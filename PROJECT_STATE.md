@@ -17,9 +17,13 @@ O funcionamento não depende de Codex/OpenCode/Claude abertos ou dos créditos d
 3. Fluxo de fechamento mensal: conciliar fontes, confirmar pendências, redigir itens variados e objetivos, revisar e gerar relatório. Não inventar datas nem conclusões.
 4. Documentação interativa e explorador técnico somente como apoio; não ampliar infraestrutura enquanto o fluxo de chamados estiver pendente.
 
-## Em preparação
+## Concluído nesta etapa
 
-Publicação do código completo sanitizado usando a instalação atual como worktree canônico. README de instalação e continuidade entre agentes, sem dados operacionais. Atualização dos links do site para o código completo.
+Código completo sanitizado publicado em https://github.com/leodah20/whatsapp-report-assistant (main), usando a instalação atual como worktree canônico. README de instalação, AGENTS/HANDOFF compartilhados e abertura opcional no OpenCode com seleção explícita do modelo Free. Nenhum dado operacional publicado. Não há troca do modelo local do coletor.
+
+Validação: 60 testes sintéticos aprovados na instalação e também em clone limpo baixado do GitHub; npm ci --ignore-scripts concluiu nesse clone. Doctor confirmou Node, Python, navegador e modelo local. OpenCode 1.19.5 instalado; catálogo confirmou o modelo Free. Não houve inferência de programação nem acesso ao arquivo privado por esse provedor. Não foi validada uma instalação Python limpa ponta a ponta.
+
+Publicação/portabilidade não reiniciou o coletor de produção nem alterou suas autorizações. Novos arquivos serão carregados em próximo início deliberado. Painel de chamados por área e gerador mensal continuam pendentes.
 
 ## Limites
 
