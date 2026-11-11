@@ -307,7 +307,7 @@ async function openCase(code){
     for(const task of d.profile.tasks||[])if(!task.resolvedAt)evidence.append(el('p','Pendência: '+task.text,'hint'));
     const facts=el('dl',undefined,'facts');
     for(const f of d.facts||[]){
-      const line=el('div');line.append(el('dt',(fieldLabels[f.field]||f.field)+(f.confirmed?' · confirmado':' · extraído da fonte')),el('dd',f.quote));facts.append(line);
+      const line=el('div');line.append(el('dt',(fieldLabels[f.field]||f.field)+(f.prior?' · contexto anterior; confira as fontes mais recentes':f.confirmed?' · confirmado':' · extraído da fonte')),el('dd',f.quote));facts.append(line);
     }
     evidence.append(facts);
     const sources=el('details');sources.open=true;sources.append(el('summary','Mensagens e anexos ('+d.sources.length+')'));

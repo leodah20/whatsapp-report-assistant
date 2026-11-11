@@ -23,6 +23,29 @@ test('source timestamp is distinct from confirmed service day and location',t=>{
   assert.equal(after.serviceDay,'2025-09-04');assert.equal(after.locationConfirmed,true);
   assert.equal(after.referenceAt,before.referenceAt);
 });
+test('a later linked closure preserves old answers as historical in detail and export',t=>{
+  const {board,item,db,dependencies}=fixture(t);
+  const answers={procedimento:'Aguardando a peça.',resultado:'Status: abortado.'};
+  const first=board.change(code,{version:0,kind:'context',location:'Sala de testes',answers});
+  const when=Math.ceil(Date.parse(first.profile.events[0].registeredAt)/1000)+60;
+  const latest=[
+    {id:'b',month:item.month,timestamp:when,text:'Após a troca, a câmera voltou a comunicar com o gravador.'},
+    {id:'c',month:item.month,timestamp:when+1,text:'Atendimento concluído.'}
+  ];
+  const read=board.readSource;
+  board.readSource=id=>latest.find(s=>s.id===id)||read(id);
+  item.sourceIds.push('b','c');
+  const detail=board.detail(code);
+  assert.equal(detail.status,'completed');
+  assert.deepEqual(detail.profile.answers,answers);
+  assert.deepEqual(detail.facts.filter(f=>f.prior).map(f=>f.field),['procedimento','resultado']);
+  assert.deepEqual(detail.reportUpdates.map(x=>x.text),latest.map(x=>x.text).reverse());
+  assert.equal(detail.facts.find(f=>f.field==='local').prior,undefined);
+  const closing=new MonthlyClosing({db,key:dependencies.key,board,template:()=>null});
+  const exported=closing.contextPackage(item.month,[code]).cases[0];
+  assert.ok(exported.facts.find(f=>f.field==='resultado').prior);
+  assert.ok(exported.sources.some(s=>s.text===latest[0].text));
+});
 test('monthly draft requires manual dates, evidence review and preventive confirmation',t=>{
   const {board,db,source,dependencies}=fixture(t);
   const groups=Array.from({length:6},(_,n)=>({name:'Grupo '+n,rows:[['1','Tarefa sintética','Técnico']]}));

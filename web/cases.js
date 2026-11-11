@@ -114,7 +114,7 @@ function renderDetail(){
   for(const [id,label] of [['overview','Resumo'],['history','Histórico'],['sources','Evidências'],['context','Contexto']]){
     const b=button(label,()=>showCaseTab(id),'tab');b.setAttribute('aria-pressed',String(tab===id));
     if(id==='sources')b.append(node('span',i.sourceCount,'tab-count'));
-    if(id==='context'&&(i.missing.length||!i.serviceDay||i.status==='unconfirmed'))b.append(node('span','•','tab-alert'));
+    if(id==='context'&&(i.missing.length||!i.serviceDay||i.status==='unconfirmed'||i.reportUpdates?.length))b.append(node('span','•','tab-alert'));
     tabs.append(b);
   }
   const body=node('div',undefined,'tab-body');
@@ -135,9 +135,19 @@ function renderDetail(){
     const tasks=node('details',undefined,'optional-task');
     tasks.append(node('summary','Adicionar pendência separada'),node('p','Use apenas se precisar acompanhar outra ação além do que já está no histórico.','hint'),button('Nova pendência',()=>edit('task'),'button outline compact'));pending.append(tasks);
     const gaps=block(body,'Informações para o relatório');
-    gaps.append(node('p',i.missing.length?'A confirmar nas fontes: '+i.missing.map(k=>fields[k]||k).join(', ')+'.':context(i)+'.','hint'));
+    if(i.reportUpdates?.length){
+      const updates=node('section',undefined,'report-updates');
+      updates.append(node('h4','Atualizações mais recentes'));
+      for(const update of i.reportUpdates)updates.append(node('p',update.text,'evidence'),node('p',(stageOrigin[update.origin]||'Registro do chamado')+' · '+date(new Date(update.at).toISOString()),'hint'));
+      updates.append(node('p','O contexto anterior foi preservado. Revise os campos de procedimento e resultado se necessário.','hint'),button('Revisar contexto',()=>showCaseTab('context'),'button outline compact'));
+      gaps.append(updates);
+    }
+    if(i.missing.length||!i.reportUpdates?.length)gaps.append(node('p',i.missing.length?'A confirmar nas fontes: '+i.missing.map(k=>fields[k]||k).join(', ')+'.':context(i)+'.','hint'));
     const facts=node('dl',undefined,'facts');
-    for(const f of i.facts){const row=node('div');row.append(node('dt',(fields[f.field]||f.field)+(f.confirmed?' · confirmado':' · extraído')),node('dd',f.quote));facts.append(row);}gaps.append(facts);
+    const earlier=node('dl',undefined,'facts');
+    for(const f of i.facts){const row=node('div');row.append(node('dt',(fields[f.field]||f.field)+(f.prior?' · contexto anterior':f.confirmed?' · confirmado':' · extraído')),node('dd',f.quote));(f.prior?earlier:facts).append(row);}
+    gaps.append(facts);
+    if(earlier.children.length){const previous=node('details',undefined,'previous-context');previous.append(node('summary','Ver contexto anterior'),earlier);gaps.append(previous);}
   }
   if(tab==='history'){
     const h=block(body,'Linha do tempo'),list=node('ol',undefined,'timeline');
@@ -203,6 +213,7 @@ function renderContext(parent,item){
   const controls={};
   for(const [k,q] of Object.entries(questions)){
     const t=label(q,node('textarea'));t.rows=2;t.maxLength=1000;t.value=item.profile.answers?.[k]||'';
+    if(item.facts.some(f=>f.field===k&&f.prior))t.parentElement.append(node('small','Contexto anterior: confira as atualizações do histórico antes de usar este texto.','hint'));
     const evidence=item.facts.filter(f=>f.field===k&&!f.confirmed).map(f=>f.quote).join(' · ');
     offerTabSuggestion(t,evidence,hint.id);
     controls[k]=t;

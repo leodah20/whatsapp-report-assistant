@@ -1,6 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {seal,open} from '../core.mjs';
-import {currentStage,isTerminal,stageQuestion,STATUSES} from './stage.mjs';
+import {currentStage,isTerminal,reportFieldConfirmedAt,stageQuestion,STATUSES} from './stage.mjs';
 export {STATUSES} from './stage.mjs';
 
 export const AREAS=['CFTV','SDAI','SCA','PABX','MEDICAO','BMS','ZABBIX'];
@@ -37,6 +37,20 @@ function day(value,allowFuture=false){
   if(typeof value!=='string'||!/^20\d\d-\d{2}-\d{2}$/.test(value)||!Number.isFinite(Date.parse(value+'T12:00:00Z'))||new Date(value+'T12:00:00Z').toISOString().slice(0,10)!==value||(!allowFuture&&value>localDay()))throw new CaseError(allowFuture?'Informe uma data de remarcação válida.':'Informe uma data válida, não futura.');
   return value;
 }
+function reportProgress(profile,sources,stage){
+  const evidence=stage.origin==='manual'?currentStage({...profile,status:'unconfirmed'},sources):stage;
+  if(!['source','note'].includes(evidence.origin)||!evidence.at||evidence.status==='unconfirmed')return {fields:[],updates:[]};
+  const times=['procedimento','resultado'].filter(field=>profile.answers?.[field]).map(field=>[field,reportFieldConfirmedAt(profile,field)]);
+  const stale=times.filter(([,at])=>at>0&&at<evidence.at);
+  if(!stale.length)return {fields:[],updates:[]};
+  const since=Math.min(...stale.map(([,at])=>at));
+  const updates=[
+    ...sources.filter(s=>!s.manualPhoto&&Number.isFinite(s.timestamp)&&s.text?.trim()).map(s=>({at:s.timestamp*1000,text:s.text,origin:'source'})),
+    ...profile.events.filter(e=>e.kind==='note'&&e.text).map(e=>({at:Date.parse(e.registeredAt),text:e.text,origin:'note'}))
+  ].filter(e=>e.at>since&&e.at<=evidence.at).sort((a,b)=>b.at-a.at).slice(0,3)
+    .map(e=>({...e,text:e.text.trim().slice(0,1000)}));
+  return {fields:stale.map(([field])=>field),updates};
+}
 export class CaseBoard{
   constructor({db,key,assistant,readSource}){Object.assign(this,{db,key,assistant,readSource});db.exec('CREATE TABLE IF NOT EXISTS case_profiles (case_id TEXT PRIMARY KEY, version INTEGER NOT NULL, payload BLOB NOT NULL)');}
   item(code){if(typeof code!=='string'||!/^R-[A-F0-9]{8}$/.test(code))throw new CaseError('Chamado não encontrado.',404);const item=this.assistant.all().find(i=>i.code===code);if(!item)throw new CaseError('Chamado não encontrado.',404);return item;}
@@ -71,9 +85,10 @@ export class CaseBoard{
     const notices=questionIds.map(this.readSource).filter(Boolean).map(s=>({...s,kind:s.id===item.questionId?'question':'receipt'}));
     const confirmations=(item.answerIds||[]).map(id=>this.assistant.receipts?.get(id)).filter(Boolean);
     const confirmed={...(profile.answers||{}),...(profile.location?{local:profile.location}:{})};
-    const facts=[...Object.entries(confirmed).map(([field,quote])=>({field,quote,confirmed:true})),...(item.facts||[]).filter(f=>!confirmed[f.field])];
     const summary=this.summary(item,profile,sources);
-    return {untrusted:true,...summary,profile,stageQuestion:summary.status==='unconfirmed'?stageQuestion:null,facts,questionState:item.questionState,sources:sources.map(s=>({...s,kind:s.manualPhoto?'manual-photo':(item.answerIds||[]).includes(s.id)?'answer':'source'})),notices,confirmations};
+    const progress=reportProgress(profile,sources,summary.stage);
+    const facts=[...Object.entries(confirmed).map(([field,quote])=>({field,quote,confirmed:true,...(progress.fields.includes(field)?{prior:true}:{})})),...(item.facts||[]).filter(f=>!confirmed[f.field])];
+    return {untrusted:true,...summary,profile,stageQuestion:summary.status==='unconfirmed'?stageQuestion:null,facts,reportUpdates:progress.updates,questionState:item.questionState,sources:sources.map(s=>({...s,kind:s.manualPhoto?'manual-photo':(item.answerIds||[]).includes(s.id)?'answer':'source'})),notices,confirmations};
   }
   change(code,input){
     if(input?.kind==='merge'){
@@ -96,7 +111,8 @@ export class CaseBoard{
         p.location=text(input.location,150);
         p.serviceDay=input.serviceDay?day(input.serviceDay):null;
         const answers=Object.fromEntries(keys.map(k=>[k,text(input.answers[k]??'',1000)]).filter(([,v])=>v));
-        event.resultChanged=p.answers?.resultado!==answers.resultado||p.answers?.procedimento!==answers.procedimento;
+        event.reportFieldsChanged=['procedimento','resultado'].filter(field=>p.answers?.[field]!==answers[field]);
+        event.resultChanged=event.reportFieldsChanged.length>0;
         p.answers=answers;
         event.text='Contexto revisado no painel.';
         if(Object.hasOwn(input,'stage')){

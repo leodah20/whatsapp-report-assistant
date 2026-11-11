@@ -34,6 +34,12 @@ export function classifyStage(text){
   return status?{status,reason}:null;
 }
 
+export function reportFieldConfirmedAt(profile,field){
+  const event=profile.events?.findLast(e=>e.kind==='context'&&
+    (Array.isArray(e.reportFieldsChanged)?e.reportFieldsChanged.includes(field):e.resultChanged!==false));
+  return Date.parse(event?.registeredAt)||0;
+}
+
 export function currentStage(profile={},sources=[]){
   if(profile.status&&profile.status!=='unconfirmed'){
     const event=profile.events?.findLast(e=>e.after?.status===profile.status&&e.before?.status!==e.after?.status);
@@ -43,10 +49,10 @@ export function currentStage(profile={},sources=[]){
   const records=sources.filter(s=>Number.isFinite(s.timestamp)&&s.text?.trim()&&!s.manualPhoto).map(s=>({at:s.timestamp*1000,text:s.text,origin:'source'}));
   for(const event of profile.events||[])if(event.kind==='note'&&event.text)records.push({at:Date.parse(event.registeredAt),text:event.text,origin:'note'});
   if(profile.answers?.resultado){
-    const saved=profile.events?.findLast(e=>e.resultChanged||e.kind==='context'&&!Object.hasOwn(e,'resultChanged'));
     const result=profile.answers.resultado,procedure=profile.answers.procedimento;
     const linked=typeof procedure==='string'&&/\babortad[oa]\b/.test(plain(result))&&classifyStage(procedure)?.status==='pending';
-    records.push({at:Date.parse(saved?.registeredAt)||0,text:linked?result+'\n'+procedure:result,origin:'context'});
+    const confirmedAt=reportFieldConfirmedAt(profile,'resultado');
+    records.push({at:linked?Math.max(confirmedAt,reportFieldConfirmedAt(profile,'procedimento')):confirmedAt,text:linked?result+'\n'+procedure:result,origin:'context'});
   }
   if(dependency)records.push({at:Date.parse(dependency.registeredAt)||0,text:dependency.text,origin:'task'});
   records.sort((a,b)=>b.at-a.at);
@@ -54,7 +60,7 @@ export function currentStage(profile={},sources=[]){
     const inferred=record.origin==='task'?{status:'pending',reason:record.text}:classifyStage(record.text);
     if(inferred){
       if(inferred.status==='completed'&&dependency)return {status:'pending',reason:dependency.text,origin:'task'};
-      return {...inferred,origin:record.origin};
+      return {...inferred,origin:record.origin,...(record.at>0?{at:record.at}:{})};
     }
     // A newer aborted visit or renewed fault must not look like a previous closure.
     const raw=plain(record.text);

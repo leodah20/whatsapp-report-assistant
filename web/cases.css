@@ -94,6 +94,9 @@ summary:focus-visible{outline:3px solid #168d80;outline-offset:2px}
 .stat strong{color:var(--stage-ink,var(--ink))}
 .case-card .stage-card-reason{margin:6px 0 0}
 .stage-evidence{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:5px}
+.report-updates{background:#edf8f5;border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin:8px 0 12px;overflow-wrap:anywhere}
+.report-updates .evidence{white-space:pre-wrap;margin-top:8px}
+.report-updates button{margin-top:7px}
 .stage-fields{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#f7fafb}
 .optional-task{margin-top:14px;color:var(--muted);font-size:.82rem}
 .optional-task .button,.section-toolbar+p+.button{margin-top:7px}

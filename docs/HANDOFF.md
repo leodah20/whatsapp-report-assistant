@@ -56,3 +56,5 @@ O cartão de mensagens automáticas usa a mesma consulta de estado da configura�
 A janela de união reaproveita o catálogo de chamados ativos do Histórico e não exige copiar código. Validação: 88 testes sintéticos e Chrome a 1366 e 390 px, com seleção de outra competência e cancelamento ou confirmação simulados. A interface atualizada foi servida sem reinício; nenhuma união real foi executada. Próxima prioridade: acompanhar o fechamento real.
 
 A janela de união permite escolher o principal sem reabrir o outro chamado. O painel usa a versão do principal escolhido, confirma a direção e abre seu histórico. A operação no servidor é a mesma. Validação: 88 testes sintéticos, cliques nos dois sentidos em Chrome a 1366 e 390 px e atualização servida sem reinício.
+
+Resumo e extração distinguem procedimento ou resultado anteriores de atualizações vinculadas que sustentam etapa posterior. Passaram 89 testes sintéticos e Chrome a 1366 e 390 px. O coletor carregou a regra após reinício e o painel local retornou a atualização recente e os campos anteriores sem alteração manual dos registros. Próxima prioridade: acompanhar o fechamento real.
