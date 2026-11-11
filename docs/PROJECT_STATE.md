@@ -27,6 +27,8 @@ Na revisão de contexto, Tab aceita a sugestão compatível e avança. Isso apen
 
 Interface revisada de ponta a ponta: fila com filtros recolhíveis, detalhe com uma ação principal e menu de ações ocasionais, uma aba de contexto, fotos em Evidências, seleção de fontes no histórico, revisão mensal em duas etapas e configuração organizada por finalidade. A barra da minuta mudou apenas na tela; a impressão A4 permanece igual. Validados 78 testes sintéticos e as cinco telas em Chrome com dados fictícios (1366 e 390 px). A validação não substitui o primeiro fechamento real.
 
+A Central exibe Chamados, Histórico sem chamado, Fechamento mensal e Configuração na barra superior. Histórico e fechamento mantêm a competência selecionada na Central.
+
 ## Limites
 
 A central calcula a etapa pelo histórico já vinculado, pelas respostas no painel e pelas atualizações locais. A fila resume por etapa e expõe o motivo de espera sem exigir uma pendência duplicada. Ajuste manual persiste até ser alterado ou voltar ao modo pelos registros. Não há reclassificação automática de material não vinculado nem leitura do conteúdo de fotos ou vídeos. A atualização foi carregada no coletor local e a API de etapas respondeu após reconexão.

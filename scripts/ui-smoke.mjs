@@ -52,10 +52,19 @@ try{
   page.on('pageerror',e=>errors.push(e.message));
   const open=async(path,ready)=>{await page.goto(origin+path+'?month='+month);await page.waitForSelector(ready,{visible:true});};
   const clickText=async(selector,label)=>{await page.waitForSelector(selector,{visible:true});assert.equal(await page.$eval(selector,x=>x.textContent.trim()),label);await page.click(selector);};
+  const goFromCases=async(selector,path,ready,withMonth=true)=>{
+    await Promise.all([page.waitForNavigation(),page.click('.workspace-bar '+selector)]);
+    const url=new URL(page.url());
+    assert.equal(url.pathname,path);
+    if(withMonth)assert.equal(url.searchParams.get('month'),month);
+    await page.waitForSelector(ready,{visible:true});
+  };
   for(const width of [1366,390]){
     await page.setViewport({width,height:850});
     const noOverflow=async()=>assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Página excede a largura: '+page.url());
     await open('/chamados','.detail-actions');await noOverflow();
+    assert.deepEqual(await page.$$eval('.workspace-bar nav a',links=>links.map(a=>a.textContent.trim())),['Chamados','Histórico sem chamado','Fechamento mensal','Configuração']);
+    assert.ok(await page.$eval('.workspace-bar',bar=>bar.getBoundingClientRect().bottom<document.querySelector('.page-head').getBoundingClientRect().top));
     assert.equal(await page.$eval('#month',x=>x.value),month);
     assert.equal(await page.$$eval('.stat strong',nodes=>Number(nodes[0].textContent)-nodes.slice(1).reduce((n,x)=>n+Number(x.textContent),0)),0);
     assert.match(await page.$eval('.stage-evidence',x=>x.textContent),/chegada da peça/);
@@ -78,12 +87,13 @@ try{
     await page.waitForSelector('.evidence-upload summary');
     await page.click('.evidence-upload summary');
     await page.waitForSelector('.evidence-upload input',{visible:true});await noOverflow();
-    await open('/historico','.source-record');await noOverflow();
+    await goFromCases('#history-link','/historico','.source-record');await noOverflow();
     assert.equal(await page.$eval('#assign-save',x=>x.disabled),true);
     await page.click('.source-record input');
     assert.equal(await page.$eval('#selected-count',x=>x.textContent),'1 selecionada');
     assert.equal(await page.$eval('#assign-save',x=>x.disabled),false);
-    await open('/fechamento','.preventive-group summary');await noOverflow();
+    await open('/chamados','.detail-actions');
+    await goFromCases('#closing-link','/fechamento','.preventive-group summary');await noOverflow();
     await page.click('.preventive-group summary');
     await page.select('select[name=preventive]','pending');
     assert.match(await page.$eval('.preventive-group summary',x=>x.textContent),/1\/1 revisadas/);
@@ -92,7 +102,8 @@ try{
     await page.emulateMediaType('print');
     assert.equal(await page.$eval('.toolbar',x=>getComputedStyle(x).display),'none');
     await page.emulateMediaType('screen');
-    await open('/','.setup-grid');await noOverflow();
+    await open('/chamados','.detail-actions');
+    await goFromCases('a[href="/"]','/','.setup-grid',false);await noOverflow();
     await page.waitForFunction(()=>document.getElementById('status').textContent.includes('desconectado'));
     console.log(`Interface validada a ${width}px: chamados, histórico, fechamento, minuta e configuração.`);
   }

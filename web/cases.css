@@ -10,13 +10,15 @@ dialog{border:1px solid var(--line);border-radius:15px;width:min(540px,calc(100%
 @media(max-width:640px){.workbench{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.case-list{max-height:330px}.detail-head,.tab-body{padding-left:14px;padding-right:14px}.page-head{gap:12px}.head-actions .button{font-size:.78rem}.lead{font-size:.91rem}}
 
 /* Shared workspace navigation and compact controls. */
-.workspace-links{padding-bottom:10px;border-bottom:1px solid #ffffff24}
-.workspace-links a,.workspace-nav a{border-radius:8px;padding:8px 10px;text-decoration:none;font-size:.84rem;font-weight:650}
-.workspace-links a{color:#d9eeef}
-.workspace-links a:hover,.workspace-links a[aria-current=page]{background:#244751;color:white}
+.workspace-nav a{border-radius:8px;padding:8px 10px;text-decoration:none;font-size:.84rem;font-weight:650}
 .workspace-nav{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:22px;border-bottom:1px solid var(--line);padding-bottom:8px}
 .workspace-nav a{color:var(--muted)}
 .workspace-nav a:hover,.workspace-nav a[aria-current=page]{background:var(--accent-bg);color:var(--accent)}
+.workspace-bar{max-width:1800px;margin-left:226px;padding:20px clamp(16px,2.6vw,39px) 0}
+.workspace-bar .workspace-nav{margin-bottom:0}
+.cases-page main{padding-top:16px}
+@media(max-width:1100px){.workspace-bar{margin-left:193px}}
+@media(max-width:860px){.workspace-bar{margin-left:0;padding-top:8px}.workspace-bar .workspace-nav{border-bottom:0}}
 .page-head{margin-bottom:14px}
 .runtime-disclosure{font-size:.8rem;color:var(--muted);margin:0 0 12px}
 .runtime-disclosure p{margin:6px 0 0 17px}
@@ -80,7 +82,7 @@ summary:focus-visible{outline:3px solid #168d80;outline-offset:2px}
 .stage-fields{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#f7fafb}
 .optional-task{margin-top:14px;color:var(--muted);font-size:.82rem}
 .optional-task .button,.section-toolbar+p+.button{margin-top:7px}
-@media(max-width:860px){.workspace-links{margin-bottom:8px}.sidebar .area{min-height:31px}}
+@media(max-width:860px){.sidebar .area{min-height:31px}}
 @media(max-width:640px){
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .stat:nth-child(odd){border-left:0}.stat:nth-child(n+3){border-top:1px solid var(--line)}

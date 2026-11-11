@@ -22,6 +22,8 @@ O supervisor recuperou uma instância travada; a central /chamados foi conferida
 
 ## Pedido para retomar
 
+As três ferramentas podem ser abertas diretamente pelas abas no topo da Central, inclusive com o WhatsApp desconectado. A navegação e a preservação da competência em Histórico e Fechamento foram testadas com cliques reais em Chrome a 1366 e 390 px, usando dados sintéticos; 84 testes unitários e de integração passaram.
+
 Fechamento: /fechamento revisa inclusões, exclusões e perguntas, guarda decisões criptografadas e exige nova revisão após mudanças nas fontes. /minuta gera a versão imprimível, sem editar arquivos finais. /historico lista fontes não vinculadas, permite atribuição manual e prepara rascunhos silenciosos por IA local. Arquivar é reversível e não apaga evidências. Verificar cobertura mês a mês; importação do WhatsApp não garante histórico completo.
 
 O histórico sugere o texto posterior à mídia sem legenda em até três minutos, com prioridade para resposta citada. A proximidade não confirma vínculo nem abre chamado. Na central, data do atendimento e local só são confirmados manualmente; o registro continua datado e há ordenação por data, nome ou andamento. A etapa usa evidência operacional explícita, distingue origem manual/automática e não cria conclusão a partir de hipótese, encaminhamento ou reparo parcial.

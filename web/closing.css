@@ -5,7 +5,7 @@
 .closing-settings{margin-top:18px}
 .closing-progress ul{padding-left:20px;margin:8px 0}
 .closing-progress p,.closing-list .hint{margin:7px 0 12px}
-.closing a.button,#closing-link,#history-link{display:inline-flex;align-items:center;text-decoration:none}
+.closing a.button{display:inline-flex;align-items:center;text-decoration:none}
 .closing a[hidden]{display:none}
 .closing #list{display:grid;gap:7px}
 .closing .control,.closing .check,.closing details{margin:12px 0}

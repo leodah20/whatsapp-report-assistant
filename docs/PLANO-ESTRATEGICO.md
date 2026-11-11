@@ -23,6 +23,7 @@
 - [x] Separar lacunas de informação, pendências operacionais e conclusão técnica confirmada.
 - [x] Oferecer uma base de conferência do mês com datas de origem e distinção de chamados anteriores; não apresentar a base como relatório final.
 - [x] Simplificar todas as telas operacionais: ação principal visível, ações ocasionais no menu, uma aba de contexto, evidências no mesmo lugar e navegação consistente entre fila, histórico, fechamento e configuração.
+- [x] Mostrar as quatro abas no topo da Central, sem depender da tela de conexão do WhatsApp para abrir as ferramentas.
 
 **Pronto quando:** o responsável chega a um chamado sem ler a conversa inteira, registra e recupera uma atualização após recarregar, identifica o que falta e consegue consultar o período sem confundir data do registro com data do serviço. Testar com dados sintéticos e verificar a versão local.
 
