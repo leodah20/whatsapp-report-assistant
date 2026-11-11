@@ -22,6 +22,7 @@
 - [x] Permitir corrigir a frente sugerida, registrar atualizações e acompanhar pendências sem sobrescrever fontes ou disparar WhatsApp.
 - [x] Separar lacunas de informação, pendências operacionais e conclusão técnica confirmada.
 - [x] Oferecer uma base de conferência do mês com datas de origem e distinção de chamados anteriores; não apresentar a base como relatório final.
+- [x] Simplificar todas as telas operacionais: ação principal visível, ações ocasionais no menu, uma aba de contexto, evidências no mesmo lugar e navegação consistente entre fila, histórico, fechamento e configuração.
 
 **Pronto quando:** o responsável chega a um chamado sem ler a conversa inteira, registra e recupera uma atualização após recarregar, identifica o que falta e consegue consultar o período sem confundir data do registro com data do serviço. Testar com dados sintéticos e verificar a versão local.
 
@@ -31,6 +32,7 @@
 - [ ] Pedir esclarecimento apenas para informação ausente/ambígua que altera o item, reaproveitando contexto confirmado.
 - [ ] Montar a minuta no modelo aprovado do projeto e conferir narrativa, datas, equipamentos, resultados e fotos antes de exportar.
 - [ ] Gerar versão para revisão humana. Não alterar nem substituir o arquivo final já entregue sem pedido expresso.
+- [x] Organizar a revisão mensal em chamados e preventivas, com progresso por grupo e acesso à minuta quando liberada. Não alterar o formato impresso.
 
 **Pronto quando:** a minuta mantém o formato aprovado, um item por atendimento distinto, texto profissional e variado, sem rótulos artificiais repetidos. Tabelas do modelo são preservadas conforme orientação do responsável. O resultado é rastreável às fontes ou confirmações, e não inventa datas, normalização ou causas.
 

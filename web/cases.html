@@ -11,23 +11,34 @@
 <body>
   <aside class="sidebar" aria-label="Navegação do painel">
     <a class="brand" href="/chamados"><span class="brand-icon" aria-hidden="true">▤</span><span>Central de chamados<small>ACOMPANHAMENTO LOCAL</small></span></a>
+    <nav class="workspace-links" aria-label="Área de trabalho">
+      <a href="/chamados" aria-current="page">Chamados</a>
+      <a href="/historico" id="history-link">Histórico sem chamado</a>
+      <a href="/fechamento" id="closing-link">Fechamento mensal</a>
+    </nav>
     <p class="nav-label">FRENTES DE SERVIÇO</p>
     <nav id="areas" aria-label="Frentes de serviço"></nav>
     <div class="sidebar-footer"><span class="local-dot" aria-hidden="true"></span>Dados neste computador<br><a href="/">Configuração do coletor ↗</a></div>
   </aside>
   <main>
     <header class="page-head">
-      <div><p class="eyebrow">OPERAÇÃO · HISTÓRICO</p><h1>Chamados</h1><p class="lead">Acompanhe o que mudou, o que falta e o que entra no fechamento do mês.</p></div>
+      <div><p class="eyebrow">ÁREA DE TRABALHO</p><h1>Chamados</h1><p class="lead">Acompanhe atendimentos e revise o que falta.</p></div>
       <div class="head-actions">
         <label class="control">Competência <input type="month" id="month" required></label>
-        <button type="button" class="button outline" id="refresh">Atualizar</button>
-        <a class="button outline" href="/fechamento" id="closing-link">Fechamento mensal</a>
-        <a class="button outline" href="/historico" id="history-link">Histórico sem chamado</a>
-        <button type="button" class="button primary" id="export">Baixar base do mês</button>
+        <details class="action-disclosure">
+          <summary class="button outline">Ferramentas do mês</summary>
+          <div class="action-options">
+            <button type="button" class="action-option" id="refresh">Atualizar lista</button>
+            <button type="button" class="action-option" id="export">Baixar base do mês</button>
+          </div>
+        </details>
       </div>
     </header>
     <p class="notice" id="notice" role="status" hidden></p>
-    <p class="notice" id="runtime" role="status">Verificando a coleta…</p>
+    <details class="runtime-disclosure">
+      <summary><span class="runtime-dot" aria-hidden="true"></span><span id="runtime-label">Verificando a coleta…</span></summary>
+      <p id="runtime" class="hint"></p>
+    </details>
     <section class="stats" aria-label="Resumo do período" id="stats"></section>
     <div class="workbench">
       <section class="queue surface" aria-labelledby="queue-title">
@@ -35,11 +46,15 @@
         <div class="filters">
           <label class="sr-only" for="search">Buscar por código, equipamento, local ou ocorrência</label>
           <input type="search" id="search" maxlength="120" placeholder="Buscar chamado…" autocomplete="off">
-          <label class="sr-only" for="filter">Filtrar andamento</label>
-          <select id="filter"><option value="all">Todos os andamentos</option><option value="attention">Com informações ou providências pendentes</option><option value="unconfirmed">Andamento a confirmar</option><option value="open">Em atendimento</option><option value="pending">Aguardando providência</option><option value="completed">Concluído confirmado</option></select>
-          <label class="control">Ordenar por <select id="sort"><option value="recent">Data · mais recente</option><option value="old">Data · mais antiga</option><option value="name">Nome do chamado · A–Z</option><option value="status">Andamento técnico</option></select></label>
-          <label class="check"><input type="checkbox" id="carry"> Incluir chamados em aberto de meses anteriores</label>
-          <label class="check"><input type="checkbox" id="archived"> Mostrar chamados arquivados</label>
+          <details class="filter-disclosure">
+            <summary>Filtros e ordenação <span id="active-filters" class="tab-count" hidden></span></summary>
+            <div class="filter-fields">
+              <label class="control">Andamento <select id="filter"><option value="all">Todos os andamentos</option><option value="attention">Com pendências ou lacunas</option><option value="unconfirmed">Andamento a confirmar</option><option value="open">Em atendimento</option><option value="pending">Aguardando providência</option><option value="completed">Concluído confirmado</option></select></label>
+              <label class="control">Ordenar por <select id="sort"><option value="recent">Data · mais recente</option><option value="old">Data · mais antiga</option><option value="name">Nome do chamado · A–Z</option><option value="status">Andamento técnico</option></select></label>
+              <label class="check"><input type="checkbox" id="carry"> Incluir chamados em aberto de meses anteriores</label>
+              <label class="check"><input type="checkbox" id="archived"> Mostrar chamados arquivados</label>
+            </div>
+          </details>
         </div>
         <div id="case-list" class="case-list" aria-label="Chamados encontrados"></div>
       </section>

@@ -1,5 +1,5 @@
 const el=id=>document.getElementById(id);let lastGroups='';
-function notify(message){el('notice').textContent=message;el('notice').style.display='block';}
+function notify(message){el('notice').textContent=message;el('notice').hidden=false;}
 async function post(path,data={}){const r=await fetch('/api/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await r.json();if(!r.ok)throw Error(result.error||'Falha');return result;}
 async function action(fn){try{await fn();await refresh();}catch(e){notify(e.message);}}
 el('connect').onclick=()=>action(async()=>{if(!el('consent').checked)throw Error('Confirme a autorização antes de vincular.');await post('connect',{consent:true});});

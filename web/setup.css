@@ -1,1 +1,13 @@
-:root{font-family:Segoe UI,Arial,sans-serif;color:#1b2b3d;background:#f0f4f7}*{box-sizing:border-box}body{margin:0}main{max-width:900px;margin:48px auto;padding:0 24px 60px}.eyebrow{letter-spacing:2px;font-size:12px;font-weight:700;color:#147b85}h1{font-size:42px;line-height:1.15;letter-spacing:-1px;margin:16px 0}h2{font-size:21px;margin:0 0 15px}.lead{font-size:18px;color:#526375}section{background:white;border:1px solid #dce5ed;border-radius:15px;padding:26px;margin-top:22px;box-shadow:0 6px 20px #16304705}p{line-height:1.6}label{display:block;margin:16px 0}input[type=checkbox]{width:18px;height:18px;vertical-align:middle;margin-right:8px}button{background:#147b85;color:white;border:0;border-radius:8px;padding:12px 16px;cursor:pointer;margin:6px 6px 6px 0;font:600 14px Segoe UI}button:disabled{opacity:.45;cursor:wait}.secondary{background:#eaf1f5;color:#284a64}select,input[type=month]{font:16px Segoe UI;padding:10px;max-width:100%;border:1px solid #b9cbd7;border-radius:7px}select{width:100%}.badge{font-size:14px;font-weight:bold;color:#147b85}.small,.note{font-size:14px;color:#536578}#qr img{display:block;width:280px;height:280px;margin:20px auto}#notice{position:sticky;bottom:15px;background:#152d43;color:white;padding:14px;border-radius:8px;display:none}.record{border-top:1px solid #e2e9f0;padding:15px 0;white-space:pre-wrap;overflow-wrap:anywhere}.record small{color:#657789}
+.setup main{max-width:1140px;margin:0 auto;padding:28px clamp(14px,3vw,38px)}
+.setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.setup-card{padding:17px 18px}
+.setup-status{font-size:.85rem;font-weight:650;color:var(--accent);margin:8px 0 13px;overflow-wrap:anywhere}
+.setup-card .check,.setup-card>.control{margin:12px 0}
+.setup-card .head-actions{align-items:flex-end}
+.setup-card .head-actions+.hint:not(:empty){margin-top:10px}
+.setup-card details,.setup-limits{margin-top:14px}
+.setup-card summary{color:var(--muted);font-weight:650;font-size:.85rem}
+.setup-card details p,.setup-limits p{margin:8px 0;color:var(--muted);font-size:.85rem}
+.setup #qr img{display:block;width:min(100%,260px);height:auto;margin:14px 0}
+.setup #messages,.setup #cases{max-height:24rem;overflow:auto;overflow-wrap:anywhere}
+@media(max-width:700px){.setup-grid{grid-template-columns:1fr}}

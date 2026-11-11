@@ -1,7 +1,17 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Histórico sem chamado</title><link rel="stylesheet" href="/cases.css"><link rel="stylesheet" href="/closing.css"><script defer src="/history.js"></script></head>
-<body class="closing"><main><header class="page-head"><div><a href="/chamados">← Central de chamados</a><p class="eyebrow">ARQUIVO LOCAL</p><h1>Histórico sem chamado</h1><p class="lead">Revise fontes antigas, junte as que pertencem ao mesmo atendimento ou vincule a um chamado que já existe.</p></div><form id="period" class="head-actions"><label class="control">Competência <input id="month" type="month" required></label><button class="button primary">Carregar mês</button></form></header>
-<section class="surface closing-progress"><p id="count" role="status">Carregando…</p><p class="hint">A data exibida é a da mensagem, não do atendimento. A lista contém apenas fontes disponíveis no arquivo que ainda não foram vinculadas. Nada é enviado ao WhatsApp.</p><button class="button outline" id="prepare">Preparar rascunhos com IA local</button> <button class="button outline" id="recheck">Rever contexto dos chamados</button> <a href="/">Buscar mais histórico no WhatsApp</a></section>
-<section class="surface closing-settings"><form id="assign"><label class="control">Código existente, se for complemento <input id="code" placeholder="R-…" maxlength="10" pattern="R-[A-Fa-f0-9]{8}"></label><button class="button primary">Salvar fontes selecionadas</button><p class="hint">Sem código, cria um novo rascunho com as fontes selecionadas.</p><p class="notice" id="notice" role="status" hidden></p><div id="sources"></div></form><button class="button outline" id="previous">Anterior</button> <button class="button outline" id="next">Próxima página</button></section>
+<body class="closing"><main>
+<nav class="workspace-nav" aria-label="Área de trabalho"><a href="/chamados" data-month-nav>Chamados</a><a href="/historico" aria-current="page">Histórico sem chamado</a><a href="/fechamento" data-month-nav>Fechamento mensal</a><a href="/">Configuração</a></nav>
+<header class="page-head"><div><h1>Histórico sem chamado</h1><p class="lead">Selecione as mensagens que pertencem ao mesmo atendimento.</p></div><form id="period" class="head-actions"><label class="control">Competência <input id="month" type="month" required></label><button class="button primary">Carregar mês</button></form></header>
+<section class="surface closing-progress"><p id="count" role="status">Carregando…</p><p class="hint">As datas são das mensagens, não dos atendimentos. Nada é enviado ao WhatsApp.</p>
+<details class="history-tools"><summary>Ferramentas do histórico</summary><div class="head-actions"><button class="button outline" id="prepare">Preparar rascunhos com IA local</button><button class="button outline" id="recheck">Rever contexto dos chamados</button><a href="/#arquivo">Importar mais registros</a></div></details></section>
+<section class="surface closing-settings">
+<form id="assign">
+<div class="source-selection"><div class="section-toolbar"><h2>Fontes disponíveis</h2><span class="count" id="selected-count" aria-live="polite">0 selecionadas</span></div>
+<div class="head-actions"><label class="control">Código de chamado existente <input id="code" placeholder="R-…" maxlength="10" pattern="R-[A-Fa-f0-9]{8}"></label><button class="button primary" id="assign-save" disabled>Salvar seleção</button></div>
+<p class="hint">Deixe o código vazio para criar um rascunho.</p></div>
+<p class="notice" id="notice" role="status" hidden></p><div id="sources"></div>
+</form>
+<div class="head-actions history-pagination"><button class="button outline" id="previous">Anterior</button><button class="button outline" id="next">Próxima página</button></div></section>
 </main></body></html>

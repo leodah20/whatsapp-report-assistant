@@ -29,6 +29,30 @@ async function api(path,options){
   const data=await r.json();if(!r.ok)throw Error(data.error||'Consulta indisponível.');return data;
 }
 function block(parent,title){const b=node('section',undefined,'block');b.append(node('h3',title));parent.append(b);return b;}
+function showCaseTab(id){
+  if(id===tab)return;
+  if(contextDirty&&!confirm('Descartar respostas não salvas?'))return;
+  contextDirty=false;tab=id;renderDetail();$('detail').querySelector('.tab[aria-pressed=true]')?.focus();
+}
+function caseActions(item){
+  const actions=node('div',undefined,'detail-actions');
+  if(!item.profile.archived)actions.append(button('Registrar atualização',()=>edit('note'),'button primary'));
+  const more=node('details',undefined,'action-disclosure');
+  const toggle=node('summary','Mais ações','button outline');
+  const list=node('div',undefined,'action-options');
+  const add=(label,kind,cls='')=>list.append(button(label,()=>{toggle.focus();more.open=false;edit(kind);},'action-option '+cls));
+  add('Editar chamado','profile');
+  if(item.profile.archived)add('Restaurar chamado','restore');
+  else{
+    if(item.status!=='completed'&&!(tab==='overview'&&item.completionSuggestion))add('Marcar como concluído','complete');
+    add('Reunir duplicado','merge');
+    add('Arquivar chamado','archive','action-danger');
+  }
+  more.append(toggle,list);actions.append(more);
+  more.addEventListener('focusout',e=>{if(!more.contains(e.relatedTarget))more.open=false;});
+  more.addEventListener('keydown',e=>{if(e.key==='Escape'&&more.open){e.preventDefault();more.open=false;toggle.focus();}});
+  return actions;
+}
 function renderList(){
   const items=model.items,query=normal($('search').value.trim()),filter=$('filter').value;
   $('areas').replaceChildren(...Object.entries(labels).map(([id,name])=>{
@@ -40,6 +64,8 @@ function renderList(){
   }));
   const visible=items.filter(i=>(area==='ALL'||i.area===area)&&(filter==='all'||(filter==='attention'?attention(i):i.status===filter))&&normal([i.code,i.title,i.summary,i.location,labels[i.area]].join(' ')).includes(query));
   const sort=$('sort').value;
+  const active=Number(filter!=='all')+Number(sort!=='recent')+Number($('carry').checked)+Number($('archived').checked);
+  $('active-filters').textContent=active;$('active-filters').hidden=!active;
   visible.sort(sort==='name'?byName:sort==='status'?(a,b)=>(statusOrder[a.status]??9)-(statusOrder[b.status]??9)||byName(a,b):(a,b)=>(sort==='old'?1:-1)*(orderDate(a)-orderDate(b))||byName(a,b));
   $('queue-title').textContent=labels[area];$('queue-count').textContent=visible.length;
   $('case-list').replaceChildren(...visible.map(i=>{
@@ -66,25 +92,28 @@ function renderDetail(){
   if(!detail)return;
   const i=detail,head=node('header',undefined,'detail-head'),flags=node('div',undefined,'badges');
   flags.append(badge(labels[i.area]+(i.areaSuggested&&i.area!=='UNCLASSIFIED'?' · sugerida':'')),badge(model.statuses[i.status]||i.status,i.status==='completed'?'green':''),badge(context(i),i.contextState==='complete'?'green':'amber'));
-  head.append(node('p',i.code,'case-code'),caseHeading('h2',i),flags,node('p',caseDate(i)+' · '+i.sourceCount+' fonte(s) · '+i.answerCount+' resposta(s)','hint'));
-  if(!i.locationConfirmed)head.append(node('p','Qual é o local exato? Confirme a torre, setor, pavimento ou unidade em Editar chamado.','notice'));
-  if(i.completionSuggestion&&!i.profile.archived){
-    const prompt=node('div',undefined,'notice');
-    prompt.append(node('strong','O serviço foi concluído?'),node('p','O registro mais recente menciona retorno à operação. Confira antes de confirmar.'),node('p','“'+i.completionSuggestion.quote+'”'));
-    head.append(prompt);
-  }
-  const actions=node('div',undefined,'detail-actions');
-  if(i.profile.archived)head.append(node('p','Arquivado: '+i.profile.archived.reason,'notice'));
-  actions.append(button('Editar chamado',()=>edit('profile')),button('Registrar atualização',()=>edit('note'),'button primary'),button('Nova pendência',()=>edit('task')),button('Completar contexto e fotos',()=>{if(tab!=='context'){tab='context';renderDetail();}}));
-  if(i.status!=='completed'&&!i.profile.archived)actions.append(button('Marcar como concluído',()=>edit('complete')));
-  if(!i.profile.archived)actions.append(button('Reunir duplicado',()=>edit('merge')));
-  head.append(actions);
-  actions.append(button(i.profile.archived?'Restaurar chamado':'Arquivar chamado',()=>edit(i.profile.archived?'restore':'archive')));
+  const top=node('div',undefined,'detail-top');
+  top.append(node('p',i.code,'case-code'),caseActions(i));
+  head.append(top,caseHeading('h2',i),flags,node('p',caseDate(i),'hint'));
+  if(i.profile.archived)head.append(node('p','Arquivado: '+i.profile.archived.reason,'hint'));
   const tabs=node('nav',undefined,'tabs');tabs.setAttribute('aria-label','Detalhes do chamado');
-  for(const [id,label] of [['overview','Visão geral'],['history','Histórico'],['sources','Fontes e fotos'],['context','Completar contexto']]){const b=button(label,()=>{if(contextDirty&&id!==tab&&!confirm('Descartar respostas não salvas?'))return;if(id===tab)return;contextDirty=false;tab=id;renderDetail();$('detail').querySelector('.tab[aria-pressed=true]')?.focus();},'tab');b.setAttribute('aria-pressed',String(tab===id));tabs.append(b);}
+  for(const [id,label] of [['overview','Resumo'],['history','Histórico'],['sources','Evidências'],['context','Contexto']]){
+    const b=button(label,()=>showCaseTab(id),'tab');b.setAttribute('aria-pressed',String(tab===id));
+    if(id==='sources')b.append(node('span',i.sourceCount,'tab-count'));
+    if(id==='context'&&(i.missing.length||!i.serviceDay))b.append(node('span','•','tab-alert'));
+    tabs.append(b);
+  }
   const body=node('div',undefined,'tab-body');
   if(tab==='overview'){
+    if(i.completionSuggestion&&i.status!=='completed'&&!i.profile.archived){
+      const prompt=node('div',undefined,'case-callout');
+      prompt.append(node('strong','O serviço foi concluído?'),node('p','O registro menciona retorno à operação. Confira antes de confirmar.','hint'),node('p','“'+i.completionSuggestion.quote+'”'),button('Marcar como concluído',()=>edit('complete')));
+      body.append(prompt);
+    }
     const pending=block(body,'Pendências operacionais');
+    const row=node('div',undefined,'section-toolbar');
+    row.append(pending.firstChild,button('Nova pendência',()=>edit('task'),'button outline compact'));
+    pending.append(row);
     if(!i.profile.tasks.length)pending.append(node('p','Nenhuma pendência operacional cadastrada.','hint'));
     for(const t of [...i.profile.tasks].sort((a,b)=>Number(!!a.resolvedAt)-Number(!!b.resolvedAt))){
       const card=node('div',undefined,'task'+(t.resolvedAt?' done':''));
@@ -103,6 +132,7 @@ function renderDetail(){
     if(!i.notices.some(n=>n.kind==='question')&&i.questionState==='sent')h.append(node('p','Pergunta enviada; texto não disponível no arquivo.','hint'));
   }
   if(tab==='sources'){
+    renderEvidenceTools(body,i);
     const s=block(body,'Evidências arquivadas');
     i.sources.forEach((v,n)=>{
       const card=node('div',undefined,'record');card.append(node('h4',kinds[v.kind]),node('p',date(v.timestamp),'hint'),node('p',v.text||'Mensagem sem legenda.'));
@@ -118,12 +148,8 @@ function renderDetail(){
 function offerTabSuggestion(control,suggestion,id){
   if(!suggestion||suggestion.length>control.maxLength)return;
   control.placeholder=suggestion;
-  const hint=node('span','Tab para usar a sugestão','hint');
-  hint.id=id;control.parentElement.append(hint);
   control.setAttribute('aria-describedby',id);
   const canAccept=()=>control.value!==suggestion&&suggestion.startsWith(control.value);
-  const updateHint=()=>{hint.hidden=!canAccept();};
-  control.addEventListener('input',updateHint);updateHint();
   control.addEventListener('keydown',event=>{
     if(event.key!=='Tab'||event.defaultPrevented||event.shiftKey||event.ctrlKey||event.altKey||event.metaKey||event.isComposing||!canAccept())return;
     control.value=suggestion;
@@ -132,18 +158,20 @@ function offerTabSuggestion(control,suggestion,id){
   });
 }
 function renderContext(parent,item){
-  const section=block(parent,'Respostas confirmadas'),form=node('form');
-  const questions={equipamento:'Qual equipamento foi atendido?',ocorrencia:'O que aconteceu?',procedimento:'O que foi executado?',resultado:'Qual foi o resultado observado ou a pendência?'};
-  const label=(name,control)=>{const l=node('label',name,'control');l.append(control);form.append(l);return control;};
-  section.append(node('p','Preencha só o que você puder confirmar. Os trechos extraídos aparecem como referência, não como respostas confirmadas.','hint'));
-  const place=label('Onde? Torre, setor, pavimento ou unidade',node('input'));place.maxLength=150;place.value=item.profile.location||'';place.placeholder=item.location||'Informe o local exato';
-  if(!item.locationConfirmed)offerTabSuggestion(place,item.location,'context-suggestion-local');
-  const when=label('Qual foi a data real do atendimento?',node('input'));when.type='date';when.max=day.format(new Date());when.value=item.serviceDay||'';
+  const section=block(parent,'Contexto do atendimento'),form=node('form',undefined,'context-form'),meta=node('div',undefined,'form-columns');
+  const questions={equipamento:'Equipamento atendido',ocorrencia:'Ocorrência',procedimento:'Serviço executado',resultado:'Resultado ou pendência'};
+  const label=(name,control,target=form)=>{const l=node('label',name,'control');l.append(control);target.append(l);return control;};
+  const hint=node('p',undefined,'context-tip');hint.id='context-suggestion-tip';
+  hint.append(node('kbd','Tab'),document.createTextNode(' usa a sugestão em cinza. Confirme apenas o que você verificou.'));
+  section.append(hint);form.append(meta);
+  const place=label('Local do atendimento',node('input'),meta);place.maxLength=150;place.value=item.profile.location||'';place.placeholder=item.location||'Torre, setor, pavimento ou unidade';
+  if(!item.locationConfirmed)offerTabSuggestion(place,item.location,hint.id);
+  const when=label('Data do atendimento',node('input'),meta);when.type='date';when.max=day.format(new Date());when.value=item.serviceDay||'';
   const controls={};
   for(const [k,q] of Object.entries(questions)){
     const t=label(q,node('textarea'));t.rows=2;t.maxLength=1000;t.value=item.profile.answers?.[k]||'';
     const evidence=item.facts.filter(f=>f.field===k&&!f.confirmed).map(f=>f.quote).join(' · ');
-    offerTabSuggestion(t,evidence,'context-suggestion-'+k);
+    offerTabSuggestion(t,evidence,hint.id);
     controls[k]=t;
   }
   const save=node('button','Salvar respostas','button primary');form.append(save);section.append(form);
@@ -157,7 +185,11 @@ function renderContext(parent,item){
   const sources=node('details');sources.append(node('summary','Ler as fontes e atualizações do chamado'));
   for(const s of timeline(item))if(s.text)sources.append(node('p',s.label+' — '+s.text,'record'));
   section.append(sources);
-  const photos=block(parent,'Adicionar fotos'),picker=node('input');picker.type='file';picker.accept='image/jpeg,image/png,image/webp';picker.setAttribute('aria-label','Selecionar foto do chamado');
+}
+function renderEvidenceTools(parent,item){
+  const actions=node('div',undefined,'evidence-actions'),photos=node('details',undefined,'evidence-upload');
+  const summary=node('summary','Adicionar foto','button outline'),fields=node('div',undefined,'evidence-upload-fields');
+  const picker=node('input');picker.type='file';picker.accept='image/jpeg,image/png,image/webp';picker.setAttribute('aria-label','Selecionar foto do chamado');
   const upload=button('Anexar foto',async()=>{
     const file=picker.files[0];if(!file){notify('Selecione uma foto.');return;}if(contextDirty){notify('Salve as respostas antes de anexar a foto.');return;}if(file.size>5*1024*1024){notify('A foto deve ter até 5 MB.');return;}
     upload.disabled=true;
@@ -166,7 +198,9 @@ function renderContext(parent,item){
     finally{upload.disabled=false;}
   });
   const link=node('a','Vincular uma fonte do histórico');link.href='/historico?month='+encodeURIComponent($('month').value)+'&code='+item.code;
-  photos.append(node('p','JPEG, PNG ou WebP de até 5 MB. O anexo fica neste chamado e pode ser selecionado na minuta.','hint'),picker,upload,node('br'),link);
+  link.className='button outline';
+  fields.append(node('p','JPEG, PNG ou WebP de até 5 MB.','hint'),picker,upload);
+  photos.append(summary,fields);actions.append(photos,link);parent.append(actions);
 }
 async function openCase(code,scroll=false){
   if(contextDirty&&code!==selected&&!confirm('Descartar respostas não salvas?'))return;
@@ -192,8 +226,10 @@ async function pulse(){
   try{
     const s=await api('/runtime');
     const label=s.requiresLink?'Novo vínculo necessário':s.paused?'Coleta pausada':s.connected?'WhatsApp conectado':s.selected?'Aguardando conexão com o WhatsApp':'Grupo ainda não autorizado';
-    $('runtime').textContent=[label,s.supervised?'Supervisão ativa':'Sem supervisão confirmada','Última checagem: '+date(s.lastTransportCheck),'Última sincronização: '+date(s.lastSyncAt),s.recovering?'Recuperando histórico':null,s.analysisPending?s.analysisPending+' aguardando análise':null,s.error].filter(Boolean).join(' · ');
-  }catch{$('runtime').textContent='Sem resposta do coletor local. A conexão do WhatsApp não está confirmada.';}
+    $('runtime-label').textContent=label;
+    $('runtime').parentElement.dataset.online=String(s.connected&&!s.paused&&!s.error);
+    $('runtime').textContent=[s.supervised?'Supervisão ativa':'Sem supervisão confirmada','Última checagem: '+date(s.lastTransportCheck),'Última sincronização: '+date(s.lastSyncAt),s.recovering?'Recuperando histórico':null,s.analysisPending?s.analysisPending+' aguardando análise':null,s.error].filter(Boolean).join(' · ');
+  }catch{$('runtime-label').textContent='Coletor indisponível';$('runtime').parentElement.dataset.online='false';$('runtime').textContent='Sem resposta do coletor local. A conexão do WhatsApp não está confirmada.';}
 }
 function edit(kind,task){
   editing={kind,task,code:detail.code,version:detail.version,status:detail.status};
@@ -244,8 +280,10 @@ $('export').onclick=async()=>{
     const a=node('a');a.href=url;a.download='base-chamados-'+month+'.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }catch(e){notify(e.message);}finally{$('export').disabled=!model.items.length;}
 };
-$('month').value=day.format(new Date()).slice(0,7);
-$('month').onchange=$('carry').onchange=()=>void refresh();
+const requestedMonth=new URLSearchParams(location.search).get('month');
+$('month').value=/^20\d\d-(0[1-9]|1[0-2])$/.test(requestedMonth||'')?requestedMonth:day.format(new Date()).slice(0,7);
+$('month').onchange=()=>{const url=new URL(location.href);url.searchParams.set('month',$('month').value);window.history.replaceState(null,'',url);void refresh();};
+$('carry').onchange=()=>void refresh();
 $('archived').onchange=()=>void refresh();
 $('sort').onchange=()=>renderList();
 function monthLinks(){for(const [id,route] of [['closing-link','/fechamento'],['history-link','/historico']])$(id).href=route+'?month='+encodeURIComponent($('month').value);}

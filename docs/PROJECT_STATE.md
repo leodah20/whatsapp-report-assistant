@@ -25,6 +25,8 @@ Em 11/11/2026, a central local por frente de serviço e a supervisão Windows en
 
 Na revisão de contexto, Tab aceita a sugestão compatível e avança. Isso apenas preenche o formulário; o responsável ainda precisa salvar.
 
+Interface revisada de ponta a ponta: fila com filtros recolhíveis, detalhe com uma ação principal e menu de ações ocasionais, uma aba de contexto, fotos em Evidências, seleção de fontes no histórico, revisão mensal em duas etapas e configuração organizada por finalidade. A barra da minuta mudou apenas na tela; a impressão A4 permanece igual. Validados 78 testes sintéticos e as cinco telas em Chrome com dados fictícios (1366 e 390 px). A validação não substitui o primeiro fechamento real.
+
 ## Limites
 
 Ainda sem interpretação de fotos/áudios e sem gerador completo de relatório final. Histórico depende do WhatsApp; envio exatamente uma vez não é garantido em falha externa. CPU pode demorar minutos. Armazenamento de credenciais Linux/macOS não implementado. Clientes OpenCode/Claude e provedores alternativos não foram testados ponta a ponta. Ofertas Free podem expirar; API direta da DeepSeek é paga.

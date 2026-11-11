@@ -16,11 +16,11 @@ function textarea(value,max){const i=el('textarea');i.value=value||'';i.maxLengt
 function select(values,value){const s=el('select');s.replaceChildren(...Object.entries(values).map(([k,v])=>new Option(v,k)));s.value=value||'';return s;}
 function checkbox(parent,label,checked=false){const l=el('label',undefined,'check'),c=input('checkbox');c.checked=checked;l.append(c,el('span',label));parent.append(l);return c;}
 function renderOverview(){
+  for(const a of document.querySelectorAll('[data-month-nav]'))a.href=a.pathname+'?month='+encodeURIComponent(view.month);
   $('counts').textContent=view.archiveCount+' mensagens no arquivo · '+view.items.length+' chamados · '+view.items.filter(x=>x.state==='include').length+' incluídos';
   $('checks').replaceChildren(...(view.checks.length?view.checks:['Revisão registrada. Você já pode abrir a minuta.']).map(x=>el('li',x)));
   $('draft').hidden=!!view.checks.length;
   $('draft').href='/minuta?month='+encodeURIComponent(view.month);
-  $('history').href='/historico?month='+encodeURIComponent(view.month);
   $('list').replaceChildren(...view.items.map(x=>{
     const b=el('button',undefined,'case-card');b.type='button';b.setAttribute('aria-current',String(selected===x.code));
     b.append(el('span',x.code,'case-code'),el('span',x.location?(x.locationConfirmed?x.location:'Local sugerido: '+x.location):'Local a confirmar','case-location'),el('h3',x.title),el('p',(x.carryover?'Anterior · ':'')+stateLabels[x.state]));
@@ -29,17 +29,20 @@ function renderOverview(){
   if(!view.items.length)$('list').append(el('p','Nenhum chamado localizado neste recorte. Confira o arquivo antes de confirmar a cobertura.','hint'));
 }
 function renderSettings(){
-  $('settings').hidden=!view.template;if(!view.template)return;
+  $('settings-link').hidden=$('settings').hidden=!view.template;if(!view.template)return;
   $('issued').value=view.settings?.issued||'';$('issued').max=local.format(new Date());
   $('observations').value=view.settings?.observations||'';$('coverage').checked=view.settings?.coverage===view.coverage;
   let index=0;
   $('preventives').replaceChildren(...view.template.groups.map(g=>{
-    const fieldset=el('fieldset');fieldset.append(el('legend',g.name));
+    const group=el('details',undefined,'preventive-group'),fieldset=el('fieldset');
+    const label=el('summary',g.name),count=el('span',undefined,'hint');label.append(count);group.append(label,fieldset);
     for(const [week,task,category] of g.rows){
       const s=select(statuses,view.settings?.statuses[index++]);s.required=true;s.name='preventive';
       const l=el('label',undefined,'preventive-row');l.append(el('span',task+' · '+category+(week?' · Semana '+week:'')),s);fieldset.append(l);
     }
-    return fieldset;
+    const update=()=>{count.textContent=[...fieldset.elements].filter(s=>s.value).length+'/'+g.rows.length+' revisadas';};
+    fieldset.addEventListener('change',update);update();
+    return group;
   }));
 }
 async function load(month){
@@ -107,6 +110,7 @@ async function saveData(payload,button){
   finally{saving=false;button.disabled=false;}
 }
 $('period').onsubmit=e=>{e.preventDefault();void load($('month').value);};
+$('settings-form').addEventListener('invalid',e=>{const group=e.target.closest('.preventive-group');if(group)group.open=true;},true);
 $('settings-form').onsubmit=async e=>{
   e.preventDefault();
   if(await saveData({kind:'settings',issued:$('issued').value,statuses:[...e.currentTarget.querySelectorAll('[name=preventive]')].map(x=>x.value),observations:$('observations').value,coverage:$('coverage').checked?view.coverage:null},e.submitter))notify('Preventivas e emissão salvas.');
