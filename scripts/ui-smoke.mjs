@@ -34,6 +34,10 @@ const data={
   '/api/cases/closing/draft':{month,groups,settings,items:[],name:'Edifício de teste',footer:'Equipe de teste'},
   '/api/status':{state:'desconectado',groups:[],count:0}
 };
+const assistantStatus=()=>({
+  assistant:{enabled:true,busy:true,items:12,pending:0,confirmationsSent:5,confirmationsPending:2,newCallsConfirmed:4,error:'Resposta guardada; reanálise local pendente.'},
+  recovery:{enabled:true,pending:0,scan:{phase:'done'}}
+});
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aDncAAAAASUVORK5CYII=','base64');
 const server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1'),path=url.pathname;
@@ -88,6 +92,7 @@ try{
     await page.waitForSelector(ready,{visible:true});
   };
   for(const width of [1366,390]){
+    Object.assign(data['/api/status'],assistantStatus());
     data['/api/cases/closing'].items=initialClosingItems();
     data['/api/cases/closing'].version=0;
     data['/api/cases/closing'].unlinkedCount=3;
@@ -244,6 +249,23 @@ try{
       assert.ok(await page.$eval('#'+anchor,x=>{const r=x.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight;}));
     }
     await page.waitForFunction(()=>document.getElementById('status').textContent.includes('desconectado'));
+    await page.waitForSelector('#assistant-metrics',{visible:true});
+    assert.equal(await page.$eval('#assistant-status',x=>x.textContent),'Envios automáticos autorizados');
+    assert.equal(await page.$eval('#assistant-activity',x=>x.textContent),'Análise em andamento');
+    assert.equal(await page.$eval('#assistant-pending',x=>x.textContent),'0');
+    assert.equal(await page.$eval('#assistant-confirmations-pending.attention',x=>x.textContent),'2');
+    assert.equal(await page.$eval('#assistant-items',x=>x.textContent),'12');
+    assert.equal(await page.$eval('#assistant-intakes',x=>x.textContent),'4');
+    assert.equal(await page.$eval('#assistant-confirmations-sent',x=>x.textContent),'5');
+    assert.match(await page.$eval('#assistant-recovery',x=>x.textContent),/Última busca concluída/);
+    assert.match(await page.$eval('#assistant-notices li',x=>x.textContent),/reanálise local pendente/);
+    Object.assign(data['/api/status'].assistant,{enabled:false,busy:false,confirmationsPending:0,error:null});
+    data['/api/status'].recovery.enabled=false;
+    await page.waitForFunction(()=>document.getElementById('assistant-status').textContent==='Envios automáticos pausados');
+    assert.equal(await page.$eval('#assistant-notices',x=>x.hidden),true);
+    assert.equal(await page.$eval('#assistant-recovery-row',x=>x.hidden),true);
+    assert.equal(await page.$eval('#assistant-confirmations-pending',x=>x.classList.contains('attention')),false);
+    await noOverflow();
     console.log(`Interface validada a ${width}px: chamados, histórico, fechamento, minuta e configuração.`);
   }
   assert.deepEqual(errors,[]);

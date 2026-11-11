@@ -33,7 +33,28 @@
 <div class="head-actions"><button id="select" class="button primary">Ativar somente este grupo</button><button id="pause" class="button outline">Pausar / retomar captura</button></div>
 </section>
 <section class="surface setup-card" aria-labelledby="automatic">
-<h2 id="automatic">Mensagens automáticas</h2><p id="assistant-status" class="setup-status" role="status">Verificando assistente…</p>
+<h2 id="automatic">Mensagens automáticas</h2>
+<div class="assistant-summary">
+  <span id="assistant-status" class="badge" role="status">Verificando assistente…</span>
+  <span id="assistant-activity" class="hint"></span>
+</div>
+<table id="assistant-metrics" class="assistant-metrics" hidden>
+  <caption class="sr-only">Fila e totais do assistente</caption>
+  <tbody>
+    <tr><th scope="rowgroup" colspan="2" class="metric-group">Na fila agora</th></tr>
+    <tr><th scope="row">Registros aguardando análise</th><td id="assistant-pending"></td></tr>
+    <tr><th scope="row">Confirmações de resposta pendentes</th><td id="assistant-confirmations-pending"></td></tr>
+    <tr id="assistant-recovery-row"><th scope="row">Mensagens na fila de retomada</th><td id="assistant-recovery-pending"></td></tr>
+  </tbody>
+  <tbody>
+    <tr><th scope="rowgroup" colspan="2" class="metric-group">Totais registrados</th></tr>
+    <tr><th scope="row">Chamados registrados</th><td id="assistant-items"></td></tr>
+    <tr><th scope="row">Confirmações de novos chamados enviadas</th><td id="assistant-intakes"></td></tr>
+    <tr><th scope="row">Confirmações de respostas enviadas</th><td id="assistant-confirmations-sent"></td></tr>
+  </tbody>
+</table>
+<p id="assistant-recovery" class="hint assistant-recovery" hidden></p>
+<ul id="assistant-notices" class="assistant-notices" aria-label="Avisos do assistente" hidden></ul>
 <div class="head-actions"><button id="questions-pause" class="button outline">Pausar mensagens</button><button id="questions-resume" class="button outline">Retomar mensagens</button></div>
 <details><summary>Como o assistente responde</summary><p>O assistente aguarda dois minutos para reunir mensagens. Se faltar contexto, pergunta no grupo pelo seu número. Responda citando a pergunta ou usando o código do chamado. O histórico importado não dispara perguntas.</p>
 <button id="cases-view" class="button outline">Consultar chamados e respostas</button><div id="cases"></div></details>

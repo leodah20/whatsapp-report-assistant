@@ -25,6 +25,7 @@
 - [x] Simplificar todas as telas operacionais: ação principal visível, ações ocasionais no menu, uma aba de contexto, evidências no mesmo lugar e navegação consistente entre fila, histórico, fechamento e configuração.
 - [x] Mostrar as quatro abas no topo da Central, sem depender da tela de conexão do WhatsApp para abrir as ferramentas.
 - [x] Dar a cada aba um menu lateral com atalhos próprios: frentes de serviço, triagem do histórico, etapas do fechamento e seções do coletor.
+- [x] Na configuração, separar autorização, atividade, filas, totais e avisos de mensagens automáticas.
 
 **Pronto quando:** o responsável chega a um chamado sem ler a conversa inteira, registra e recupera uma atualização após recarregar, identifica o que falta e consegue consultar o período sem confundir data do registro com data do serviço. Testar com dados sintéticos e verificar a versão local.
 

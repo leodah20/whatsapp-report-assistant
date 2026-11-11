@@ -50,3 +50,5 @@ Após a revisão visual, passaram `npm test` (78 testes) e `node scripts/ui-smok
 O alerta de registros sem chamado foi validado com 88 testes e em Chrome a 1366 e 390 px. A bolinha some quando a competência não tem pendências; a extração avisa se fontes avulsas ficaram de fora.
 
 Menus laterais contextuais testados com cliques em Chrome a 1366 e 390 px: alternância do Histórico, filas e modos do Fechamento e atalhos da Configuração. Os 88 testes sintéticos passaram; as quatro rotas locais serviram a interface atualizada sem reiniciar o coletor. Nenhuma mudança no armazenamento, nos envios ou na minuta. Próximo passo: acompanhar o fechamento real.
+
+O cartão de mensagens automáticas usa a mesma consulta de estado da configuração e distingue fila, totais e avisos. Validação: 88 testes sintéticos e teste de interface em Chrome a 1366 e 390 px, com transição simulada de envios autorizados para pausados. A página local serviu o novo cartão sem reinício. Não houve teste de envio real; a próxima prioridade continua sendo acompanhar o fechamento real.
