@@ -1,6 +1,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const demo=document.body?.dataset.demo==='true';
+const remote=document.body?.dataset.remote==='true';
 const labels={ALL:'Todas as frentes',CFTV:'CFTV',SDAI:'SDAI',SCA:'SCA',PABX:'PABX',MEDICAO:'Medição',BMS:'BMS',ZABBIX:'Zabbix',UNCLASSIFIED:'Sem classificação'};
 const fields={local:'Local',equipamento:'Equipamento',ocorrencia:'Ocorrência',procedimento:'Procedimento',resultado:'Resultado / pendência'};
 const kinds={source:'Registro do WhatsApp',answer:'Resposta do WhatsApp',question:'Pergunta do assistente',receipt:'Confirmação de registro',note:'Atualização local',task:'Pendência registrada',resolve:'Pendência concluída',profile:'Cadastro atualizado',context:'Respostas confirmadas',merge:'Chamados reunidos',archive:'Arquivado',restore:'Restaurado','manual-photo':'Foto adicionada pelo painel'};
@@ -47,11 +48,10 @@ function caseActions(item){
   const list=node('div',undefined,'action-options');
   const add=(label,kind,cls='')=>list.append(button(label,()=>{toggle.focus();more.open=false;edit(kind);},'action-option '+cls));
   add('Editar chamado','profile');
-  if(item.profile.archived)add('Restaurar chamado','restore');
+  if(item.profile.archived){if(!remote)add('Restaurar chamado','restore');}
   else{
     if(!['completed','cancelled'].includes(item.status))add('Marcar como concluído','complete');
-    add('Reunir duplicado','merge');
-    add('Arquivar chamado','archive','action-danger');
+    if(!remote){add('Reunir duplicado','merge');add('Arquivar chamado','archive','action-danger');}
   }
   more.append(toggle,list);actions.append(more);
   more.addEventListener('focusout',e=>{if(!more.contains(e.relatedTarget))more.open=false;});
@@ -158,7 +158,7 @@ function renderDetail(){
     if(!i.notices.some(n=>n.kind==='question')&&i.questionState==='sent')h.append(node('p','Pergunta enviada; texto não disponível no arquivo.','hint'));
   }
   if(tab==='sources'){
-    if(!demo)renderEvidenceTools(body,i);
+    if(!demo&&!remote)renderEvidenceTools(body,i);
     const s=block(body,'Evidências arquivadas');
     i.sources.forEach((v,n)=>{
       const card=node('div',undefined,'record');card.append(node('h4',kinds[v.kind]),node('p',date(v.timestamp),'hint'),node('p',v.text||'Mensagem sem legenda.'));

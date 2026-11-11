@@ -60,3 +60,5 @@ Uma etapa explícita mais recente, em fonte vinculada ou atualização local, si
 O Explorador da API, em Configuração, mostra rota e resposta JSON de três consultas locais: estado do coletor, lista mensal e detalhe de chamado. Usa a sessão local existente e não executa consultas antes do clique. Não há acesso do navegador de outro dispositivo nem alteração das permissões de rede.
 
 A demonstração independente usa o painel e o explorador em modo somente leitura, com cinco chamados fictícios. É servida em loopback, em porta separada, sem encaminhar consultas para o coletor. Instruções em [DEMO.md](DEMO.md).
+
+A ponte descrita em [PAINEL-PRIVADO.md](PAINEL-PRIVADO.md) permite encaminhar apenas consultas e edições selecionadas a partir de Serve HTTPS e uma conta autorizada. A ativação depende de rede aprovada, HTTPS e validação no celular.

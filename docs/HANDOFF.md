@@ -62,3 +62,5 @@ Resumo e extração distinguem procedimento ou resultado anteriores de atualiza�
 Explorador da API testado com 89 testes automatizados e navegação a 1366 e 390 px com dados fictícios. O coletor continua restrito a 127.0.0.1. Antes de disponibilizar o painel em rede, confirmar destino e usuários, exigir autenticação, manter a configuração do WhatsApp fora da superfície remota e testar leitura e edição no celular.
 
 A demo independente passou em navegador a 1366, 390 e 320 px. Os 90 testes automatizados incluem rejeição de gravação, configuração do coletor e arquivos operacionais na demo. Publicação privada deve apontar só para o processo da demonstração, após verificar acesso dos destinatários; não publicar o coletor.
+
+A ponte do painel real passou nos 91 testes automatizados, incluindo bloqueio de conta não autorizada, transporte sem HTTPS, escrita de outra origem e rotas administrativas. A preparação não altera a demo nem o coletor. Antes da publicação real, habilitar HTTPS na rede aprovada, verificar o encaminhamento e validar o acesso e a edição a partir do celular.

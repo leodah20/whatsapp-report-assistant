@@ -51,6 +51,7 @@
 - [x] Manter na raiz um glossário dos comandos utilitários solicitados, com acesso pelo README e instrução de atualização em AGENTS.md.
 - [x] Disponibilizar explorador local, somente leitura, para as rotas de estado e de chamados.
 - [x] Separar uma demonstração responsiva com chamados fictícios, sem gravação nem conexão com o coletor.
+- [x] Preparar uma ponte local de leitura e edição para uma conta via Tailscale Serve HTTPS, sem expor a administração do coletor.
 - [ ] Definir servidor e público autorizado para acesso de rede. Validar autenticação e separação da configuração do coletor antes da publicação interna. Conferir navegação, edição e leitura em telas pequenas, sem depender de zoom ou rolagem horizontal.
 - [ ] Atualizar o diagrama/stepper e a documentação pública conforme entregas reais, sem trocar o foco por infraestrutura.
 
