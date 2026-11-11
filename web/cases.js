@@ -171,15 +171,30 @@ function renderDetail(){
   if(tab==='context')renderContext(body,i);
   $('detail').replaceChildren(head,tabs,body);
 }
-function offerTabSuggestion(control,suggestion,id){
+function offerSuggestion(control,suggestion,id,name){
   if(!suggestion||suggestion.length>control.maxLength)return;
   control.placeholder=suggestion;
   control.setAttribute('aria-describedby',id);
   const canAccept=()=>control.value!==suggestion&&suggestion.startsWith(control.value);
-  control.addEventListener('keydown',event=>{
-    if(event.key!=='Tab'||event.defaultPrevented||event.shiftKey||event.ctrlKey||event.altKey||event.metaKey||event.isComposing||!canAccept())return;
+  const accept=()=>{
+    if(!canAccept())return;
     control.value=suggestion;
     control.dispatchEvent(new Event('input',{bubbles:true}));
+  };
+  const apply=button('Usar sugestão',accept,'button outline context-use-suggestion');
+  apply.setAttribute('aria-label','Usar sugestão: '+name);
+  const update=()=>{
+    apply.disabled=!canAccept();
+    apply.textContent=control.value===suggestion?'Sugestão aplicada':'Usar sugestão';
+    apply.setAttribute('aria-label',apply.textContent+': '+name);
+  };
+  const field=control.parentElement,group=node('div',undefined,'context-suggestion-field');
+  field.replaceWith(group);group.append(field,apply);
+  control.addEventListener('input',update);
+  update();
+  control.addEventListener('keydown',event=>{
+    if(event.key!=='Tab'||event.defaultPrevented||event.shiftKey||event.ctrlKey||event.altKey||event.metaKey||event.isComposing)return;
+    accept();
     // Let the browser move focus normally after accepting the suggestion.
   });
 }
@@ -188,7 +203,9 @@ function renderContext(parent,item){
   const questions={equipamento:'Equipamento atendido',ocorrencia:'Ocorrência',procedimento:'Serviço executado',resultado:'Resultado ou pendência'};
   const label=(name,control,target=form)=>{const l=node('label',name,'control');l.append(control);target.append(l);return control;};
   const hint=node('p',undefined,'context-tip');hint.id='context-suggestion-tip';
-  hint.append(node('kbd','Tab'),document.createTextNode(' usa a sugestão em cinza. Confirme apenas o que você verificou.'));
+  const keyboardHint=node('span',undefined,'context-keyboard-hint');
+  keyboardHint.append(node('kbd','Tab'),document.createTextNode(' usa a sugestão em cinza.'));
+  hint.append(keyboardHint,node('span','Toque em Usar sugestão para preencher.','context-touch-hint'),document.createTextNode(' Confirme apenas o que você verificou.'));
   section.append(hint);
   const stageFields=node('div',undefined,'stage-fields'),stageTitle=node('p',item.stageQuestion||('Etapa atual: '+(model.statuses[item.status]||item.status)),'hint');
   stageFields.append(stageTitle);form.append(stageFields,meta);
@@ -211,14 +228,14 @@ function renderContext(parent,item){
   }
   stage.onchange=stageFieldsState;reason.oninput=stageFieldsState;scheduled.oninput=stageFieldsState;stageFieldsState();
   const place=label('Local do atendimento',node('input'),meta);place.maxLength=150;place.value=item.profile.location||'';place.placeholder=item.location||'Torre, setor, pavimento ou unidade';
-  if(!item.locationConfirmed)offerTabSuggestion(place,item.location,hint.id);
+  if(!item.locationConfirmed)offerSuggestion(place,item.location,hint.id,'Local do atendimento');
   const when=label('Data do atendimento',node('input'),meta);when.type='date';when.max=day.format(new Date());when.value=item.serviceDay||'';
   const controls={};
   for(const [k,q] of Object.entries(questions)){
     const t=label(q,node('textarea'));t.rows=2;t.maxLength=1000;t.value=item.profile.answers?.[k]||'';
     if(item.facts.some(f=>f.field===k&&f.prior))t.parentElement.append(node('small','Contexto anterior: confira as atualizações do histórico antes de usar este texto.','hint'));
     const evidence=item.facts.filter(f=>f.field===k&&!f.confirmed).map(f=>f.quote).join(' · ');
-    offerTabSuggestion(t,evidence,hint.id);
+    offerSuggestion(t,evidence,hint.id,q);
     controls[k]=t;
   }
   const save=node('button','Salvar respostas','button primary');form.append(save);section.append(form);

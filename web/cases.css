@@ -75,6 +75,14 @@ summary:focus-visible{outline:3px solid #168d80;outline-offset:2px}
 .form-columns{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px}
 .context-tip{font-size:.8rem;color:var(--muted);margin-bottom:12px}
 .context-tip kbd{background:#eaf1f2;border:1px solid var(--line);border-radius:4px;padding:1px 4px}
+.context-suggestion-field{min-width:0}
+.context-touch-hint,.context-use-suggestion{display:none}
+@media(max-width:640px),(any-pointer:coarse){
+  .context-keyboard-hint{display:none}
+  .context-touch-hint{display:inline}
+  .context-use-suggestion{display:inline-block;min-height:44px;margin-top:5px}
+  .context-use-suggestion:disabled{cursor:default}
+}
 .evidence-actions{display:flex;align-items:flex-start;flex-wrap:wrap;gap:10px 15px;margin-bottom:14px}
 .evidence-actions a{font-size:.82rem;padding:9px 0}
 .evidence-upload-fields{margin-top:9px}

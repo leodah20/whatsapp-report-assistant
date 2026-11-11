@@ -61,4 +61,6 @@ O Explorador da API, em Configuração, mostra rota e resposta JSON de três con
 
 A demonstração independente usa o painel e o explorador em modo somente leitura, com cinco chamados fictícios. É servida em loopback, em porta separada, sem encaminhar consultas para o coletor. Instruções em [DEMO.md](DEMO.md).
 
-A ponte descrita em [PAINEL-PRIVADO.md](PAINEL-PRIVADO.md) permite encaminhar apenas consultas e edições selecionadas a partir de Serve HTTPS e uma conta autorizada. A instalação respondeu pela rede privada em porta HTTPS separada; falta confirmar navegação e edição pelo celular.
+A ponte descrita em [PAINEL-PRIVADO.md](PAINEL-PRIVADO.md) permite encaminhar apenas consultas e edições selecionadas a partir de Serve HTTPS e uma conta autorizada. A instalação respondeu pela rede privada em porta HTTPS separada.
+
+O proprietário confirmou a navegação do painel privado no Android. Na aba Contexto, telas de toque têm o botão **Usar sugestão**; Tab continua disponível no desktop. Nenhum atalho sobrescreve texto divergente ou salva o formulário.

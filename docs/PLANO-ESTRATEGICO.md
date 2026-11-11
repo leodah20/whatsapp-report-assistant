@@ -67,7 +67,7 @@
 - [x] Classificar etapa atual por evidência explícita: em andamento, aguardando, remarcado, cancelado, concluído ou não identificada. Encaminhamento, contexto completo e testes isolados não encerram atendimento. Mostrar motivo/dependência e preservar ajustes manuais auditáveis na aba Contexto.
 - [x] Substituir contadores sobrepostos por etapas que somam o total e filtram a fila. Mostrar bloqueio já documentado sem exigir cadastro de pendência; pedir a etapa apenas quando a evidência for insuficiente, sem redisparar perguntas históricas.
 - [x] Sinalizar lacunas na fila e concentrar perguntas, respostas confirmadas, fontes e anexos locais numa tela. Reprocessar trechos documentados sem apagar confirmações humanas.
-- [x] Aceitar sugestão de contexto com Tab no campo vazio ou com prefixo correspondente, avançando o foco e preservando texto divergente. Salvar continua explícito.
+- [x] Aceitar sugestão de contexto com Tab no desktop e com o botão Usar sugestão em telas de toque. Ambos preservam texto divergente; salvar continua explícito.
 - [x] Reunir duplicados confirmados com trilha de auditoria. Respeitar código/resposta citada e identificação inequívoca de equipamento em atualizações posteriores; mostrar sugestões quando houver ambiguidade.
 - [x] Selecionar outro chamado na lista, inclusive de outras competências, e escolher na mesma janela qual permanece como principal antes de confirmar.
 - [x] Destacar atualizações vinculadas mais recentes que o procedimento ou resultado já salvo; preservar o contexto anterior e distingui-lo na extração.

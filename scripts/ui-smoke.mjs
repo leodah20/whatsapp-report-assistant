@@ -110,7 +110,7 @@ try{
     data['/api/cases/closing'].version=0;
     data['/api/cases/closing'].unlinkedCount=3;
     data['/api/cases/closing'].settings={...settings};
-    await page.setViewport({width,height:850});
+    await page.setViewport({width,height:850,hasTouch:width===390});
     const noOverflow=async()=>assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Página excede a largura: '+page.url());
     const verifySidebar=async()=>{
       assert.ok(await page.$eval('.panel-sidebar',side=>{
@@ -170,7 +170,15 @@ try{
     assert.equal(await page.$eval('.stage-fields textarea',x=>x.required),true);
     await page.waitForSelector('.stage-fields input[type=date]',{visible:true});
     assert.equal(await page.$$eval('.context-tip',x=>x.length),1);
-    await page.focus('.context-form textarea[placeholder]');await page.keyboard.press('Tab');
+    if(width===390){
+      const offer='.context-suggestion-field:has(textarea) .context-use-suggestion';
+      await page.tap(offer);
+      assert.equal(await page.$eval(offer,x=>x.textContent),'Sugestão aplicada');
+      await noOverflow();
+    }else{
+      assert.equal(await page.$eval('.context-use-suggestion',x=>getComputedStyle(x).display),'none');
+      await page.focus('.context-form textarea[placeholder]');await page.keyboard.press('Tab');
+    }
     assert.equal(await page.$eval('.context-form textarea[placeholder]',x=>x.value),source.text);
     page.once('dialog',dialog=>dialog.accept());
     await page.click('.tabs .tab:nth-child(3)');
