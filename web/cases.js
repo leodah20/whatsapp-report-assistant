@@ -265,6 +265,40 @@ async function pulse(){
     $('runtime').textContent=[s.supervised?'Supervisão ativa':'Sem supervisão confirmada','Última checagem: '+date(s.lastTransportCheck),'Última sincronização: '+date(s.lastSyncAt),s.recovering?'Recuperando histórico':null,s.analysisPending?s.analysisPending+' aguardando análise':null,s.error].filter(Boolean).join(' · ');
   }catch{$('runtime-label').textContent='Coletor indisponível';$('runtime').parentElement.dataset.online='false';$('runtime').textContent='Sem resposta do coletor local. A conexão do WhatsApp não está confirmada.';}
 }
+function renderMergeTargets(){
+  if(editing?.kind!=='merge')return;
+  const select=$('merge-target'),previous=select.value;
+  const words=normal($('merge-search').value.trim()).split(/\s+/).filter(Boolean);
+  const rows=editing.targets.filter(t=>{
+    const text=normal([t.title,t.location,labels[t.area],t.area,t.code,t.month].join(' '));
+    return words.every(word=>text.includes(word));
+  });
+  select.replaceChildren(new Option(rows.length?'Selecione o chamado duplicado':editing.targets.length?'Nenhum chamado encontrado':'Nenhum outro chamado disponível',''));
+  for(const [current,label] of [[true,'Nesta competência'],[false,'Outras competências']]){
+    const group=node('optgroup');group.label=label;
+    for(const t of rows.filter(t=>t.current===current)){
+      const when=t.day?calendar(t.day):t.referenceAt?date(t.referenceAt):t.month;
+      group.append(new Option([t.title,t.location,labels[t.area],when,t.code].filter(Boolean).join(' · '),t.code));
+    }
+    if(group.children.length)select.append(group);
+  }
+  select.disabled=!rows.length;
+  select.value=rows.some(t=>t.code===previous)?previous:'';
+  $('save').disabled=!select.value||editing.saving;
+}
+async function loadMergeTargets(dialog){
+  try{
+    const data=await api('/history?'+new URLSearchParams({month:$('month').value,targets:'1'}));
+    if(editing!==dialog||!$('edit-dialog').open)return;
+    dialog.targets=data.targets.filter(t=>/^R-[A-F0-9]{8}$/.test(t.code)&&t.code!==dialog.code);
+    renderMergeTargets();
+  }catch{
+    if(editing!==dialog||!$('edit-dialog').open)return;
+    $('merge-target').replaceChildren(new Option('Lista indisponível',''));
+    $('form-error').textContent='Não foi possível carregar os chamados. Feche e abra a janela para tentar de novo.';
+    $('form-error').hidden=false;
+  }
+}
 function edit(kind,task){
   editing={kind,task,code:detail.code,version:detail.version};
   $('dialog-title').textContent={profile:'Editar chamado',complete:'Marcar como concluído',note:'Registrar atualização',task:'Nova pendência',resolve:'Concluir pendência',archive:'Arquivar chamado',restore:'Restaurar chamado',merge:'Reunir ao chamado atual'}[kind];
@@ -280,22 +314,36 @@ function edit(kind,task){
   $('note-label').textContent=kind==='complete'?'O que confirma a conclusão?':kind==='archive'?'Motivo (ex.: duplicado do chamado R-…)':kind==='resolve'?'Como a pendência foi resolvida?':kind==='profile'?'Observação ou correção técnica':'Descrição';
   $('date-label').textContent=kind==='complete'?'Data real da conclusão':'Data real da atualização';
   $('edit-note').parentElement.hidden=['restore','merge'].includes(kind);
-  $('duplicate-field').hidden=kind!=='merge';$('duplicate-code').required=kind==='merge';$('duplicate-code').value='';
+  $('duplicate-field').hidden=kind!=='merge';
+  $('save').textContent=kind==='merge'?'Reunir chamados':'Salvar';
+  $('save').disabled=kind==='merge';
   if(kind==='archive')$('edit-note').maxLength=1000;
   $('form-error').hidden=true;configureForm();$('edit-dialog').showModal();
+  if(kind==='merge'){
+    $('merge-main').textContent=detail.title+' · '+detail.code;
+    $('merge-search').value='';
+    $('merge-target').disabled=true;
+    $('merge-target').replaceChildren(new Option('Carregando chamados…',''));
+    $('merge-search').focus();
+    void loadMergeTargets(editing);
+  }
 }
 function configureForm(){if(!editing)return;const required=!['archive','restore','merge','profile'].includes(editing.kind);$('date-field').hidden=!required;$('edit-day').required=required;$('edit-note').required=required||editing.kind==='archive';}
 for(const id of ['cancel','cancel-top'])$(id).onclick=()=>$('edit-dialog').close();
+$('merge-search').oninput=()=>{if(editing?.targets)renderMergeTargets();};
+$('merge-target').onchange=()=>{$('save').disabled=!$('merge-target').value||editing?.saving;};
 $('edit-dialog').onclose=()=>{editing=null;};
 $('edit-form').onsubmit=async e=>{
-  e.preventDefault();if(!editing)return;
+  e.preventDefault();if(!editing||editing.saving)return;
   const {kind,version,code,task}=editing,occurredOn=$('edit-day').value,note=$('edit-note').value;
-  const payload=kind==='archive'?{kind,version,text:note}:kind==='restore'?{kind,version}:kind==='merge'?{kind,version,duplicate:$('duplicate-code').value.trim().toUpperCase()}:kind==='complete'?{kind:'profile',version,area:detail.profile.area,title:detail.profile.title,status:'completed',note,occurredOn}:kind==='profile'?{kind,version,area:$('edit-area').value||null,title:$('edit-title').value,status:detail.profile.status||'unconfirmed',location:$('edit-location').value,serviceDay:$('edit-service-day').value,note}:{kind,version,text:note,occurredOn,...(task?{taskId:task.id}:{})};
-  if(kind==='merge'&&!confirm('Reunir as fontes de '+payload.duplicate+' em '+code+' e arquivar o cadastro duplicado?'))return;
+  const duplicate=kind==='merge'?editing.targets?.find(t=>t.code===$('merge-target').value):null;
+  if(kind==='merge'&&(!duplicate||!confirm('Reunir “'+duplicate.title+'” ('+duplicate.code+') em “'+detail.title+'” ('+code+')? O chamado atual permanece e o duplicado é arquivado.')))return;
+  const payload=kind==='archive'?{kind,version,text:note}:kind==='restore'?{kind,version}:kind==='merge'?{kind,version,duplicate:duplicate.code}:kind==='complete'?{kind:'profile',version,area:detail.profile.area,title:detail.profile.title,status:'completed',note,occurredOn}:kind==='profile'?{kind,version,area:$('edit-area').value||null,title:$('edit-title').value,status:detail.profile.status||'unconfirmed',location:$('edit-location').value,serviceDay:$('edit-service-day').value,note}:{kind,version,text:note,occurredOn,...(task?{taskId:task.id}:{})};
+  const submission=editing;submission.saving=true;
   $('save').disabled=true;
   try{detail=await api('/'+code,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});$('edit-dialog').close();renderDetail();await refresh();notify('Alteração salva no painel. Nenhuma mensagem enviada.');}
   catch(e){$('form-error').textContent=e.message;$('form-error').hidden=false;}
-  finally{$('save').disabled=false;}
+  finally{submission.saving=false;if(editing===submission)$('save').disabled=kind==='merge'&&!$('merge-target').value;}
 };
 $('export').onclick=async()=>{
   const month=model.month,items=model.items.filter(i=>!i.archived);$('export').disabled=true;

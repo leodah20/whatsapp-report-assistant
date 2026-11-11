@@ -8,9 +8,11 @@ import {CONFIG} from '../src/config.mjs';
 import {STATUSES,currentStage} from '../src/cases/stage.mjs';
 
 const month='2026-10', code='R-00000001', timestamp=1791890000;
+const duplicateCode='R-00000030';
+let mergeRequest;
 const source={kind:'source',timestamp,text:'Foi relatada uma falha.',hasMedia:true,mediaState:'saved',mime:'image/png'};
 const blocker='Aguardando a chegada da peça.';
-const row={code,title:'Falha de leitura',area:'SCA',status:'pending',stage:currentStage({},[{timestamp,text:blocker}]),contextState:'missing',location:'Setor de testes',locationConfirmed:true,sourceCount:1,referenceAt:timestamp,missing:['resultado'],openTasks:0};
+const row={code,version:3,title:'Falha de leitura',area:'SCA',status:'pending',stage:currentStage({},[{timestamp,text:blocker}]),contextState:'missing',location:'Setor de testes',locationConfirmed:true,sourceCount:1,referenceAt:timestamp,missing:['resultado'],openTasks:0};
 const profile={title:'Falha de leitura',location:row.location,events:[],tasks:[]};
 const detail={...row,profile,sources:[source],notices:[],facts:[{field:'ocorrencia',quote:source.text}]};
 const groups=[{name:'Controle de acesso',rows:[[1,'Verificação de teste','Operacional']]}];
@@ -41,6 +43,11 @@ const assistantStatus=()=>({
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aDncAAAAASUVORK5CYII=','base64');
 const server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1'),path=url.pathname;
+  if(req.method==='POST'&&path==='/api/cases/'+code){
+    const chunks=[];for await(const chunk of req)chunks.push(chunk);
+    mergeRequest={path,...JSON.parse(Buffer.concat(chunks).toString())};
+    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify(detail));return;
+  }
   if(req.method==='POST'&&path==='/api/cases/closing/context'){
     res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({text:'Extração sintética com contexto',fingerprint:'test',attachments:0,pendingReview:1,unlinkedCount:2}));return;
   }
@@ -58,7 +65,10 @@ const server=createServer(async(req,res)=>{
   }
   if(req.method!=='GET'){res.writeHead(405).end();return;}
   if(path==='/api/cases/history'&&url.searchParams.get('targets')==='1'){
-    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({targets:[{...row,current:true,month,status:'Aguardando'}]}));return;
+    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({targets:[
+      {...row,current:true,month,status:'Aguardando'},
+      {...row,code:duplicateCode,title:'Verificação do leitor',location:'Recepção do prédio',current:false,month:'2026-09'}
+    ]}));return;
   }
   if(path==='/api/cases/history/media'){res.writeHead(200,{'Content-Type':'image/png'}).end(png);return;}
   if(path==='/api/cases/'+code+'/attachment/0'||path==='/api/cases/'+code+'/media/0'){res.writeHead(200,{'Content-Type':'image/png'}).end(png);return;}
@@ -92,6 +102,7 @@ try{
     await page.waitForSelector(ready,{visible:true});
   };
   for(const width of [1366,390]){
+    mergeRequest=null;
     Object.assign(data['/api/status'],assistantStatus());
     data['/api/cases/closing'].items=initialClosingItems();
     data['/api/cases/closing'].version=0;
@@ -120,6 +131,30 @@ try{
     await clickText('.detail-actions .action-option:nth-child(2)','Marcar como concluído');
     await page.waitForSelector('#edit-dialog[open]');
     await page.click('#cancel');await page.waitForSelector('#edit-dialog[open]',{hidden:true});
+    await clickText('.detail-actions summary','Mais ações');
+    await clickText('.detail-actions .action-option:nth-child(3)','Reunir duplicado');
+    await page.waitForSelector('#merge-target optgroup option');
+    assert.match(await page.$eval('#merge-main',x=>x.textContent),/Falha de leitura/);
+    assert.deepEqual(await page.$$eval('#merge-target option',x=>x.map(o=>o.value)),['',duplicateCode]);
+    assert.equal(await page.$eval('#save',x=>x.disabled),true);
+    await page.type('#merge-search','sem resultado');
+    assert.equal(await page.$eval('#merge-target',x=>x.disabled),true);
+    await page.$eval('#merge-search',x=>{x.value='';});
+    await page.type('#merge-search','recepcao SCA');
+    assert.equal(await page.$eval('#merge-target optgroup',x=>x.label),'Outras competências');
+    await noOverflow();
+    await page.select('#merge-target',duplicateCode);
+    assert.equal(await page.$eval('#save',x=>x.disabled),false);
+    let confirmation;
+    page.once('dialog',dialog=>{confirmation=dialog.message();void dialog.dismiss();});
+    await page.click('#save');
+    assert.match(confirmation,/Verificação do leitor.*Falha de leitura/);
+    assert.equal(mergeRequest,null);
+    page.once('dialog',dialog=>dialog.accept());
+    await page.click('#save');
+    await page.waitForSelector('#edit-dialog[open]',{hidden:true});
+    assert.deepEqual(mergeRequest,{path:'/api/cases/'+code,kind:'merge',version:3,duplicate:duplicateCode});
+    await page.waitForFunction(()=>document.getElementById('notice').textContent.includes('Alteração salva no painel'));
     await page.click('.tabs .tab:nth-child(4)');
     await page.waitForSelector('.context-form');
     await page.select('.stage-fields select','rescheduled');

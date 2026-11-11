@@ -52,3 +52,5 @@ O alerta de registros sem chamado usa a competência aberta: há uma bolinha na 
 Cada aba operacional tem menu lateral contextual. Chamados mantém as frentes; Histórico separa A vincular e Ignorados e abre as ferramentas; Fechamento concentra filas, preventivas e saída; Configuração salta para as seções do coletor. Em telas estreitas, os atalhos ficam acima do conteúdo. A minuta imprimível não mudou.
 
 Em Configuração, o cartão Mensagens automáticas separa autorização de envio, atividade de análise, fila, totais e avisos. Os totais são do coletor, não da competência. A conclusão da última busca de retomada não significa que a fila foi esvaziada.
+
+Reunir duplicado lista chamados não arquivados da competência e de outros meses, sem incluir o chamado atual. A busca é local no painel, por título, local, frente ou código. O chamado aberto é o principal e a confirmação mostra os dois títulos.
