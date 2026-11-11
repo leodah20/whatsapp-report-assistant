@@ -18,4 +18,6 @@
 .closing .photo-list img{width:100%;height:110px;object-fit:contain;background:#eaf0f2}
 .closing .photo-list label{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:5px}
 .closing .photo-list img{grid-column:1/-1}
+.case-location,.case-subject{display:block;overflow-wrap:anywhere}
+.case-location{font-size:.88em;color:#125952;margin-bottom:3px}
 @media(max-width:640px){.closing .preventive-row{grid-template-columns:1fr;gap:2px}}

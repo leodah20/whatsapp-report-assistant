@@ -23,7 +23,7 @@ function renderOverview(){
   $('history').href='/historico?month='+encodeURIComponent(view.month);
   $('list').replaceChildren(...view.items.map(x=>{
     const b=el('button',undefined,'case-card');b.type='button';b.setAttribute('aria-current',String(selected===x.code));
-    b.append(el('span',x.code,'case-code'),el('h3',x.title),el('p',(x.carryover?'Anterior · ':'')+stateLabels[x.state]));
+    b.append(el('span',x.code,'case-code'),el('span',x.location?(x.locationConfirmed?x.location:'Local sugerido: '+x.location):'Local a confirmar','case-location'),el('h3',x.title),el('p',(x.carryover?'Anterior · ':'')+stateLabels[x.state]));
     b.onclick=()=>{if(!saving&&(!dirty||confirm('Descartar alterações não salvas?')))void openCase(x.code);};return b;
   }));
   if(!view.items.length)$('list').append(el('p','Nenhum chamado localizado neste recorte. Confira o arquivo antes de confirmar a cobertura.','hint'));
@@ -69,7 +69,7 @@ async function openCase(code){
     const heading=control(body,'Título técnico',input('text',r.title||d.title,180));
     const historical=checkbox(body,'Acompanhamento sem nova intervenção datada neste mês',r.historical);
     const dates=el('div',undefined,'date-row');
-    const start=control(dates,'Data real do atendimento',input('date',r.start||''));
+    const start=control(dates,'Data real do atendimento',input('date',r.start||(d.serviceDay?.startsWith(month+'-')?d.serviceDay:'')));
     const end=control(dates,'Fim do período, se aplicável',input('date',r.end||''));
     start.max=end.max=local.format(new Date());body.append(dates);
     const narrative=control(body,'Texto corrido para a minuta',textarea(r.narrative,3400));

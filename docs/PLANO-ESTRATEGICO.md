@@ -42,6 +42,17 @@
 
 **Pronto quando:** outro ambiente consegue retomar com Git e os arquivos de continuidade, sem acessar chats antigos ou dados privados para entender a arquitetura. Não depender de oferta gratuita permanente nem conectar modelo remoto ao arquivo sem autorização.
 
+### Melhorias operacionais pedidas em 11/11/2026
+
+- [x] Conferir histórico do mês contra o WhatsApp disponível; expor fontes sem vínculo e revisar foto ou vídeo antes de anexar. Não confundir cobertura disponível com histórico integral.
+- [x] Para mídia sem legenda, buscar texto posterior próximo e priorizar resposta citada; mostrar sugestão, sem transformar proximidade em certeza ou abrir chamado só pela foto.
+- [x] Exibir data do registro em todos os chamados quando disponível, separada da data real do atendimento. Ordenar por data, nome ou andamento.
+- [x] Destacar o local no título. Quando não confirmado, pedir torre, setor, pavimento ou unidade; não preencher por suposição.
+- [x] Oferecer conclusão manual em ação direta. Retorno operacional textual pode sugerir confirmação; encaminhamento, pendência e contexto completo não encerram atendimento.
+- [x] Sinalizar lacunas na fila e concentrar perguntas, respostas confirmadas, fontes e anexos locais numa tela. Reprocessar trechos documentados sem apagar confirmações humanas.
+- [x] Reunir duplicados confirmados com trilha de auditoria. Respeitar código/resposta citada e identificação inequívoca de equipamento em atualizações posteriores; mostrar sugestões quando houver ambiguidade.
+- [ ] Acompanhar reclassificações e novas atualizações reais. Refinar identificação de ativos e locais conforme confirmações, sem criar regra genérica a partir de um único caso.
+
 ## Regras de trabalho que não mudam
 
 - Fonte original, atualização humana e sugestão automática são coisas diferentes. Um recebimento, uma foto ou um teste não encerram um chamado. Não tratar hipótese como causa confirmada.

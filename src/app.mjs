@@ -63,7 +63,7 @@ const closing=new MonthlyClosing({db,key:KEY,board:caseBoard,template(){
   }catch{return null;}
 },archive(month){
   const hash=createHash('sha256');let count=0;
-  for(const row of db.prepare('SELECT id,payload FROM messages WHERE month=? ORDER BY id').iterate(month)){hash.update(row.id);hash.update(row.payload);count++;}
+  for(const row of db.prepare("SELECT id,payload FROM messages WHERE month=? AND id NOT LIKE 'manual-photo:%' ORDER BY id").iterate(month)){hash.update(row.id);hash.update(row.payload);count++;}
   return {count,revision:hash.digest('hex')};
 }});
 const historical=new HistoricalCases({db,board:caseBoard,assistant,readSource});

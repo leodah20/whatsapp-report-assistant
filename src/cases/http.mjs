@@ -6,10 +6,15 @@ import {CaseError,imageType} from './board.mjs';
 const assets={'/chamados':['web/cases.html','text/html'],'/cases.js':['web/cases.js','text/javascript'],'/cases.css':['web/cases.css','text/css'],'/fechamento':['web/closing.html','text/html'],'/minuta':['web/draft.html','text/html'],'/historico':['web/history.html','text/html'],'/history.js':['web/history.js','text/javascript'],'/closing.js':['web/closing.js','text/javascript'],'/closing.css':['web/closing.css','text/css'],'/draft.js':['web/draft.js','text/javascript'],'/draft.css':['web/draft.css','text/css']};
 const age=12*60*60;
 const json=(res,value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(value));};
-async function body(req){
+async function bytes(req,limit){
   const chunks=[];let size=0;
-  for await(const chunk of req){size+=chunk.length;if(size>8192)throw new CaseError('Atualização acima do limite.',413);chunks.push(chunk);}
-  try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new CaseError('Atualização inválida.');}
+  if(Number(req.headers['content-length'])>limit)throw new CaseError('Atualização acima do limite.',413);
+  for await(const chunk of req){size+=chunk.length;if(size>limit)throw new CaseError('Atualização acima do limite.',413);chunks.push(chunk);}
+  return Buffer.concat(chunks);
+}
+async function body(req,limit=8192){
+  const data=await bytes(req,limit);
+  try{return JSON.parse(data.toString('utf8'));}catch{throw new CaseError('Atualização inválida.');}
 }
 
 export function createCaseHandler({origin,root,board,readMedia,closing,historical,readCover,getRuntime=()=>null}){
@@ -43,6 +48,7 @@ export function createCaseHandler({origin,root,board,readMedia,closing,historica
           const data=await body(req);
           if(data?.kind==='prepare'){json(res,historical.prepare(month,data.before??null),202);return true;}
           if(data?.kind==='assign'){json(res,{code:historical.assign(month,data.ids,data.code)});return true;}
+          if(data?.kind==='recheck'){json(res,historical.recheck(month),202);return true;}
         }
         throw new CaseError('Operação local não autorizada.',403);
       }
@@ -67,6 +73,10 @@ export function createCaseHandler({origin,root,board,readMedia,closing,historica
       if(req.method==='GET'&&url.pathname==='/api/cases'){
         json(res,board.list(url.searchParams.get('month'),url.searchParams.get('carry')==='1',url.searchParams.get('archived')==='1'));return true;
       }
+      const upload=url.pathname.match(/^\/api\/cases\/(R-[A-F0-9]{8})\/photo$/);
+      if(upload&&req.method==='POST'&&req.headers.origin===origin&&['image/jpeg','image/png','image/webp'].includes(req.headers['content-type'])){
+        json(res,board.addPhoto(upload[1],await bytes(req,5*1024*1024),req.headers['content-type']));return true;
+      }
       const path=url.pathname.match(/^\/api\/cases\/(R-[A-F0-9]{8})(?:\/media\/(\d{1,4}))?$/);
       if(!path)throw new CaseError('Rota de chamados não encontrada.',404);
       if(req.method==='GET'&&path[2]===undefined){json(res,board.detail(path[1]));return true;}
@@ -81,8 +91,7 @@ export function createCaseHandler({origin,root,board,readMedia,closing,historica
       if(req.method!=='POST'||path[2]!==undefined||req.headers.origin!==origin||req.headers['content-type']!=='application/json'){
         json(res,{error:'Operação local não autorizada.'},403);return true;
       }
-      if(Number(req.headers['content-length'])>8192)throw new CaseError('Atualização acima do limite.',413);
-      json(res,board.change(path[1],await body(req)));return true;
+      json(res,board.change(path[1],await body(req,24576)));return true;
     }catch(e){if(!res.headersSent)json(res,{error:e instanceof CaseError?e.message:'Não foi possível consultar ou guardar este chamado.'},e instanceof CaseError?e.status:500);else res.end();return true;}
   };
 }

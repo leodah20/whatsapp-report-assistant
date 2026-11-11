@@ -3,6 +3,8 @@ import { seal, open } from '../core.mjs';
 import { ReceiptNotifier } from './receipts.mjs';
 import { intakeText, isIntakeText } from './intake.mjs';
 import { CONFIG } from '../config.mjs';
+import { isUncaptionedMedia } from './media-context.mjs';
+import { followupMatch } from './followup.mjs';
 
 export const PREFIX='Assistente do relatório';
 export const FIELDS=['local','equipamento','ocorrencia','procedimento','resultado'];
@@ -83,6 +85,9 @@ export class ReportAssistant{
     this.save(item);
   }
   schedule(){if(this.timer)clearTimeout(this.timer);this.timer=setTimeout(()=>void this.flush(),this.debounceMs);this.timer.unref();}
+  followup(record){
+    return followupMatch(record.text,this.all().filter(i=>!i.mergedInto&&!this.isArchived(i.id)).map(i=>({id:i.id,code:i.code,text:i.sourceIds.map(id=>this.readSource(id)?.text||'').join('\n')})));
+  }
   accept(record){const result=this.handling.then(()=>this.acceptOne(record));this.handling=result.catch(()=>{});return result;}
   async acceptOne(record){
     if(ownAssistant(record)){
@@ -102,8 +107,18 @@ export class ReportAssistant{
     const code=record.text.match(/\bR-[A-F0-9]{8}\b/i)?.[0]?.toUpperCase();
     if(!itemId&&code)itemId=this.all().find(i=>i.code===code)?.id;
     if(!itemId)itemId=this.all().find(i=>i.answerIds?.includes(record.id))?.id;
+    if(!itemId&&isUncaptionedMedia(record))return;
+    if(!itemId){
+      const hint=this.followup(record);
+      if(hint.target)itemId=hint.target;
+      else if(hint.review)return;
+    }
     if(itemId){
-      const item=this.all().find(i=>i.id===itemId);if(!item)return;
+      const all=this.all();
+      let item=all.find(i=>i.id===itemId);const visited=new Set();
+      while(item?.mergedInto){if(visited.has(item.id))return;visited.add(item.id);item=all.find(i=>i.id===item.mergedInto);}
+      if(!item)return;
+      itemId=item.id;
       const alreadyAdded=item.sourceIds.includes(record.id);
       if(alreadyAdded&&item.review!=='clarification-received')return;
       if(!record.hasMedia&&/^(obrigad[oa]|valeu|ok|certo|beleza|👍|🙏)[!.,\s]*$/iu.test(record.text.trim())&&record.quotedId&&this.db.prepare('SELECT 1 FROM assistant_receipts WHERE message_id=?').get(record.quotedId))return;
@@ -134,7 +149,12 @@ export class ReportAssistant{
       if(!pending.length)return;
       if(Date.now()/1000-pending.at(-1).ts<this.debounceMs/1000){this.schedule();return;}
       const first=pending[0].ts;const batch=pending.filter(r=>r.ts<=first+180);
-      const sources=batch.map(r=>this.readSource(r.id)).filter(Boolean);
+      const sources=batch.map(r=>this.readSource(r.id)).filter(r=>{
+        if(!isUncaptionedMedia(r))return !!r;
+        this.db.prepare("DELETE FROM assistant_inbox WHERE id=? AND state='pending'").run(r.id);
+        return false;
+      });
+      if(!sources.length){this.schedule();return;}
       const analyzed=await this.analyze(sources);
       for(const entry of analyzed){
         const group=entry.sources.map(n=>sources[n]);const id='case:'+randomBytes(16).toString('hex');
