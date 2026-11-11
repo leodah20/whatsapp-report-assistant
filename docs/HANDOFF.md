@@ -31,6 +31,8 @@ No fechamento, confirme fontes e anexos de cada chamado sem precisar redigir o i
 
 As decisões de impressão e a emissão ficam ocultas no fluxo padrão de extração. **Fechar PDF pelo painel** abre esses controles, sem selecionar uma decisão por padrão. As preventivas permanecem acessíveis para a extração; o salvamento dos status é independente da emissão.
 
+**Exportar para outra IA** é o rótulo neutro do destino padrão, sem integração com uma conversa aberta. O teste de interface confirma o rótulo e a ausência de um link de conversa nesse modo.
+
 A fila de revisão abre em **A revisar**. Confirmar abre o próximo pendente; terminar a fila exibe o botão de extração no próprio detalhe. A revisão manual de um item já conferido permanece no detalhe. Mudanças nas fontes devolvem o item à fila ao atualizar o fechamento. Testados 88 casos automatizados e, no Chrome a 1366 e 390 px, avanço pela fila, extração no detalhe e salvamento das preventivas sem emissão.
 
 No Histórico, abrir imagem/vídeo/áudio não seleciona nem vincula a mensagem. A prévia é local, sob demanda, e só serve fontes elegíveis para o mês; arquivos de outros tipos são entregues como download. Vincular usa o menu de chamados não arquivados, e criar novo exige ação distinta. Ignorar tira a fonte da fila e da análise, sem apagá-la; a opção Ver mensagens ignoradas permite restaurar. Validação: 85 testes, incluindo HTTP com banco sintético, e navegação em Chrome a 1366 e 390 px.

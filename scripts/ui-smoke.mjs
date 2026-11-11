@@ -160,6 +160,8 @@ try{
     }
     await heading('Todos os chamados conferidos');
     assert.equal(await page.$eval('#review-pending-count',x=>x.textContent),'0');
+    assert.equal(await page.$eval('#assist-provider',x=>x.selectedOptions[0].textContent),'Exportar para outra IA');
+    assert.equal(await page.$eval('#assist-open',x=>x.hidden),true);
     await clickText('.review-finished a','Conferir preventivas do mês');
     assert.equal(await page.$eval('#print-settings',x=>x.hidden),true);
     await page.click('.preventive-group summary');

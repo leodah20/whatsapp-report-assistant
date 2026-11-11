@@ -36,7 +36,7 @@ Para retomar uma instalação autorizada: `npm run resume`. O script `scripts/wi
 
 Abra **Chamados → Fechamento mensal**, selecione a competência e abra um item em **A revisar**. **Confirmar fontes e anexos** move o chamado para **Conferidos** e abre o próximo. No fim da fila, a extração fica no próprio painel de revisão. Se as fontes mudarem, o chamado volta a **A revisar**. Em **Preventivas do mês**, salve os status para o pacote sem preencher a data de emissão.
 
-Em **Preparar o relatório com IA**, escolha a conversa atual, ChatGPT, Claude ou Ollama local. Para as conversas, revise a extração e copie/baixe o TXT ou baixe o ZIP com as mídias confirmadas. Você pode guardar o link privado da conversa neste navegador; não é preciso criar uma chave de API. O painel não envia arquivos: anexe manualmente apenas o que puder compartilhar. Se a conversa não aceitar ZIP, extraia e anexe o TXT e os arquivos necessários.
+Em **Preparar o relatório com IA**, escolha **Exportar para outra IA** para levar o TXT ou ZIP ao chat de sua escolha. ChatGPT e Claude têm atalhos opcionais para um link privado salvo no navegador. Não é preciso criar uma chave de API. O painel não identifica a conversa aberta nem envia arquivos: anexe manualmente apenas o que puder compartilhar. Se a conversa não aceitar ZIP, extraia e anexe o TXT e os arquivos necessários.
 
 Para redigir sem cobrança de API, use um modelo GGUF baixado no Ollama. O modelo lê contexto textual, não interpreta anexos, e devolve sugestões por chamado sem salvar nem aprovar a redação. Revise as sugestões no painel. Para uma instalação somente local, também é possível desabilitar as funções de nuvem do Ollama com `OLLAMA_NO_CLOUD=1`, conforme a [documentação oficial](https://docs.ollama.com/faq).
 

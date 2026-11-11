@@ -37,7 +37,7 @@ function refreshProvider(){
   if(host&&entered.trim()&&!chat)link.hidden=true;
   $('assist-chat').setCustomValidity(host&&entered.trim()&&!chat?'Use o link privado da conversa no serviço escolhido.':'');
   $('assist-provider-note').textContent=provider==='local'?'O modelo baixado redige uma sugestão por chamado a partir dos textos, sem interpretar fotos ou vídeos. Nada é salvo até você revisar.':
-    provider==='codex'?'Baixe ou copie a extração e traga para o chat que já conhece seu relatório.':
+    provider==='export'?'Baixe o pacote ou copie o texto para levar ao chat de sua escolha. O painel não identifica a conversa nem envia dados automaticamente.':
     'O link fica neste navegador. O painel não envia dados: confira a prévia e anexe ou cole a extração na conversa escolhida.';
   $('assist-run').textContent=provider==='local'?'Gerar sugestões locais':$('editor').contains($('report-assist'))?'Gerar extração':'Preparar extração';
 }

@@ -31,6 +31,8 @@ A Central exibe Chamados, Histórico sem chamado, Fechamento mensal e Configura�
 
 O glossário de comandos fica em [COMANDOS.md](../COMANDOS.md), na raiz, e é atualizado quando o usuário pede um comando do projeto.
 
+O destino padrão da extração é **Exportar para outra IA**. O painel não detecta qual agente ou conversa o usuário tem aberto.
+
 O Histórico permite prévia da mídia arquivada sob demanda, seleção de chamado existente por título/local/frente, criação explícita de chamado e ignorar/restaurar sem apagar a fonte. Tipos sem prévia compatível ficam disponíveis para baixar; anexos não arquivados não podem ser abertos.
 
 No fechamento, **A revisar** e **Conferidos** têm listas e contagens próprias, com busca. A lista rola separadamente no desktop; abrir um chamado revela o início do conteúdo também no celular. Fontes alteradas voltam a **A revisar**.
