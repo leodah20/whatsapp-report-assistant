@@ -22,7 +22,9 @@ function remoteDashboard(html){
 }
 
 export function createPrivatePanel({host,login,collectorPort=8767,fetcher=fetch}){
-  if(!/^[a-z0-9-]{1,63}\.[a-z0-9-]{1,63}\.ts\.net$/.test(host||'')||
+  const authority=/^[a-z0-9-]{1,63}\.[a-z0-9-]{1,63}\.ts\.net(?::([1-9]\d{0,4}))?$/.exec(host||'');
+  const httpsPort=Number(authority?.[1]||443);
+  if(!authority||(authority[1]&&(httpsPort<1024||httpsPort>65535))||
      typeof login!=='string'||!/^\S+@\S+$/.test(login)||login.length>254||
      !Number.isInteger(collectorPort)||collectorPort<1024||collectorPort>65535)throw Error('Configure hostname Tailscale, login exato e porta local válidos.');
   const origin='https://'+host,collector='http://127.0.0.1:'+collectorPort;
@@ -80,6 +82,7 @@ export function createPrivatePanel({host,login,collectorPort=8767,fetcher=fetch}
 }
 
 if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url){
-  const [host,login]=process.argv.slice(2);
-  createPrivatePanel({host,login}).listen(8769,'127.0.0.1',()=>console.log('Acesso privado pronto no loopback 8769.'));
+  const [host,login,port='8769']=process.argv.slice(2);
+  if(!/^\d{4,5}$/.test(port)||Number(port)<1024||Number(port)>65535)throw Error('Porta local inválida.');
+  createPrivatePanel({host,login}).listen(Number(port),'127.0.0.1',()=>console.log('Acesso privado pronto no loopback '+port+'.'));
 }

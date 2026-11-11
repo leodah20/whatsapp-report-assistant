@@ -4,7 +4,7 @@ import {request} from 'node:http';
 import {createPrivatePanel} from '../scripts/serve-private-panel.mjs';
 
 test('private panel allows only owner over HTTPS and scoped, same-origin edits',async t=>{
-  const host='example.demo.ts.net',login='owner@example.invalid',origin='https://'+host;
+  const host='example.demo.ts.net:8443',login='owner@example.invalid',origin='https://'+host;
   const token='a'.repeat(64),seen=[];
   const server=createPrivatePanel({host,login,fetcher:async(url,options)=>{
     seen.push({url,options});
