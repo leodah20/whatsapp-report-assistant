@@ -3,6 +3,7 @@
 !/.gitignore
 !/.env.example
 !/README.md
+!/COMANDOS.md
 !/AGENTS.md
 !/CLAUDE.md
 !/LICENSE

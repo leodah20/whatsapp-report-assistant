@@ -9,6 +9,7 @@ Leia AGENTS.md, PLANO-ESTRATEGICO.md, PROJECT_STATE.md e README.md. Confira git 
 3. Continue a primeira prioridade pendente de PROJECT_STATE.md: chamados e fechamento mensal antes de infraestrutura acessória.
 4. Antes de publicar, git diff --check, revisão de git diff --cached e git ls-files. Sem estado operacional, identificadores ou credenciais.
 5. Registre aqui o que passou, o que falta e a próxima etapa; commit/push apenas do código/documentação sanitizados.
+6. Registre em [COMANDOS.md](../COMANDOS.md) cada comando do projeto pedido pelo usuário. As entradas iniciais foram conferidas contra os scripts, o pacote e o README; não foi necessário iniciar o coletor para validar o glossário.
 
 ## Último ponto
 

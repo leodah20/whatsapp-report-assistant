@@ -7,6 +7,7 @@ Leia docs/PLANO-ESTRATEGICO.md, docs/PROJECT_STATE.md e docs/HANDOFF.md; confira
 Acompanhar chamados: histórico, atualizações, pendências, evidências e redação do relatório mensal com revisão humana. Infraestrutura e painéis só devem facilitar esse fluxo. Preserve o padrão aprovado de cada projeto em contexto privado; não publique fatos de clientes nem transforme preferências específicas em regras globais.
 
 - Preserve alterações do usuário. Nunca reset/descarte trabalho para alternar agentes.
+- Sempre que o usuário pedir um comando para este projeto, registre-o ou atualize sua entrada em COMANDOS.md na raiz. Inclua objetivo, terminal e cuidados relevantes, sem duplicatas nem dados privados. Comandos internos usados só para diagnóstico não precisam entrar no glossário.
 - Plataforma suportada: Windows, Node 24+, Python. Rode npm test e git diff --check.
 - Nunca leia, imprima, versione ou envie a modelos remotos .env.local, data/, sessão, local-ai/, chaves, QR, mensagens, fotos ou logs sem autorização específica. Mesmo numa consulta autorizada, nunca publique esses dados no Git.
 - Mantenha loopback, validação Host/Origin/cookie, CSP, sandbox do navegador e filtro do único grupo autorizado.

@@ -4,7 +4,7 @@ Assistente local de registros de manutenção. Acompanha **um grupo autorizado**
 
 Repositório completo: https://github.com/leodah20/whatsapp-report-assistant
 
-[Plano estratégico](docs/PLANO-ESTRATEGICO.md) · [Estado do projeto](docs/PROJECT_STATE.md) · [Continuidade](docs/HANDOFF.md)
+[Glossário de comandos](COMANDOS.md) · [Plano estratégico](docs/PLANO-ESTRATEGICO.md) · [Estado do projeto](docs/PROJECT_STATE.md) · [Continuidade](docs/HANDOFF.md)
 
 > Integração não oficial via whatsapp-web.js: há risco de bloqueio e mudanças incompatíveis. A vinculação dá acesso técnico à conta inteira; o filtro de grupo é do programa, não uma permissão do WhatsApp. Obtenha autorização dos participantes e da organização. Nunca publique dados, sessão, QR ou credenciais.
 
