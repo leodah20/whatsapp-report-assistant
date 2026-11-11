@@ -23,7 +23,9 @@ function renderOverview(){
   $('draft').href='/minuta?month='+encodeURIComponent(view.month);
   $('list').replaceChildren(...view.items.map(x=>{
     const b=el('button',undefined,'case-card');b.type='button';b.setAttribute('aria-current',String(selected===x.code));
-    b.append(el('span',x.code,'case-code'),el('span',x.location?(x.locationConfirmed?x.location:'Local sugerido: '+x.location):'Local a confirmar','case-location'),el('h3',x.title),el('p',(x.carryover?'Anterior · ':'')+stateLabels[x.state]));
+    b.append(el('span',x.code,'case-code'),el('span',x.location?(x.locationConfirmed?x.location:'Local sugerido: '+x.location):'Local a confirmar','case-location'),el('h3',x.title));
+    if(x.stageLabel)b.append(el('span',x.stageLabel,'badge stage-badge stage-'+x.status));
+    b.append(el('p',(x.carryover?'Anterior · ':'')+stateLabels[x.state]));
     b.onclick=()=>{if(!saving&&(!dirty||confirm('Descartar alterações não salvas?')))void openCase(x.code);};return b;
   }));
   if(!view.items.length)$('list').append(el('p','Nenhum chamado localizado neste recorte. Confira o arquivo antes de confirmar a cobertura.','hint'));

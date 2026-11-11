@@ -49,7 +49,7 @@
           <details class="filter-disclosure">
             <summary>Filtros e ordenação <span id="active-filters" class="tab-count" hidden></span></summary>
             <div class="filter-fields">
-              <label class="control">Andamento <select id="filter"><option value="all">Todos os andamentos</option><option value="attention">Com pendências ou lacunas</option><option value="unconfirmed">Andamento a confirmar</option><option value="open">Em atendimento</option><option value="pending">Aguardando providência</option><option value="completed">Concluído confirmado</option></select></label>
+              <label class="control">Etapa <select id="filter"><option value="all">Todas as etapas</option></select></label>
               <label class="control">Ordenar por <select id="sort"><option value="recent">Data · mais recente</option><option value="old">Data · mais antiga</option><option value="name">Nome do chamado · A–Z</option><option value="status">Andamento técnico</option></select></label>
               <label class="check"><input type="checkbox" id="carry"> Incluir chamados em aberto de meses anteriores</label>
               <label class="check"><input type="checkbox" id="archived"> Mostrar chamados arquivados</label>
@@ -73,8 +73,6 @@
         <label class="control">Data confirmada do atendimento <input type="date" id="edit-service-day"></label>
         <p class="hint">Se ainda não souber, deixe a data por confirmar. A data do registro continuará visível, sem ser usada como data do serviço.</p>
         <label class="control">Frente de serviço <select id="edit-area"></select></label>
-        <label class="control">Andamento técnico <select id="edit-status"></select></label>
-        <p class="hint">Só confirme a conclusão após verificar o serviço. Isso não encerra as pendências cadastradas.</p>
       </div>
       <label class="control" id="duplicate-field" hidden>Código do duplicado que será reunido a este chamado<input id="duplicate-code" placeholder="R-…" maxlength="10" pattern="R-[A-Fa-f0-9]{8}"></label>
       <label class="control" id="date-field"><span id="date-label">Data real da atualização</span><input type="date" id="edit-day"></label>

@@ -10,6 +10,17 @@ test('missing source is rejected',()=>assert.throws(()=>validateAnalysis({cases:
 test('questions have fixed prefix and strip mentions/links',()=>{const text=questionText({code:'R-12345678',facts:[{field:'equipamento',quote:'switch @todos https://bad.test/x'}],missing:['resultado']});assert(text.startsWith('Assistente do relatório [R-12345678]'));assert(!text.includes('@'));assert(!text.includes('https'));});
 function fixture(active=true){const db=new DatabaseSync(':memory:');const sent=[],intakes=[];const sources=new Map([[source.id,source]]);const engine=new ReportAssistant({db,key:randomBytes(32),readSource:id=>sources.get(id),send:async(text,quote,options)=>{if(options?.kind==='intake'){intakes.push({text,quote});return'intake-'+intakes.length;}sent.push(text);return 'question-'+sent.length;},isActive:()=>active,analyze:async rows=>validateAnalysis({cases:[{sources:rows.map((_,n)=>n),facts:[]}]},rows),debounceMs:1});return{db,sent,intakes,sources,engine};}
 test('pending context creates one identified question, then deduplicates',async()=>{const f=fixture();await f.engine.accept(source);await f.engine.flush();await f.engine.flush();assert.equal(f.sent.length,1);assert.equal(f.engine.all().length,1);f.db.close();});
+test('new intake asks only once for unknown stage even with full technical context',async()=>{
+  const f=fixture();f.engine.needsStage=()=>true;f.engine.analyze=async()=>[{sources:[0],facts:[],missing:[]}];
+  await f.engine.accept(source);await f.engine.flush();await f.engine.flush();
+  assert.equal(f.sent.length,1);assert.equal(f.intakes.length,0);assert.match(f.sent[0],/Qual é a etapa atual/);f.db.close();
+});
+test('stage upgrade does not re-question old or imported records',async()=>{
+  const f=fixture();f.engine.needsStage=()=>true;
+  f.engine.save({id:'old',code:'R-00000001',month:source.month,sourceIds:[source.id],missing:[],facts:[],questionState:'not-sent',intakeState:'sent'});
+  f.engine.save({id:'imported',code:'R-00000002',month:source.month,sourceIds:[source.id],missing:[],facts:[],historical:true,stageIntake:true,questionState:'silent',intakeState:'silent'});
+  await f.engine.flush();assert.equal(f.sent.length+f.intakes.length,0);f.db.close();
+});
 test('paused assistant does not send or consume sources',async()=>{const f=fixture(false);await f.engine.accept(source);await f.engine.flush();assert.equal(f.sent.length,0);assert.equal(f.engine.status().pending,1);f.db.close();});
 test('quoted answer stays in the exact case and receives one confirmation',async()=>{const f=fixture();await f.engine.accept(source);await f.engine.flush();const reply={...source,id:'answer',text:'Voltou a operar',quotedId:'question-1'};f.sources.set(reply.id,reply);await f.engine.accept(reply);assert.deepEqual(f.engine.all()[0].answerIds,['answer']);assert.equal(f.sent.length,2);assert(isReceiptText(f.sent[1]));assert.equal(f.engine.all().length,1);await f.engine.accept(reply);await f.engine.flush();assert.equal(f.sent.length,2);f.db.close();});
 test('uncertain delivery is not automatically repeated',async()=>{const f=fixture();f.engine.send=async()=>{throw Error('uncertain');};await f.engine.accept(source);await f.engine.flush();assert.equal(f.engine.all()[0].questionState,'delivery-uncertain');await f.engine.flush();assert.equal(f.engine.all().length,1);f.db.close();});

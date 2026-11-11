@@ -34,6 +34,26 @@ test('manual answers persist independently and photo is encrypted and linked to 
   const data=db.prepare('SELECT media FROM messages WHERE id=?').get(photo.id).media;
   assert(!Buffer.from(data).equals(picture));assert.deepEqual(open(key,data,photo.id+':media'),picture);
 });
+test('existing context exposes the documented blocker without a separate task',t=>{
+  const {board,add}=setup(t);const item=add('one','R-11111111','Vistoria de um sensor.');
+  const saved=board.change(item.code,{kind:'context',version:0,location:'Setor A',serviceDay:'',answers:{resultado:'Status: Abortado.',procedimento:'Vamos precisar que seja retirado o material para acessar o sensor.'}});
+  assert.equal(saved.status,'pending');assert.equal(saved.stage.origin,'context');assert.match(saved.stage.reason,/retirado o material/);
+  assert.equal(saved.openTasks,0);assert.equal(saved.stageQuestion,null);
+  assert.equal(board.list(month).items[0].status,'pending');
+});
+test('context stage is audited, validated and can return to the evidence',t=>{
+  const {board,add}=setup(t);const item=add('one','R-11111111','Aguardando a entrega da peça.');
+  const context={kind:'context',version:0,location:'',serviceDay:'',answers:{}};
+  assert.throws(()=>board.change(item.code,{...context,stage:{status:'inventado'}}),/Etapa inválida/);
+  assert.throws(()=>board.change(item.code,{...context,stage:{status:'pending'}}),/Texto vazio/);
+  assert.throws(()=>board.change(item.code,{...context,stage:{status:'rescheduled',reason:'Mudança de horário',scheduledFor:'2027-02-30'}}),/data de remarcação/);
+  const saved=board.change(item.code,{...context,stage:{status:'rescheduled',reason:'Mudança de horário',scheduledFor:'2027-02-02'}});
+  assert.equal(saved.status,'rescheduled');assert.equal(saved.stage.origin,'manual');assert.equal(saved.stage.scheduledFor,'2027-02-02');
+  assert.equal(saved.serviceDay,null);assert.equal(saved.profile.events.at(-1).after.status,'rescheduled');
+  assert.throws(()=>board.change(item.code,{...context,stage:{status:'unconfirmed'}}),/atualizado/);
+  const restored=board.change(item.code,{...context,version:1,stage:{status:'unconfirmed'}});
+  assert.equal(restored.status,'pending');assert.equal(restored.stage.origin,'source');
+});
 test('merge keeps chronological sources, routes old reply links and archives the duplicate',t=>{
   const {board,add,assistant,db}=setup(t),a=add('old','R-11111111','Falha',t0),b=add('new','R-22222222','Atualização',t0+86400);
   const merged=board.change(a.code,{kind:'merge',version:0,duplicate:b.code});

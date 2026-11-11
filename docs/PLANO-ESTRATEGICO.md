@@ -50,7 +50,8 @@
 - [x] Para mídia sem legenda, buscar texto posterior próximo e priorizar resposta citada; mostrar sugestão, sem transformar proximidade em certeza ou abrir chamado só pela foto.
 - [x] Exibir data do registro em todos os chamados quando disponível, separada da data real do atendimento. Ordenar por data, nome ou andamento.
 - [x] Destacar o local no título. Quando não confirmado, pedir torre, setor, pavimento ou unidade; não preencher por suposição.
-- [x] Oferecer conclusão manual em ação direta. Retorno operacional textual pode sugerir confirmação; encaminhamento, pendência e contexto completo não encerram atendimento.
+- [x] Classificar etapa atual por evidência explícita: em andamento, aguardando, remarcado, cancelado, concluído ou não identificada. Encaminhamento, contexto completo e testes isolados não encerram atendimento. Mostrar motivo/dependência e preservar ajustes manuais auditáveis na aba Contexto.
+- [x] Substituir contadores sobrepostos por etapas que somam o total e filtram a fila. Mostrar bloqueio já documentado sem exigir cadastro de pendência; pedir a etapa apenas quando a evidência for insuficiente, sem redisparar perguntas históricas.
 - [x] Sinalizar lacunas na fila e concentrar perguntas, respostas confirmadas, fontes e anexos locais numa tela. Reprocessar trechos documentados sem apagar confirmações humanas.
 - [x] Aceitar sugestão de contexto com Tab no campo vazio ou com prefixo correspondente, avançando o foco e preservando texto divergente. Salvar continua explícito.
 - [x] Reunir duplicados confirmados com trilha de auditoria. Respeitar código/resposta citada e identificação inequívoca de equipamento em atualizações posteriores; mostrar sugestões quando houver ambiguidade.

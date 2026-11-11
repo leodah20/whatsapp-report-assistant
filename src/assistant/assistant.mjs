@@ -5,6 +5,7 @@ import { intakeText, isIntakeText } from './intake.mjs';
 import { CONFIG } from '../config.mjs';
 import { isUncaptionedMedia } from './media-context.mjs';
 import { followupMatch } from './followup.mjs';
+import {stageQuestion} from '../cases/stage.mjs';
 
 export const PREFIX='Assistente do relatório';
 export const FIELDS=['local','equipamento','ocorrencia','procedimento','resultado'];
@@ -31,17 +32,17 @@ export async function analyzeSources(sources){
   const result=await response.json();return validateAnalysis(JSON.parse(result.message.content),sources);
 }
 
-export function questionText(item){
+export function questionText(item,askStage=false){
   const labels={local:'em qual torre/setor e pavimento ou unidade ocorreu',equipamento:'qual equipamento ou sistema foi atendido',ocorrencia:'qual foi o problema ou a solicitação',procedimento:'o que foi feito no atendimento',resultado:'como ficou após o atendimento ou o que permanece pendente'};
   const label=cleanLabel(item.facts.find(f=>f.field==='equipamento')?.quote||item.facts.find(f=>f.field==='local')?.quote);
   const questions=item.missing.map(f=>labels[f]).join('; ');
-  return `${PREFIX} [${item.code}]\nSobre ${label}: chamado registrado. Pode confirmar ${questions}?\nResponda a esta mensagem para atualizar o chamado.`;
+  return `${PREFIX} [${item.code}]\nSobre ${label}: chamado registrado.${questions?' Pode confirmar '+questions+'?':''}${askStage?'\n'+stageQuestion:''}\nResponda a esta mensagem para atualizar o chamado.`;
 }
 
 export class ReportAssistant{
-  constructor({db,key,readSource,send,isActive,isArchived=()=>false,enabled=true,analyze=analyzeSources,debounceMs=120000}){
+  constructor({db,key,readSource,send,isActive,isArchived=()=>false,needsStage,enabled=true,analyze=analyzeSources,debounceMs=120000}){
     this.isArchived=isArchived;
-    Object.assign(this,{db,key,readSource,send,isActive,enabled,analyze,debounceMs});
+    Object.assign(this,{db,key,readSource,send,isActive,needsStage,enabled,analyze,debounceMs});
     this.busy=false;this.lastError=null;this.timer=null;this.handling=Promise.resolve();
     db.exec('CREATE TABLE IF NOT EXISTS assistant_items (id TEXT PRIMARY KEY, month TEXT NOT NULL, payload BLOB NOT NULL); CREATE TABLE IF NOT EXISTS assistant_inbox (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, state TEXT NOT NULL); CREATE TABLE IF NOT EXISTS assistant_links (message_id TEXT PRIMARY KEY, item_id TEXT NOT NULL);');
     this.receipts=new ReceiptNotifier({db,key,send,isActive:()=>this.enabled&&this.isActive()});
@@ -49,9 +50,10 @@ export class ReportAssistant{
   save(item){this.db.prepare('INSERT INTO assistant_items VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').run(item.id,item.month,seal(this.key,Buffer.from(JSON.stringify(item)),item.id));}
   all(){return this.db.prepare('SELECT id,payload FROM assistant_items').all().map(r=>JSON.parse(open(this.key,r.payload,r.id)));}
   status(){const items=this.all();return {enabled:this.enabled,busy:this.busy,pending:this.db.prepare("SELECT COUNT(*) AS n FROM assistant_inbox WHERE state='pending'").get().n,items:items.length,questionsSent:items.filter(i=>i.questionState==='sent').length,newCallsConfirmed:items.filter(i=>i.intakeState==='sent').length,...this.receipts.status(),error:this.lastError};}
+  askForStage(item){return !!(item.stageIntake&&!item.historical&&!item.intakeAttemptAt&&this.needsStage?.(item));}
   async confirmNew(item){
     if(this.isArchived(item.id))return;
-    if(!this.enabled||!this.isActive()||item.missing.length||item.questionAttemptAt||item.questionId||item.intakeState!=='not-sent'||item.intakeAttemptAt)return;
+    if(!this.enabled||!this.isActive()||item.missing.length||this.askForStage(item)||item.questionAttemptAt||item.questionId||item.intakeState!=='not-sent'||item.intakeAttemptAt)return;
     const today=new Date().toISOString().slice(0,10);
     if(this.all().filter(i=>i.intakeAttemptAt?.startsWith(today)).length>=60)return;
     item.intakeState='sending';item.intakeAttemptAt=new Date().toISOString();this.save(item);
@@ -76,11 +78,12 @@ export class ReportAssistant{
   }
   async askPending(item){
     if(this.isArchived(item.id))return;
-    if(!this.enabled||!this.isActive()||!item.missing.length||!['not-sent','rate-limited'].includes(item.questionState)||item.questionAttemptAt)return;
+    if(!this.enabled||!this.isActive()||!['not-sent','rate-limited'].includes(item.questionState)||item.questionAttemptAt)return;
+    const askStage=this.askForStage(item);if(!item.missing.length&&!askStage)return;
     const today=new Date().toISOString().slice(0,10);
     if(this.all().filter(i=>i.questionAttemptAt?.startsWith(today)).length>=12){item.questionState='rate-limited';this.save(item);return;}
     item.questionState='sending';item.questionAttemptAt=new Date().toISOString();this.save(item);
-    try{const sent=await this.send(questionText(item),item.sourceIds.at(-1));item.questionState='sent';item.questionId=sent;this.db.prepare('INSERT OR IGNORE INTO assistant_links VALUES(?,?)').run(sent,item.id);}
+    try{const sent=await this.send(questionText(item,askStage),item.sourceIds.at(-1));item.questionState='sent';item.questionId=sent;this.db.prepare('INSERT OR IGNORE INTO assistant_links VALUES(?,?)').run(sent,item.id);}
     catch(e){const observed=this.all().find(i=>i.id===item.id);if(observed?.questionState==='sent')return;item.questionState='delivery-uncertain';item.sendError={name:String(e?.name||'Error').slice(0,60),message:String(e?.message||'Falha de envio').replace(/https?:\/\/\S+/g,'[URL]').replace(/\b\d{10,}\b/g,'[identificador]').slice(0,220)};this.lastError='Envio sem confirmação; não repetido para evitar duplicação.';}
     this.save(item);
   }
@@ -129,6 +132,7 @@ export class ReportAssistant{
       this.db.prepare('INSERT OR IGNORE INTO assistant_inbox VALUES(?,?,?)').run(record.id,record.timestamp,'answer');
       let outcome='pending';
       try{const sources=item.sourceIds.map(this.readSource).filter(Boolean).map(r=>({...r,isClarification:item.answerIds.includes(r.id)}));if(sources.length>12)throw Error('Revisão extensa');const analysis=await this.analyze(sources);item.facts=analysis.flatMap(a=>a.facts.map(f=>({...f,sourceId:sources[f.source].id})));item.missing=FIELDS.filter(f=>!item.facts.some(x=>x.field===f));item.review=item.missing.length?'needs-review':'draft-ready';this.save(item);outcome=item.missing.length?'partial':'updated';this.lastError=null;}catch{this.lastError='Resposta guardada no chamado; reanálise local pendente.';}
+      if(outcome==='updated'&&this.askForStage(item))outcome='partial';
       await this.receipts.complete(record.id,outcome);
       return;
     }
@@ -158,7 +162,7 @@ export class ReportAssistant{
       const analyzed=await this.analyze(sources);
       for(const entry of analyzed){
         const group=entry.sources.map(n=>sources[n]);const id='case:'+randomBytes(16).toString('hex');
-        const item={id,code:'R-'+randomBytes(4).toString('hex').toUpperCase(),month:group[0].month,sourceIds:group.map(r=>r.id),answerIds:[],facts:entry.facts.map(f=>({...f,sourceId:sources[f.source].id})),missing:entry.missing,review:entry.missing.length?'needs-context':'draft-ready',createdAt:new Date().toISOString(),questionState:'not-sent',intakeState:'not-sent'};
+        const item={id,code:'R-'+randomBytes(4).toString('hex').toUpperCase(),month:group[0].month,sourceIds:group.map(r=>r.id),answerIds:[],facts:entry.facts.map(f=>({...f,sourceId:sources[f.source].id})),missing:entry.missing,review:entry.missing.length?'needs-context':'draft-ready',createdAt:new Date().toISOString(),questionState:'not-sent',intakeState:'not-sent',stageIntake:!!this.needsStage};
         this.db.exec('BEGIN IMMEDIATE');
         try{this.save(item);for(const source of group){this.db.prepare("UPDATE assistant_inbox SET state='processed' WHERE id=?").run(source.id);this.db.prepare('INSERT OR IGNORE INTO assistant_links VALUES(?,?)').run(source.id,id);}this.db.exec('COMMIT');}
         catch(e){this.db.exec('ROLLBACK');throw e;}

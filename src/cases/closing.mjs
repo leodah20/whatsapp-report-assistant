@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {CaseError,localDay} from './board.mjs';
+import {CaseError,localDay,STATUSES} from './board.mjs';
 import {open,seal} from '../core.mjs';
 
 const monthPattern=/^20\d\d-(0[1-9]|1[0-2])$/;
@@ -26,7 +26,7 @@ export class MonthlyClosing{
     return row?JSON.parse(open(this.key,row.payload,'closing:'+month)):{version:0,reviews:{},settings:null};
   }
   candidates(month){
-    return this.board.list(month,true).items.map(i=>({...i,stamp:stamp(this.board.detail(i.code))}));
+    return this.board.list(month,true).items.map(i=>({...i,stageLabel:STATUSES[i.status],stamp:stamp(this.board.detail(i.code))}));
   }
   get(month){
     const data=this.load(month), template=this.template(), items=this.candidates(month);

@@ -38,7 +38,7 @@ const sessions=new Set(); let choices=[];
 function persist(){writeFileSync(CFG,seal(KEY,Buffer.from(JSON.stringify(scope)),'scope'));}
 function requireLink(){reauthRequired=true;if(scope.groupId&&!scope.linkRequired){scope.linkRequired=true;persist();}}
 function readSource(id){const row=db.prepare('SELECT payload FROM messages WHERE id=?').get(id);return row?JSON.parse(open(KEY,row.payload,id)):null;}
-const assistant=new ReportAssistant({db,key:KEY,readSource,isArchived:id=>!!caseBoard.profile(id).archived,isActive:()=>!stopping&&state==='conectado'&&!scope.paused&&!!scope.groupId&&!!scope.questionsEnabled,enabled:!!scope.questionsEnabled,send:async(text,quotedMessageId,options={})=>{
+const assistant=new ReportAssistant({db,key:KEY,readSource,isArchived:id=>!!caseBoard.profile(id).archived,needsStage:item=>caseBoard.summary(item).status==='unconfirmed',isActive:()=>!stopping&&state==='conectado'&&!scope.paused&&!!scope.groupId&&!!scope.questionsEnabled,enabled:!!scope.questionsEnabled,send:async(text,quotedMessageId,options={})=>{
   if(stopping||state!=='conectado'||scope.paused||!scope.questionsEnabled||!scope.groupId?.endsWith('@g.us')||text.length>1200)throw Error('Mensagem fora do escopo autorizado');
   if(options.kind==='intake'){
     const item=assistant.all().find(i=>i.id===options.itemId);

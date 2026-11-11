@@ -7,7 +7,6 @@ import {fileURLToPath} from 'node:url';
 import {CaseBoard,suggestArea,imageType} from '../src/cases/board.mjs';
 import {createCaseHandler} from '../src/cases/http.mjs';
 import {MonthlyClosing} from '../src/cases/closing.mjs';
-import {completionHint} from '../src/cases/outcome.mjs';
 
 const code='R-ABCDEF12',id='case:synthetic',occurredOn='2025-10-03';
 test('source timestamp is distinct from confirmed service day and location',t=>{
@@ -21,14 +20,6 @@ test('source timestamp is distinct from confirmed service day and location',t=>{
   const after=board.change(code,{version:0,kind:'profile',area:'SCA',title:'Porta',status:'unconfirmed',note:'',occurredOn:'',location:'Torre A, 15º pavimento',serviceDay:'2025-09-04'});
   assert.equal(after.serviceDay,'2025-09-04');assert.equal(after.locationConfirmed,true);
   assert.equal(after.referenceAt,before.referenceAt);
-});
-test('explicit return can prompt confirmation, but referral or open task cannot',()=>{
-  const profile={status:'unconfirmed',tasks:[]};
-  const good={text:'Após o ajuste, o dispositivo voltou a operar.',timestamp:10};
-  assert.equal(completionHint([good],profile).quote,good.text);
-  assert.equal(completionHint([good,{text:'Foi encaminhado para manutenção.',timestamp:11}],profile),null);
-  assert.equal(completionHint([{...good,text:'O dispositivo não voltou a operar.'}],profile),null);
-  assert.equal(completionHint([good],{...profile,tasks:[{}]}),null);
 });
 test('monthly draft requires manual dates, evidence review and preventive confirmation',t=>{
   const {board,db,source,dependencies}=fixture(t);

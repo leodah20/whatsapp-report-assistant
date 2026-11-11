@@ -1,9 +1,9 @@
 import {randomUUID} from 'node:crypto';
 import {seal,open} from '../core.mjs';
-import {completionHint} from './outcome.mjs';
+import {currentStage,isTerminal,stageQuestion,STATUSES} from './stage.mjs';
+export {STATUSES} from './stage.mjs';
 
 export const AREAS=['CFTV','SDAI','SCA','PABX','MEDICAO','BMS','ZABBIX'];
-export const STATUSES={unconfirmed:'Andamento a confirmar',open:'Em atendimento',pending:'Aguardando providência',completed:'Concluído — confirmado manualmente'};
 export const FIELD_LABELS={local:'Local',equipamento:'Equipamento',ocorrencia:'Ocorrência',procedimento:'Procedimento',resultado:'Resultado / pendência'};
 export class CaseError extends Error {constructor(message,status=400){super(message);this.status=status;}}
 const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -33,8 +33,8 @@ function literalLocation(quote){
   return '';
 }
 function text(value,max,required=false){if(typeof value!=='string'||value.length>max||value.includes('\0')||(required&&!value.trim()))throw new CaseError('Texto vazio ou acima do limite.');return value.trim();}
-function day(value){
-  if(typeof value!=='string'||!/^20\d\d-\d{2}-\d{2}$/.test(value)||!Number.isFinite(Date.parse(value+'T12:00:00Z'))||new Date(value+'T12:00:00Z').toISOString().slice(0,10)!==value||value>localDay())throw new CaseError('Informe uma data válida, não futura.');
+function day(value,allowFuture=false){
+  if(typeof value!=='string'||!/^20\d\d-\d{2}-\d{2}$/.test(value)||!Number.isFinite(Date.parse(value+'T12:00:00Z'))||new Date(value+'T12:00:00Z').toISOString().slice(0,10)!==value||(!allowFuture&&value>localDay()))throw new CaseError(allowFuture?'Informe uma data de remarcação válida.':'Informe uma data válida, não futura.');
   return value;
 }
 export class CaseBoard{
@@ -52,12 +52,13 @@ export class CaseBoard{
     const referenceAt=timestamps[0]??(Number.isFinite(Date.parse(item.createdAt))?Date.parse(item.createdAt)/1000:null);
     const confirmed=profile.answers||{};
     const missing=[...new Set([...(item.missing||[]),...(profile.location?[]:['local'])])].filter(f=>f==='local'?!profile.location:!confirmed[f]);
-    return {code:item.code,title:title.slice(0,180),location,locationConfirmed:!!profile.location,serviceDay:profile.serviceDay||null,referenceAt,referenceKind:timestamps.length?'source':'created',summary:confirmed.ocorrencia||item.facts?.find(f=>f.field==='ocorrencia')?.quote||'',area:profile.area||suggestion.area,areaSuggested:!profile.area,candidates:suggestion.candidates,status:profile.status,version:profile.version,contextState:missing.length?(item.review==='clarification-received'?'analysis-pending':'needs-context'):'complete',missing,openTasks:profile.tasks.filter(t=>!t.resolvedAt).length,sourceCount:sources.length,answerCount:item.answerIds?.length||0,originMonth:item.month,activityMonths,firstSourceAt:timestamps[0]||null,lastSourceAt:timestamps.at(-1)||null,updatedAt:[profile.events.at(-1)?.registeredAt,item.updatedAt,item.createdAt].filter(Boolean).sort().at(-1)};
+    const stage=currentStage(profile,sources);
+    return {code:item.code,title:title.slice(0,180),location,locationConfirmed:!!profile.location,serviceDay:profile.serviceDay||null,referenceAt,referenceKind:timestamps.length?'source':'created',summary:confirmed.ocorrencia||item.facts?.find(f=>f.field==='ocorrencia')?.quote||'',area:profile.area||suggestion.area,areaSuggested:!profile.area,candidates:suggestion.candidates,status:stage.status,stage,version:profile.version,contextState:missing.length?(item.review==='clarification-received'?'analysis-pending':'needs-context'):'complete',missing,openTasks:profile.tasks.filter(t=>!t.resolvedAt).length,sourceCount:sources.length,answerCount:item.answerIds?.length||0,originMonth:item.month,activityMonths,firstSourceAt:timestamps[0]||null,lastSourceAt:timestamps.at(-1)||null,updatedAt:[profile.events.at(-1)?.registeredAt,item.updatedAt,item.createdAt].filter(Boolean).sort().at(-1)};
   }
   list(month,carry=false,includeArchived=false){
     if(!/^20\d\d-(0[1-9]|1[0-2])$/.test(month||''))throw new CaseError('Mês inválido.');
     const all=this.assistant.all().map(i=>{const p=this.profile(i.id);return {...this.summary(i,p),archived:!!p.archived,historical:!!i.historical};}).filter(i=>includeArchived||!i.archived);
-    const items=all.filter(i=>i.activityMonths.includes(month)||(carry&&i.originMonth<month&&(i.status!=='completed'||i.openTasks>0))).map(i=>({...i,carryover:!i.activityMonths.includes(month)}));
+    const items=all.filter(i=>i.activityMonths.includes(month)||(carry&&i.originMonth<month&&(!isTerminal(i.status)||i.openTasks>0))).map(i=>({...i,carryover:!i.activityMonths.includes(month)}));
     items.sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
     return {untrusted:true,month,areas:AREAS,statuses:STATUSES,months:[...new Set([localDay().slice(0,7),...all.flatMap(i=>i.activityMonths)])].sort().reverse(),items};
   }
@@ -68,7 +69,8 @@ export class CaseBoard{
     const confirmations=(item.answerIds||[]).map(id=>this.assistant.receipts?.get(id)).filter(Boolean);
     const confirmed={...(profile.answers||{}),...(profile.location?{local:profile.location}:{})};
     const facts=[...Object.entries(confirmed).map(([field,quote])=>({field,quote,confirmed:true})),...(item.facts||[]).filter(f=>!confirmed[f.field])];
-    return {untrusted:true,...this.summary(item,profile,sources),profile,completionSuggestion:completionHint(profile.answers?.resultado?[{text:profile.answers.resultado,timestamp:Date.now()/1000}]:sources,profile),facts,questionState:item.questionState,sources:sources.map(s=>({...s,kind:s.manualPhoto?'manual-photo':(item.answerIds||[]).includes(s.id)?'answer':'source'})),notices,confirmations};
+    const summary=this.summary(item,profile,sources);
+    return {untrusted:true,...summary,profile,stageQuestion:summary.status==='unconfirmed'?stageQuestion:null,facts,questionState:item.questionState,sources:sources.map(s=>({...s,kind:s.manualPhoto?'manual-photo':(item.answerIds||[]).includes(s.id)?'answer':'source'})),notices,confirmations};
   }
   change(code,input){
     if(input?.kind==='merge'){
@@ -77,7 +79,7 @@ export class CaseBoard{
     }
     const item=this.item(code);
     if(!input||!Number.isInteger(input.version)||input.version<0)throw new CaseError('Versão inválida.');
-    const allowed={profile:['version','kind','area','title','status','note','occurredOn','location','serviceDay'],context:['version','kind','location','serviceDay','answers'],note:['version','kind','text','occurredOn'],task:['version','kind','text','occurredOn'],resolve:['version','kind','taskId','text','occurredOn'],archive:['version','kind','text'],restore:['version','kind']};
+    const allowed={profile:['version','kind','area','title','status','note','occurredOn','location','serviceDay'],context:['version','kind','location','serviceDay','answers','stage'],note:['version','kind','text','occurredOn'],task:['version','kind','text','occurredOn'],resolve:['version','kind','taskId','text','occurredOn'],archive:['version','kind','text'],restore:['version','kind']};
     if(!Object.hasOwn(allowed,input.kind)||Object.keys(input).some(k=>!allowed[input.kind].includes(k)))throw new CaseError('Atualização inválida.');
     this.db.exec('BEGIN IMMEDIATE');
     try{
@@ -90,8 +92,19 @@ export class CaseBoard{
         if(!input.answers||typeof input.answers!=='object'||Array.isArray(input.answers)||Object.keys(input.answers).some(k=>!keys.includes(k)))throw new CaseError('Respostas inválidas.');
         p.location=text(input.location,150);
         p.serviceDay=input.serviceDay?day(input.serviceDay):null;
-        p.answers=Object.fromEntries(keys.map(k=>[k,text(input.answers[k]??'',1000)]).filter(([,v])=>v));
+        const answers=Object.fromEntries(keys.map(k=>[k,text(input.answers[k]??'',1000)]).filter(([,v])=>v));
+        event.resultChanged=p.answers?.resultado!==answers.resultado||p.answers?.procedimento!==answers.procedimento;
+        p.answers=answers;
         event.text='Contexto revisado no painel.';
+        if(Object.hasOwn(input,'stage')){
+          const stage=input.stage;
+          if(!stage||Array.isArray(stage)||typeof stage!=='object'||Object.keys(stage).some(k=>!['status','reason','scheduledFor'].includes(k))||!Object.hasOwn(STATUSES,stage.status))throw new CaseError('Etapa inválida.');
+          if(stage.scheduledFor&&stage.status!=='rescheduled')throw new CaseError('A nova data só se aplica a chamados remarcados.');
+          const reason=stage.status==='unconfirmed'?'':text(stage.reason??'',500,['pending','cancelled','rescheduled','completed'].includes(stage.status));
+          event.before={status:p.status};event.after={status:stage.status};
+          p.status=stage.status;p.stageReason=reason;p.scheduledFor=stage.scheduledFor?day(stage.scheduledFor,true):null;
+          event.text=(stage.status==='unconfirmed'?'Etapa definida pelas fontes.':STATUSES[stage.status]+(reason?' — '+reason:'')+(p.scheduledFor?' · nova data: '+p.scheduledFor:''))+'. Contexto revisado no painel.';
+        }
       }else if(input.kind==='archive'){
         if(p.archived)throw new CaseError('Chamado já arquivado.',409);
         event.text=text(input.text,1000,true);
@@ -106,7 +119,9 @@ export class CaseBoard{
         const note=text(input.note||'',2000,input.status!==p.status);
         if(input.status!==p.status)event.occurredOn=day(input.occurredOn);
         event.before={area:p.area,title:p.title,status:p.status,location:p.location||'',serviceDay:p.serviceDay||null};
-        p.area=input.area;p.title=text(input.title,160);p.status=input.status;
+        p.area=input.area;p.title=text(input.title,160);
+        if(input.status!==p.status){p.stageReason=input.status==='unconfirmed'?'':note;p.scheduledFor=null;}
+        p.status=input.status;
         if(Object.hasOwn(input,'location'))p.location=text(input.location,150);
         if(Object.hasOwn(input,'serviceDay'))p.serviceDay=input.serviceDay===null||input.serviceDay===''?null:day(input.serviceDay);
         event.after={area:p.area,title:p.title,status:p.status,location:p.location||'',serviceDay:p.serviceDay||null};event.text=note;

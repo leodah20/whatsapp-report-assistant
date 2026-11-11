@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 
 const script=readFileSync(new URL('../web/cases.js',import.meta.url),'utf8');
-const boundary=script.indexOf("$('edit-status').onchange=configureForm;");
+const boundary=script.indexOf("for(const id of ['cancel','cancel-top'])");
 assert(boundary>0);
 const prefix=script.slice(0,boundary);
 const suggestion='Trecho de exemplo verificado.';

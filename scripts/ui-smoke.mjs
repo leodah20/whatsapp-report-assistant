@@ -5,10 +5,12 @@ import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import puppeteer from 'puppeteer';
 import {CONFIG} from '../src/config.mjs';
+import {STATUSES,currentStage} from '../src/cases/stage.mjs';
 
 const month='2026-10', code='R-00000001', timestamp=1791890000;
 const source={kind:'source',timestamp,text:'Foi relatada uma falha.'};
-const row={code,title:'Falha de leitura',area:'SCA',status:'unconfirmed',contextState:'missing',location:'Setor de testes',locationConfirmed:true,sourceCount:1,referenceAt:timestamp,missing:['resultado'],openTasks:0};
+const blocker='Aguardando a chegada da peça.';
+const row={code,title:'Falha de leitura',area:'SCA',status:'pending',stage:currentStage({},[{timestamp,text:blocker}]),contextState:'missing',location:'Setor de testes',locationConfirmed:true,sourceCount:1,referenceAt:timestamp,missing:['resultado'],openTasks:0};
 const profile={title:'Falha de leitura',location:row.location,events:[],tasks:[]};
 const detail={...row,profile,sources:[source],notices:[],facts:[{field:'ocorrencia',quote:source.text}]};
 const groups=[{name:'Controle de acesso',rows:[[1,'Verificação de teste','Operacional']]}];
@@ -19,7 +21,7 @@ const routes={
 };
 const types={html:'text/html',css:'text/css',js:'text/javascript'};
 const data={
-  '/api/cases':{month,statuses:{unconfirmed:'Andamento a confirmar'},items:[row]},
+  '/api/cases':{month,statuses:STATUSES,items:[row,{...row,code:'R-00000002',status:'completed',stage:{status:'completed',origin:'manual'}}]},
   ['/api/cases/'+code]:detail,
   '/api/cases/runtime':{connected:true},
   '/api/cases/history':{count:1,sources:[{id:'synthetic-source',timestamp,text:'Fonte de teste'}]},
@@ -55,6 +57,9 @@ try{
     const noOverflow=async()=>assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Página excede a largura: '+page.url());
     await open('/chamados','.detail-actions');await noOverflow();
     assert.equal(await page.$eval('#month',x=>x.value),month);
+    assert.equal(await page.$$eval('.stat strong',nodes=>Number(nodes[0].textContent)-nodes.slice(1).reduce((n,x)=>n+Number(x.textContent),0)),0);
+    assert.match(await page.$eval('.stage-evidence',x=>x.textContent),/chegada da peça/);
+    await page.click('#stats [data-stage=pending]');assert.equal(await page.$eval('#queue-count',x=>x.textContent),'1');
     assert.equal(await page.$$eval('.detail-actions > *',x=>x.length),2);
     await clickText('.detail-actions summary','Mais ações');
     await clickText('.detail-actions .action-option:nth-child(2)','Marcar como concluído');
@@ -62,6 +67,9 @@ try{
     await page.click('#cancel');await page.waitForSelector('#edit-dialog[open]',{hidden:true});
     await page.click('.tabs .tab:nth-child(4)');
     await page.waitForSelector('.context-form');
+    await page.select('.stage-fields select','rescheduled');
+    assert.equal(await page.$eval('.stage-fields textarea',x=>x.required),true);
+    await page.waitForSelector('.stage-fields input[type=date]',{visible:true});
     assert.equal(await page.$$eval('.context-tip',x=>x.length),1);
     await page.focus('.context-form textarea[placeholder]');await page.keyboard.press('Tab');
     assert.equal(await page.$eval('.context-form textarea[placeholder]',x=>x.value),source.text);
