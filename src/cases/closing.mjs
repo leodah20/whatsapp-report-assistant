@@ -37,7 +37,10 @@ export class MonthlyClosing{
     const checks=[];
     if(!template)checks.push('O modelo local de impressão não está configurado.');
     if(!data.settings||data.settings.coverage!==coverage)checks.push('Você conferiu se as fontes do período e os chamados anteriores estão representados?');
-    if(template&&data.settings?.template!==digest(template))checks.push('Confirme os status das tabelas preventivas e a data de emissão.');
+    const templateStamp=template?digest(template):null;
+    const currentStatuses=templateStamp&&data.settings?.template===templateStamp&&Array.isArray(data.settings.statuses)?data.settings.statuses:null;
+    if(template&&(!currentStatuses||currentStatuses.length!==template.groups.flatMap(g=>g.rows).length||currentStatuses.some(s=>!states.includes(s))))checks.push('Confirme os status das tabelas preventivas.');
+    if(template&&!data.settings?.issued)checks.push('Informe a data de emissão para imprimir.');
     const rows=items.map(i=>{
       const review=data.reviews[i.code]||null;
       const state=!review?'unreviewed':review.stamp!==i.stamp?'stale':review.decision;
@@ -45,7 +48,7 @@ export class MonthlyClosing{
       return {...i,state,review,sourceReview,sourceReviewState:!sourceReview?'unreviewed':sourceReview.stamp===i.stamp?'reviewed':'stale'};
     });
     if(rows.some(i=>!['include','exclude'].includes(i.state)))checks.push('Revise os chamados não decididos ou que receberam novas informações.');
-    return {month,version:data.version,settings:data.settings,items:rows,checks,coverage,archiveCount:archive.count,template:template?{name:template.name,groups:template.groups}:null};
+    return {month,version:data.version,settings:data.settings?{...data.settings,statuses:currentStatuses||[]}:null,items:rows,checks,coverage,archiveCount:archive.count,template:template?{name:template.name,groups:template.groups,stamp:templateStamp}:null};
   }
   save(month,input){
     const data=this.load(month);
@@ -58,17 +61,24 @@ export class MonthlyClosing{
       const sources=this.board.detail(input.code).sources;
       if(!Array.isArray(input.attachments)||input.attachments.length>100||new Set(input.attachments).size!==input.attachments.length||input.attachments.some(n=>!Number.isInteger(n)||!sources[n]?.hasMedia||sources[n].mediaState!=='saved'))throw new CaseError('Selecione apenas anexos arquivados deste chamado.');
       data.sourceReviews[input.code]={stamp:entry.stamp,attachments:input.attachments,at:new Date().toISOString()};
-    }else if(input.kind==='settings'){
-      shape(input,['kind','version','issued','statuses','observations','coverage']);
+    }else if(input.kind==='settings'||input.kind==='preventives'){
+      const onlyStatuses=input.kind==='preventives';
+      shape(input,onlyStatuses?['kind','version','templateStamp','statuses']:['kind','version','issued','statuses','observations','coverage']);
       const template=this.template();
       if(!template)throw new CaseError('Modelo local não configurado.');
+      const templateStamp=digest(template);
+      if(onlyStatuses&&input.templateStamp!==templateStamp)throw new CaseError('O modelo de preventivas mudou. Recarregue o fechamento.',409);
       const groups=template.groups.flatMap(g=>g.rows);
-      if(!Array.isArray(input.statuses)||input.statuses.length!==groups.length||input.statuses.some(s=>!states.includes(s)))throw new CaseError('Informe o status de cada preventiva. Use “Sem confirmação” se não houver evidência.');
-      const current=this.get(month);
-      if(input.coverage&&input.coverage!==current.coverage)throw new CaseError('Há mudanças na lista de chamados. Recarregue e confira a cobertura.',409);
-      const issued=date(input.issued);
-      if(issued.slice(0,7)<month)throw new CaseError('A emissão não pode ser anterior à competência.');
-      data.settings={issued,statuses:input.statuses,observations:clean(input.observations,2500),coverage:input.coverage||null,template:digest(template)};
+      if(!Array.isArray(input.statuses)||input.statuses.length!==groups.length||input.statuses.some(s=>!states.includes(s)&&!(onlyStatuses&&s==='')))throw new CaseError('Informe um status válido para as preventivas.');
+      if(onlyStatuses){
+        data.settings={issued:null,observations:'',coverage:null,...data.settings,statuses:input.statuses,template:templateStamp};
+      }else{
+        const current=this.get(month);
+        if(input.coverage&&input.coverage!==current.coverage)throw new CaseError('Há mudanças na lista de chamados. Recarregue e confira a cobertura.',409);
+        const issued=date(input.issued);
+        if(issued.slice(0,7)<month)throw new CaseError('A emissão não pode ser anterior à competência.');
+        data.settings={issued,statuses:input.statuses,observations:clean(input.observations,2500),coverage:input.coverage||null,template:templateStamp};
+      }
     }else{
       shape(input,['kind','version','code','stamp','decision','reason','title','start','end','historical','narrative','photos','verified']);
       if(input.kind!=='review'||!codePattern.test(input.code||'')||!['include','exclude','defer'].includes(input.decision))throw new CaseError('Decisão inválida.');
@@ -123,7 +133,7 @@ export class MonthlyClosing{
         updates:d.profile.events.filter(e=>['note','profile','context','task','resolve'].includes(e.kind)&&e.text).map(e=>({kind:e.kind,serviceDate:e.occurredOn||null,registeredAt:e.registeredAt,text:e.text})),
         sources};
     });
-    const settings=view.settings,preventiveStatuses=settings?.template===digest(this.template())?settings.statuses:[];
+    const settings=view.settings,preventiveStatuses=settings?.statuses||[];
     let offset=0;
     const preventive=view.template?.groups.map(g=>({name:g.name,rows:g.rows.map(([week,task,category])=>({week,task,category,status:preventiveStatuses[offset++]||null}))}))||[];
     const output={schemaVersion:1,month,preparedAt:new Date().toISOString(),coverageConfirmed:!!settings&&settings.coverage===view.coverage,

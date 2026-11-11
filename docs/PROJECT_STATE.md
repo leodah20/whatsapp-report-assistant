@@ -35,7 +35,7 @@ No fechamento, **A revisar** e **Conferidos** têm listas e contagens próprias,
 
 ## Limites
 
-O fechamento abre no fluxo de extração. A revisão da redação, as decisões de inclusão e as preventivas aparecem somente ao escolher **Fechar PDF pelo painel**. Voltar à extração não descarta o pacote preparado.
+O fechamento abre no fluxo de extração. A revisão da redação, as decisões de inclusão e a emissão aparecem somente ao escolher **Fechar PDF pelo painel**. As preventivas também podem ser salvas no fluxo de extração, sem emissão. Ao confirmar fontes na fila de revisão, o painel abre o próximo chamado e, ao terminar, exibe a extração no próprio detalhe.
 
 A extração mensal usa os chamados selecionados, seus fatos, histórico e evidências vinculadas, separando revisão de fontes de aprovação da narrativa. O ZIP inclui as mídias confirmadas para o pacote. ChatGPT e Claude são destinos manuais; o painel não acessa conversas remotas. A opção Ollama gera sugestões textuais e não interpreta os anexos. Limites da extração: 100 chamados, 2 MB de texto estruturado e ZIP de até 100 MB/200 arquivos.
 

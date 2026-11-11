@@ -10,7 +10,7 @@
 <p id="notice" role="status" class="notice" hidden></p>
 <div class="section-toolbar closing-mode"><p class="hint" id="closing-mode-note" role="status">Extração de contexto e mídias</p><button id="print-mode" type="button" class="button outline">Fechar PDF pelo painel</button></div>
 <section class="surface closing-progress" id="print-progress" aria-labelledby="progress" hidden><div class="section-toolbar"><h2 id="progress">Situação do PDF</h2><a id="draft" class="button primary" hidden>Abrir minuta</a></div><p id="counts" class="hint">Carregando…</p><ul id="checks"></ul></section>
-<section class="surface report-assist" id="report-assist" aria-labelledby="assist-title">
+<div id="assist-home"><section class="surface report-assist" id="report-assist" aria-labelledby="assist-title">
   <h2 id="assist-title">Preparar o relatório com IA</h2>
   <p class="hint">Depois de conferir as fontes, reúna o contexto e as mídias da competência em um pacote.</p>
   <div class="report-controls">
@@ -26,8 +26,8 @@
     <div class="head-actions"><button type="button" class="button primary" id="assist-zip">Baixar pacote com mídias</button><button type="button" class="button outline" id="assist-copy">Copiar extração</button><button type="button" class="button outline" id="assist-download">Baixar só o texto</button></div>
   </div>
   <div id="assist-results"></div>
-</section>
-<nav class="closing-steps" aria-label="Atalhos do fechamento"><a href="#review" id="review-link">Conferir fontes</a><a id="extract-link" href="#report-assist">Gerar extração</a><a id="settings-link" href="#settings" hidden>2. Preventivas e emissão</a></nav>
+</section></div>
+<nav class="closing-steps" aria-label="Atalhos do fechamento"><a href="#review" id="review-link">Conferir fontes</a><a id="settings-link" href="#settings" hidden>Preventivas</a><a id="extract-link" href="#report-assist">Gerar extração</a></nav>
 <div class="workbench closing-workbench">
 <section class="surface closing-list" id="review" aria-labelledby="review-title">
   <h2 id="review-title">Conferir fontes</h2>
@@ -42,14 +42,16 @@
 <section class="surface closing-editor" id="editor" tabindex="-1" aria-label="Conteúdo do chamado"><h2>Selecione um chamado</h2><p class="hint">O contexto e os anexos aparecem aqui.</p></section>
 </div>
 <section class="surface closing-settings" id="settings" hidden>
-<h2>2. Confirmar preventivas e emissão</h2>
+<h2 id="settings-title">Preventivas do mês</h2>
 <p class="hint">A semana é a referência da rotina, não a data em que ela foi executada. Nenhum status vem marcado de outro mês.</p>
 <form id="settings-form">
-<label class="control">Data real de emissão <input id="issued" type="date" required></label>
 <div id="preventives"></div>
+<div id="print-settings" hidden>
+<label class="control">Data real de emissão <input id="issued" type="date"></label>
 <label class="control">Observações confirmadas (opcional)<textarea id="observations" maxlength="2500" rows="4"></textarea></label>
 <label class="check"><input id="coverage" type="checkbox"> Conferi o arquivo do período, os chamados e as pendências anteriores. Sei que a coleta não garante cobertura integral.</label>
-<button class="button primary">Salvar preventivas e emissão</button>
+</div>
+<button class="button primary" id="settings-save">Salvar preventivas</button>
 </form>
 </section>
 </main></body></html>

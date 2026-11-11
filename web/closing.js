@@ -7,8 +7,8 @@ const clock=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',dateSt
 const stateLabels={unreviewed:'Por revisar',stale:'Fonte atualizada — rever',include:'Incluído',exclude:'Fora da minuta',defer:'Falta resposta'};
 const fields={local:'Qual é o local exato?',equipamento:'Qual equipamento foi atendido?',ocorrencia:'O que aconteceu?',procedimento:'O que foi feito de fato?',resultado:'Qual foi o resultado observado ou o que ficou pendente?'};
 const fieldLabels={local:'Local',equipamento:'Equipamento',ocorrencia:'Ocorrência',procedimento:'Procedimento',resultado:'Resultado ou pendência'};
-const statuses={'':'Selecione…',done:'Concluída',pending:'Pendente',unknown:'Sem confirmação',na:'Não aplicável'};
-let view=null,selected=null,serial=0,dirty=false,saving=false;
+const statuses={'':'Sem status',done:'Concluída',pending:'Não concluída',unknown:'Sem confirmação',na:'Não aplicável'};
+let view=null,selected=null,serial=0,dirty=false,saving=false,preventivesDirty=false;
 let assistMonth='',assistRunning=false,extraction=null,printMode=false,reviewGroup='pending';
 const assistPicked=new Set(),localSuggestions=new Map();
 const cloudHosts={chatgpt:'chatgpt.com',claude:'claude.ai'};
@@ -39,7 +39,7 @@ function refreshProvider(){
   $('assist-provider-note').textContent=provider==='local'?'O modelo baixado redige uma sugestão por chamado a partir dos textos, sem interpretar fotos ou vídeos. Nada é salvo até você revisar.':
     provider==='codex'?'Baixe ou copie a extração e traga para o chat que já conhece seu relatório.':
     'O link fica neste navegador. O painel não envia dados: confira a prévia e anexe ou cole a extração na conversa escolhida.';
-  $('assist-run').textContent=provider==='local'?'Gerar sugestões locais':'Preparar extração';
+  $('assist-run').textContent=provider==='local'?'Gerar sugestões locais':$('editor').contains($('report-assist'))?'Gerar extração':'Preparar extração';
 }
 function refreshSelection(){
   $('assist-count').textContent=assistPicked.size;
@@ -61,6 +61,7 @@ function renderAssist(){
 const assistRequest=(month,tail,codes,timeout=15000)=>request(url(month,tail),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codes}),signal:AbortSignal.timeout(timeout)});
 async function runAssist(){
   if(assistRunning||!view||!assistPicked.size||assistPicked.size>100)return;
+  if(preventivesDirty){$('assist-status').textContent='Salve os status alterados em Preventivas do mês antes de gerar a extração.';return;}
   const provider=$('assist-provider').value,month=view.month,version=view.version,codes=[...assistPicked];
   if(provider!=='local'&&!$('assist-chat').reportValidity())return;
   assistRunning=true;clearExtraction();$('assist-cases').disabled=$('assist-provider').disabled=true;refreshSelection();
@@ -136,7 +137,13 @@ function reviewAttachment(code,s,index){
 function renderMode(){
   $('print-progress').hidden=!printMode;
   $('report-assist').hidden=$('extract-link').hidden=printMode;
-  $('settings-link').hidden=$('settings').hidden=!printMode||!view?.template;
+  $('settings-link').hidden=$('settings').hidden=!view?.template;
+  $('print-settings').hidden=!printMode;
+  $('issued').required=printMode;
+  $('settings-title').textContent=printMode?'2. Preventivas e emissão':'Preventivas do mês';
+  $('settings-link').textContent=printMode?'2. Preventivas e emissão':'Preventivas';
+  $('settings-save').textContent=printMode?'Salvar preventivas e emissão':'Salvar preventivas';
+  for(const status of $('preventives').querySelectorAll('select'))status.required=printMode;
   $('closing-mode-note').textContent=printMode?'Revisão para impressão':'Extração de contexto e mídias';
   $('closing-lead').textContent=printMode?'Revise o texto, as datas, as fotos e as preventivas para salvar em PDF.':'Confira as fontes e os anexos e gere a extração do mês.';
   $('print-mode').textContent=printMode?'Voltar para extração':'Fechar PDF pelo painel';
@@ -157,6 +164,7 @@ function renderOverview(){
 }
 const searchKey=value=>String(value||'').normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
 const isReviewed=row=>printMode?['include','exclude'].includes(row.state):row.sourceReviewState==='reviewed';
+const matchesSearch=(row,query)=>searchKey([row.title,row.location,row.code,row.area].join(' ')).includes(query);
 function reviewBadge(row){
   if(!row)return null;
   const stale=printMode?row.state==='stale':row.sourceReviewState==='stale';
@@ -176,7 +184,7 @@ function renderQueue({reset=false}={}){
   }
   const name=$('review-'+reviewGroup).firstElementChild.textContent;
   list.setAttribute('aria-label','Chamados — '+name);
-  const visible=groups[reviewGroup].filter(row=>searchKey([row.title,row.location,row.code,row.area].join(' ')).includes(query));
+  const visible=groups[reviewGroup].filter(row=>matchesSearch(row,query));
   list.replaceChildren(...visible.map(x=>{
     const b=el('button',undefined,'case-card');b.type='button';b.setAttribute('aria-current',String(selected===x.code));
     b.dataset.code=x.code;
@@ -202,6 +210,36 @@ function focusCase(){
   if(matchMedia('(max-width: 720px)').matches||top<0||top>36)editor.scrollIntoView({block:'start'});
   heading?.focus({preventScroll:true});
 }
+function restoreAssist(){
+  const assist=$('report-assist'),home=$('assist-home');
+  if(assist.parentElement!==home){home.append(assist);refreshProvider();}
+}
+function resetEditor(){
+  restoreAssist();
+  $('editor').replaceChildren(el('h2','Selecione um chamado'),el('p','O contexto e os anexos aparecem aqui.','hint'));
+}
+function finishReview(focus=true){
+  selected=null;renderQueue();
+  const editor=$('editor'),intro=el('header',undefined,'review-editor-head review-finished'),copy=el('div');
+  const title=el('h2','Todos os chamados conferidos');title.tabIndex=-1;
+  copy.append(title,el('p','A extração pode ser gerada aqui mesmo.','hint'));
+  if(view.template){
+    const preventive=el('a','Conferir preventivas do mês');preventive.href='#settings';copy.append(preventive);
+  }
+  intro.append(copy);
+  editor.replaceChildren(intro,$('report-assist'));
+  refreshProvider();
+  if(focus)focusCase();
+}
+const reviewIsDone=()=>!!view?.items.length&&view.items.every(row=>row.sourceReviewState==='reviewed');
+async function advanceReview(code){
+  if(reviewIsDone()){finishReview();return;}
+  const rows=view.items,index=rows.findIndex(x=>x.code===code);
+  const next=[...rows.slice(index+1),...rows.slice(0,index+1)].find(x=>x.sourceReviewState!=='reviewed');
+  if(!next)return;
+  if(!matchesSearch(next,searchKey($('review-search').value.trim()))){$('review-search').value='';renderQueue({reset:true});}
+  await openCase(next.code);
+}
 function backToQueue(){
   const queue=$('review'),list=$('list'),active=[...list.querySelectorAll('.case-card')].find(b=>b.dataset.code===selected);
   queue.scrollIntoView({block:'start'});
@@ -221,7 +259,7 @@ function renderSettings(){
     const group=el('details',undefined,'preventive-group'),fieldset=el('fieldset');
     const label=el('summary',g.name),count=el('span',undefined,'hint');label.append(count);group.append(label,fieldset);
     for(const [week,task,category] of g.rows){
-      const s=select(statuses,view.settings?.statuses[index++]);s.required=true;s.name='preventive';
+      const s=select(statuses,view.settings?.statuses[index++]);s.required=printMode;s.name='preventive';
       const l=el('label',undefined,'preventive-row');l.append(el('span',task+' · '+category+(week?' · Semana '+week:'')),s);fieldset.append(l);
     }
     const update=()=>{count.textContent=[...fieldset.elements].filter(s=>s.value).length+'/'+g.rows.length+' revisadas';};
@@ -230,13 +268,14 @@ function renderSettings(){
   }));
 }
 async function load(month){
-  if(saving||assistRunning||dirty&&!confirm('Descartar alterações não salvas?'))return;
+  if(saving||assistRunning||(dirty||preventivesDirty)&&!confirm('Descartar alterações não salvas?'))return;
   const n=++serial;
   try{
     const next=await request(url(month));if(n!==serial)return;
-    view=next;selected=null;dirty=false;reviewGroup='pending';$('review-search').value='';$('list').scrollTop=0;
+    view=next;selected=null;dirty=false;preventivesDirty=false;reviewGroup='pending';$('review-search').value='';$('list').scrollTop=0;
     history.replaceState(null,'','/fechamento?month='+encodeURIComponent(month));
-    $('editor').replaceChildren(el('h2','Selecione um chamado'),el('p','O contexto e os anexos aparecem aqui.','hint'));renderOverview();renderSettings();notify('');
+    resetEditor();renderOverview();renderSettings();notify('');
+    if(!printMode&&reviewIsDone())finishReview(false);
   }catch(e){if(n===serial)notify(e.message);}
 }
 async function openCase(code){
@@ -284,8 +323,10 @@ async function openCase(code){
     const markSources=()=>{dirty=true;sourceNote.textContent='Seleção alterada. Confirme para incluir no pacote.';};
     for(const [,choice] of attachments)choice.addEventListener('change',markSources);
     sourceSave.onclick=async()=>{
+      const autoAdvance=!printMode&&reviewGroup==='pending'&&!formDirty&&view.items.find(x=>x.code===code)?.sourceReviewState!=='reviewed';
       if(await saveData({kind:'sources',code,stamp:row.stamp,attachments:attachments.filter(([,c])=>c.checked).map(([i])=>i)},sourceSave)){
         if(!formDirty)dirty=false;sourceNote.textContent='Fontes e anexos conferidos. Já podem entrar na extração.';
+        if(autoAdvance&&!printMode&&reviewGroup==='pending'&&selected===code)await advanceReview(code);
       }
     };
     evidence.append(sourceSave,sourceNote);
@@ -331,7 +372,7 @@ async function openCase(code){
       if(await saveData({kind:'review',code,stamp:row.stamp,decision:decision.value,...payload},save)){formDirty=false;dirty=sourceNote.textContent.startsWith('Seleção alterada');notify('Decisão salva. Nenhuma mensagem enviada.');}
     };
     const final=el('details',undefined,'final-review');final.open=true;final.hidden=!printMode;final.append(el('summary','Revisar texto final para impressão'),context,form);
-    $('editor').replaceChildren(headingBar,evidence,final);focusCase();
+    restoreAssist();$('editor').replaceChildren(headingBar,evidence,final);focusCase();
   }catch(e){if(n===serial)notify(e.message);}
 }
 async function saveData(payload,button){
@@ -345,14 +386,26 @@ async function saveData(payload,button){
   finally{saving=false;button.disabled=false;}
 }
 $('period').onsubmit=e=>{e.preventDefault();void load($('month').value);};
-$('print-mode').onclick=()=>{printMode=!printMode;reviewGroup='pending';$('list').scrollTop=0;if(view)renderOverview();else renderMode();};
+$('print-mode').onclick=()=>{
+  printMode=!printMode;reviewGroup='pending';$('list').scrollTop=0;
+  if(printMode&&$('editor').contains($('report-assist')))resetEditor();
+  if(view){renderOverview();if(!printMode&&!selected&&reviewIsDone())finishReview(false);}else renderMode();
+};
 for(const key of ['pending','done'])$('review-'+key).onclick=()=>{reviewGroup=key;renderQueue({reset:true});};
 $('review-search').oninput=()=>renderQueue({reset:true});
 $('settings-form').addEventListener('invalid',e=>{const group=e.target.closest('.preventive-group');if(group)group.open=true;},true);
+const preventiveValues=()=>[...$('preventives').querySelectorAll('[name=preventive]')].map(x=>x.value);
+function updatePreventivesDirty(){
+  preventivesDirty=preventiveValues().some((value,index)=>value!==(view?.settings?.statuses?.[index]||''));
+  if(preventivesDirty)clearExtraction();
+}
+$('preventives').addEventListener('change',updatePreventivesDirty);
 $('settings-form').onsubmit=async e=>{
   e.preventDefault();
-  if(!printMode)return;
-  if(await saveData({kind:'settings',issued:$('issued').value,statuses:[...e.currentTarget.querySelectorAll('[name=preventive]')].map(x=>x.value),observations:$('observations').value,coverage:$('coverage').checked?view.coverage:null},e.submitter))notify('Preventivas e emissão salvas.');
+  if(!view?.template)return;
+  const statuses=preventiveValues(),pdf=printMode;
+  const payload=pdf?{kind:'settings',issued:$('issued').value,statuses,observations:$('observations').value,coverage:$('coverage').checked?view.coverage:null}:{kind:'preventives',templateStamp:view.template.stamp,statuses};
+  if(await saveData(payload,e.submitter)){updatePreventivesDirty();notify(pdf?'Preventivas e emissão salvas.':'Preventivas salvas para a extração.');}
 };
 const given=new URLSearchParams(location.search).get('month');
 setupAssist();

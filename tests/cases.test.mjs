@@ -59,6 +59,23 @@ test('archiving removes case from closing and can be reversed without losing sou
   assert.equal(closing.get(month).items.length,1);
   assert.equal(board.detail(code).profile.events[1].kind,'restore');
 });
+test('preventive statuses can be saved for extraction independently of PDF issuance',t=>{
+  const {board,db,dependencies}=fixture(t);
+  const month='2025-09';
+  let template={name:'Exemplo',footer:'Exemplo',groups:[{name:'Testes',rows:[['1','Tarefa A','Técnico'],['2','Tarefa B','Técnico'],['3','Tarefa C','Técnico']]}]};
+  const closing=new MonthlyClosing({db,key:dependencies.key,board,template:()=>template});
+  const initial=closing.get(month),payload={kind:'preventives',version:0,templateStamp:initial.template.stamp,statuses:['done','pending','']};
+  assert.throws(()=>closing.save(month,{...payload,statuses:['inventado','pending','']}),/status válido/);
+  assert.throws(()=>closing.save(month,{...payload,issued:'2025-10-01'}),/Campos/);
+  const saved=closing.save(month,payload);
+  assert.equal(saved.settings.issued,null);
+  assert.deepEqual(closing.contextPackage(month,[code]).preventive[0].rows.map(r=>r.status),['done','pending',null]);
+  assert.ok(saved.checks.some(x=>x.includes('data de emissão')));
+  assert.throws(()=>closing.draft(month),{status:409});
+  template={...template,footer:'Modelo atualizado'};
+  assert.throws(()=>closing.save(month,{...payload,version:1}),{status:409});
+  assert.deepEqual(closing.contextPackage(month,[code]).preventive[0].rows.map(r=>r.status),[null,null,null]);
+});
 function fixture(t){
   const db=new DatabaseSync(':memory:');t.after(()=>db.close());
   const item={id,code,month:'2025-09',sourceIds:['a'],answerIds:[],facts:[{field:'equipamento',quote:'Câmera de teste'}],review:'draft-ready',missing:[],createdAt:'2025-09-05T12:00:00Z'};

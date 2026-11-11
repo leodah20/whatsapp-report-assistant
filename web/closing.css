@@ -84,6 +84,9 @@
 .review-editor-head h2:focus{outline:none}
 .review-editor-head .review-back{flex-shrink:0}
 .review-current-badge{margin-top:5px}
+.review-finished{margin-bottom:12px}
+.review-finished a{display:inline-block;margin-top:5px;font-size:.86rem}
+.closing-editor .report-assist{border:0;box-shadow:none;padding:0;margin:0}
 .source-review .record{padding:12px 14px}
 @media(min-width:721px){
   .closing-list,.closing-editor{max-height:calc(100dvh - 32px)}
