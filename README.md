@@ -4,6 +4,8 @@ Assistente local de registros de manutenção. Acompanha **um grupo autorizado**
 
 Repositório completo: https://github.com/leodah20/whatsapp-report-assistant
 
+[Plano estratégico](docs/PLANO-ESTRATEGICO.md) · [Estado do projeto](docs/PROJECT_STATE.md) · [Continuidade](docs/HANDOFF.md)
+
 > Integração não oficial via whatsapp-web.js: há risco de bloqueio e mudanças incompatíveis. A vinculação dá acesso técnico à conta inteira; o filtro de grupo é do programa, não uma permissão do WhatsApp. Obtenha autorização dos participantes e da organização. Nunca publique dados, sessão, QR ou credenciais.
 
 ## Instalação local — Windows / PowerShell
@@ -28,7 +30,7 @@ O Ollama deve estar iniciado (aplicativo ou `ollama serve` em outro terminal). A
 
 Se a detecção falhar, ajuste REPORT_PYTHON e REPORT_CHROME_PATH no .env.local. **Nunca sobrescreva configurações existentes**: o nome da chave e da sessão devem continuar iguais para acessar o arquivo atual.
 
-Para retomar uma instalação autorizada: `npm run resume`. O script `Iniciar coletor.ps1` inicia em segundo plano. Atalho de inicialização é opcional; o projeto não instala um serviço nem muda energia/suspensão. PC desligado não processa: ao reconectar, tenta buscar o histórico disponível. Não há garantia de recuperar mensagens apagadas ou mídias expiradas.
+Para retomar uma instalação autorizada: `npm run resume`. O script `scripts/windows/start.ps1` inicia em segundo plano. Atalho de inicialização é opcional; o projeto não instala um serviço nem muda energia/suspensão. PC desligado não processa: ao reconectar, tenta buscar o histórico disponível. Não há garantia de recuperar mensagens apagadas ou mídias expiradas.
 
 ## Mesma pasta, mesmo Git, qualquer agente
 
@@ -45,7 +47,7 @@ opencode
 
 Pedido para o próximo agente:
 
-> Leia AGENTS.md, PROJECT_STATE.md e HANDOFF.md, confira git status e continue a próxima pendência. Use este worktree e o origin existente. Preserve dados privados, execute testes, atualize o HANDOFF e faça commit/push somente do código sanitizado.
+> Leia AGENTS.md, docs/PROJECT_STATE.md e docs/HANDOFF.md, confira git status e continue a próxima pendência. Use este worktree e o origin existente. Preserve dados privados, execute testes, atualize o HANDOFF e faça commit/push somente do código sanitizado.
 
 Na volta ao Codex, use o mesmo pedido e a mesma pasta. Em outro computador, primeiro salve trabalho local e use `git pull --ff-only`. Não use reset destrutivo. Git transporta código, testes e decisões; não transfere créditos nem a memória integral de um chat.
 
@@ -55,41 +57,42 @@ Instale conforme a [documentação oficial do OpenCode](https://opencode.ai/docs
 
 Alternativa sem cobrança de API: [OpenCode com Ollama local](https://docs.ollama.com/integrations/opencode). Existem modelos locais da [família DeepSeek](https://ollama.com/library/deepseek-r1); não foram validados neste projeto para programação ou ferramentas. Modelos pequenos podem ter qualidade insuficiente; hardware/energia continuam tendo custo.
 
-Nesta máquina, o OpenCode 1.19.5 já está instalado e o catálogo retornou `opencode/deepseek-v4.1-flash-free`. O script opcional `Continuar no OpenCode.ps1` confere se esse identificador ainda existe e abre a mesma pasta com ele selecionado; se não existir, interrompe. Não aceita autorização automática, não muda o modelo do coletor e não testa inferência com dados reais. A presença no catálogo não garante oferta gratuita futura; confirme as condições antes de usar.
+Nesta máquina, o OpenCode 1.19.5 já está instalado e o catálogo retornou `opencode/deepseek-v4.1-flash-free`. O script opcional `scripts/windows/opencode.ps1` confere se esse identificador ainda existe e abre a mesma pasta com ele selecionado; se não existir, interrompe. Não aceita autorização automática, não muda o modelo do coletor e não testa inferência com dados reais. A presença no catálogo não garante oferta gratuita futura; confirme as condições antes de usar.
 
 O modelo que **programa no OpenCode** é independente do modelo que **analisa o grupo**. O coletor continua com IA local configurada em REPORT_MODEL. Trabalhar no código público não exige acesso a mensagens. Nunca conecte um modelo remoto ao arquivo privado/MCP sem autorização específica.
 
 ### MCP opcional — somente leitura
 
-`mcp_server.py` expõe whatsapp_status, whatsapp_month, whatsapp_cases e whatsapp_image. Não envia mensagens nem lê QR/perfil da sessão. Habilitar o conector pode enviar conteúdo privado ao agente/modelo: autorize separadamente.
+`integrations/mcp/server.py` expõe whatsapp_status, whatsapp_month, whatsapp_cases e whatsapp_image. Não envia mensagens nem lê QR/perfil da sessão. Habilitar o conector pode enviar conteúdo privado ao agente/modelo: autorize separadamente.
 
 Exemplos; substitua C:/CAMINHO pela pasta real da instalação:
 
 ```text
-codex mcp add whatsapp-reports -- C:/CAMINHO/.venv/Scripts/python.exe C:/CAMINHO/mcp_server.py
-claude mcp add --transport stdio whatsapp-reports -- C:/CAMINHO/.venv/Scripts/python.exe C:/CAMINHO/mcp_server.py
+codex mcp add whatsapp-reports -- C:/CAMINHO/.venv/Scripts/python.exe C:/CAMINHO/integrations/mcp/server.py
+claude mcp add --transport stdio whatsapp-reports -- C:/CAMINHO/.venv/Scripts/python.exe C:/CAMINHO/integrations/mcp/server.py
 ```
 
 Confira a versão instalada: [Codex MCP](https://developers.openai.com/codex/mcp), [Claude Code MCP](https://code.claude.com/docs/en/mcp), [OpenCode MCP](https://opencode.ai/docs/mcp-servers/). O protocolo MCP foi validado, mas não houve teste ponta a ponta com todos esses clientes/provedores. Não é necessário ativar MCP para editar o código.
 
 ## Arquitetura e limites atuais
 
-`WhatsApp → filtro de grupo → fonte criptografada → aviso de coleta → fila persistente → análise local → chamado → pergunta se necessário → resposta vinculada → atualização salva → confirmação`
+`WhatsApp → filtro de grupo → fonte criptografada → fila persistente → análise local → chamado → confirmação OU pergunta → resposta vinculada → confirmação de atualização`
 
 Confirmação de recebimento não significa serviço concluído. Informação completa para redação não prova equipamento normalizado. Mensagens, anexos e saída da IA são dados não confiáveis, nunca instruções.
 
 | Fonte | Função |
 | --- | --- |
-| app.mjs | Servidor local, vínculo, captura, importação, permissões e envio restrito |
-| assistant.mjs | Análise literal, chamados, perguntas e respostas |
-| collection.mjs / intake.mjs / receipts.mjs | Aviso de coleta, cadastro e confirmação por resposta |
-| recovery.mjs / history.mjs | Fila durável, reconexão e busca por período |
-| transport.mjs / compat.mjs / media.mjs | Estado real da conexão, IDs e anexos |
-| core.mjs / vault.py | AES-256-GCM e chave no Gerenciador de Credenciais do Windows |
-| config.mjs / envconfig.py | Configuração local, sem avaliar código |
-| mcp_server.py | Quatro ferramentas de consulta |
-| index.html / ui.js / style.css | Painel local |
-| *.test.mjs / test.mjs / probe.py | Testes sintéticos e verificação HTTP/MCP |
+| src/app.mjs | Servidor local, vínculo, captura, importação, permissões e envio restrito |
+| src/assistant/assistant.mjs | Análise literal, chamados, perguntas e respostas |
+| src/assistant/intake.mjs / src/assistant/receipts.mjs | Confirmação de cadastro ou resposta, sem aviso duplicado |
+| src/whatsapp/recovery.mjs / src/whatsapp/history.mjs | Fila durável, reconexão e busca por período |
+| src/whatsapp/transport.mjs / src/whatsapp/compat.mjs / src/whatsapp/media.mjs | Estado real da conexão, IDs e anexos |
+| src/core.mjs / integrations/mcp/vault.py | AES-256-GCM e chave no Gerenciador de Credenciais do Windows |
+| src/config.mjs / integrations/mcp/envconfig.py | Configuração local, sem avaliar código |
+| integrations/mcp/server.py | Quatro ferramentas de consulta |
+| src/cases/ e web/ | Painel de chamados, acompanhamento local e configuração |
+| scripts/windows/ | Inicialização, supervisão e reinício no Windows |
+| tests/ e scripts/probe.py | Testes sintéticos e verificação HTTP/MCP |
 | .env.local | Ajustes privados; fora do Git |
 | data/ | Banco, sessão e escopo; fora do Git |
 | local-ai/ / node_modules/ / .venv/ | Modelos, binários e dependências; fora do Git |
@@ -116,13 +119,23 @@ O cookie é criado ao abrir o painel; POST exige origem local exata e JSON.
 
 Não há API genérica de envio, SQL, comandos ou leitura de arquivos. Isso não é isolamento contra processos/malware da mesma conta do Windows.
 
-### Implementado
+### Central de chamados e supervisão
 
-Captura de textos/anexos do grupo escolhido; IA local com validação por trechos literais; perguntas e respostas vinculadas; confirmação por atualização; recibos de coleta/cadastro; fila de recuperação e controle de envios incertos. Histórico manual não dispara perguntas em massa.
+Abra [a central local](http://127.0.0.1:8767/chamados). Filtre por competência, frente de serviço e andamento. Abra a linha do tempo, fontes e fotos; registre atualizações, corrija a frente sugerida e mantenha pendências e conclusão técnica separadas. As alterações manuais ficam no arquivo criptografado e não enviam WhatsApp. A base do mês é um TXT para revisão, não um relatório final.
+
+O painel indica a última conexão verificada e sincronização. Para iniciar o supervisor pelo CMD, na pasta do projeto:
+
+```cmd
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\windows\start.ps1" -Background
+```
+
+Para iniciar ao entrar no Windows, configure o atalho de inicialização para esse comando com a pasta do projeto como diretório de trabalho. A supervisão respeita pausa e pedido de novo vínculo; reinicia apenas processos da instalação, com intervalo entre tentativas. PC desligado, suspenso ou sem login não executa a coleta. Em caso de erro persistente, `scripts/windows/restart.ps1` permite reiniciar essa instalação, sem limpar a sessão.
+
+Cada novo chamado gera só uma mensagem: confirmação ou pergunta com o código. Não há recibo adicional antes da análise. Respostas vinculadas continuam recebendo uma confirmação própria.
 
 ### Não implementado / limites
 
-Interpretação de fotos/áudios e geração do relatório final completo. Sem garantia de envio exatamente uma vez em falha externa. Recuperação limitada ao histórico disponibilizado pelo WhatsApp. Windows-first: armazenamento de credenciais Linux/macOS não implementado. A console por frente de serviço e o explorador interativo estão na lista de próximas implementações, não são apresentados como prontos.
+Interpretação de fotos/áudios, explorador técnico interativo e geração do relatório final completo ainda não implementados. Sem garantia de envio exatamente uma vez em falha externa. Recuperação limitada ao histórico disponibilizado pelo WhatsApp. Windows-first: armazenamento de credenciais Linux/macOS não implementado.
 
 ## Verificação e continuidade
 
@@ -130,11 +143,11 @@ Interpretação de fotos/áudios e geração do relatório final completo. Sem g
 npm run doctor  # não lê chaves/mensagens, não conecta WhatsApp
 npm test        # fontes sintéticas, sem envios reais
 # Somente com servidor iniciado e autorização de consulta:
-.\.venv\Scripts\python.exe probe.py
+.\.venv\Scripts\python.exe scripts/probe.py
 git diff --check
 git status --short
 ```
 
-Antes de publicar, revise `git diff --cached` e `git ls-files`. Sem dados operacionais ou identificação de clientes. Atualize AGENTS.md, PROJECT_STATE.md e HANDOFF.md ao trocar de agente. Veja também [arquitetura pública](https://leodah20.github.io/docs/whatsapp-report-assistant/).
+Antes de publicar, revise `git diff --cached` e `git ls-files`. Sem dados operacionais ou identificação de clientes. Atualize AGENTS.md, docs/PROJECT_STATE.md e docs/HANDOFF.md ao trocar de agente. Veja também [arquitetura pública](https://leodah20.github.io/docs/whatsapp-report-assistant/).
 
 Licença Apache-2.0; dependências mantêm suas licenças. Sem afiliação ao WhatsApp/Meta, OpenAI, Anthropic ou OpenCode.

@@ -1,0 +1,13 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {randomBytes}from'node:crypto';import {seal,open,inScope,monthOf,recordOf,groupOf}from'../src/core.mjs';
+test('cipher roundtrip and no plaintext',()=>{const key=randomBytes(32),data=seal(key,Buffer.from('privado'),'id');assert(!data.includes(Buffer.from('privado')));assert.equal(open(key,data,'id').toString(),'privado');});
+test('wrong associated id rejected',()=>{const key=randomBytes(32),data=seal(key,Buffer.from('privado'),'id');assert.throws(()=>open(key,data,'other'));});
+test('corrupted ciphertext rejected',()=>{const key=randomBytes(32),data=seal(key,Buffer.from('privado'),'id');data[13]^=1;assert.throws(()=>open(key,data,'id'));});
+test('other groups ignored',()=>assert.equal(inScope({from:'other@g.us'},'selected@g.us',false),false));
+test('private messages ignored',()=>assert.equal(inScope({from:'private@c.us'},'selected@g.us',false),false));
+test('no selection denies every message',()=>assert.equal(inScope({from:'selected@g.us'},null,false),false));
+test('paused denies capture',()=>assert.equal(inScope({from:'selected@g.us'},'selected@g.us',true),false));
+test('own messages use destination',()=>assert.equal(inScope({fromMe:true,from:'self',to:'selected@g.us'},'selected@g.us',false),true));
+test('month is local Sao Paulo, not UTC',()=>assert.equal(monthOf(Date.parse('2026-11-01T01:00:00Z')/1000),'2026-10'));
+test('unreviewed source record never claims completion',()=>{const r=recordOf({id:{_serialized:'synthetic'},timestamp:1700000000,body:'normalizou'});assert.equal(r.review,'unreviewed');assert.equal(r.text,'normalizou');});
+test('invalid ids rejected',()=>assert.throws(()=>recordOf({id:{},timestamp:1700000000})));
+test('NaN date rejected',()=>assert.throws(()=>monthOf(NaN)));

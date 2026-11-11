@@ -1,6 +1,6 @@
 # Instruções compartilhadas pelos agentes
 
-Leia PLANO-ESTRATEGICO.md, PROJECT_STATE.md e HANDOFF.md; confira git status antes de alterar. Português brasileiro, comunicação direta. Use esta pasta Git e seu origin existente. Codex é o ambiente principal; OpenCode/Claude são alternativas, não substituições obrigatórias.
+Leia docs/PLANO-ESTRATEGICO.md, docs/PROJECT_STATE.md e docs/HANDOFF.md; confira git status antes de alterar. Português brasileiro, comunicação direta. Use esta pasta Git e seu origin existente. Codex é o ambiente principal; OpenCode/Claude são alternativas, não substituições obrigatórias.
 
 ## Prioridade do produto
 
@@ -15,5 +15,5 @@ Acompanhar chamados: histórico, atualizações, pendências, evidências e reda
 - Não troque chave/sessão de instalação existente nem regenere chave para corrigir erro de leitura. Preserve configurações privadas.
 - Informação suficiente para redigir não significa serviço concluído. Não invente datas, causas, procedimentos ou normalização; peça contexto quando faltar.
 - Testes com dados sintéticos, sem conectar WhatsApp de produção para testar funcionalidade nova.
-- Atualize PROJECT_STATE.md e HANDOFF.md com testes reais, limites e próxima etapa. Faça commit de código/documentação juntos; nada que identifique clientes.
+- Atualize docs/PROJECT_STATE.md e docs/HANDOFF.md com testes reais, limites e próxima etapa. Faça commit de código/documentação juntos; nada que identifique clientes.
 - O modelo de programação e o modelo local do coletor são independentes. Acesso ao código não autoriza um provedor remoto a consultar o arquivo privado/MCP.
