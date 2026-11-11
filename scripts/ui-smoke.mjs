@@ -8,7 +8,7 @@ import {CONFIG} from '../src/config.mjs';
 import {STATUSES,currentStage} from '../src/cases/stage.mjs';
 
 const month='2026-10', code='R-00000001', timestamp=1791890000;
-const source={kind:'source',timestamp,text:'Foi relatada uma falha.'};
+const source={kind:'source',timestamp,text:'Foi relatada uma falha.',hasMedia:true,mediaState:'saved',mime:'image/png'};
 const blocker='Aguardando a chegada da peça.';
 const row={code,title:'Falha de leitura',area:'SCA',status:'pending',stage:currentStage({},[{timestamp,text:blocker}]),contextState:'missing',location:'Setor de testes',locationConfirmed:true,sourceCount:1,referenceAt:timestamp,missing:['resultado'],openTasks:0};
 const profile={title:'Falha de leitura',location:row.location,events:[],tasks:[]};
@@ -32,11 +32,15 @@ const data={
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aDncAAAAASUVORK5CYII=','base64');
 const server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1'),path=url.pathname;
+  if(req.method==='POST'&&path==='/api/cases/closing/context'){
+    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({text:'Extração sintética com contexto',fingerprint:'test',attachments:0,pendingReview:1}));return;
+  }
   if(req.method!=='GET'){res.writeHead(405).end();return;}
   if(path==='/api/cases/history'&&url.searchParams.get('targets')==='1'){
     res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({targets:[{...row,current:true,month,status:'Aguardando'}]}));return;
   }
   if(path==='/api/cases/history/media'){res.writeHead(200,{'Content-Type':'image/png'}).end(png);return;}
+  if(path==='/api/cases/'+code+'/attachment/0'||path==='/api/cases/'+code+'/media/0'){res.writeHead(200,{'Content-Type':'image/png'}).end(png);return;}
   if(data[path]){res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify(data[path]));return;}
   if(path==='/api/cases/closing/cover'){res.writeHead(200,{'Content-Type':'image/png'}).end(png);return;}
   const file=routes[path]||(/^\/(cases|history|closing|draft)\.(js|css)$/.test(path)?path.slice(1):null);
@@ -111,6 +115,19 @@ try{
     assert.equal(await page.$eval('#target-controls',x=>x.hidden),true);
     await open('/chamados','.detail-actions');
     await goFromCases('#closing-link','/fechamento','.preventive-group summary');await noOverflow();
+    await page.click('.closing-list .case-card');
+    await page.waitForSelector('.review-attachment summary',{visible:true});
+    await page.click('.review-attachment summary');
+    await page.waitForFunction(()=>document.querySelector('.review-attachment img')?.naturalWidth>0);
+    assert.equal(await page.$eval('.final-review',x=>x.open),false);
+    await page.select('#assist-provider','claude');
+    await page.$eval('#assist-chat',x=>{x.value='';});
+    await page.type('#assist-chat','https://claude.ai/chat/12345678-1234-1234-1234-123456789abc');
+    assert.equal(await page.$eval('#assist-open',x=>x.href),'https://claude.ai/chat/12345678-1234-1234-1234-123456789abc');
+    await page.click('#assist-run');
+    await page.waitForSelector('#assist-output',{visible:true});
+    assert.match(await page.$eval('#assist-text',x=>x.value),/contexto/);
+    await noOverflow();
     await page.click('.preventive-group summary');
     await page.select('select[name=preventive]','pending');
     assert.match(await page.$eval('.preventive-group summary',x=>x.textContent),/1\/1 revisadas/);

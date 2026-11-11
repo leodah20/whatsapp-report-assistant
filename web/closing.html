@@ -9,9 +9,26 @@
 <form id="period" class="head-actions"><label class="control">Competência <input id="month" type="month" required></label><button class="button primary">Carregar mês</button></form></header>
 <p id="notice" role="status" class="notice" hidden></p>
 <section class="surface closing-progress" aria-labelledby="progress"><div class="section-toolbar"><h2 id="progress">Situação do fechamento</h2><a id="draft" class="button primary" hidden>Abrir minuta</a></div><p id="counts" class="hint">Carregando…</p><ul id="checks"></ul></section>
+<section class="surface report-assist" id="report-assist" aria-labelledby="assist-title">
+  <h2 id="assist-title">Preparar o relatório com IA</h2>
+  <p class="hint">Faça uma extração da competência com o contexto já organizado. A minuta final continua dependendo da sua revisão.</p>
+  <div class="report-controls">
+    <label class="control">Onde redigir <select id="assist-provider"><option value="codex">Conversa atual (Codex)</option><option value="chatgpt">ChatGPT</option><option value="claude">Claude</option><option value="local">IA local (Ollama)</option></select></label>
+    <label class="control" id="assist-chat-field" hidden>Link privado da conversa (opcional) <input id="assist-chat" type="url" maxlength="400" autocomplete="off"></label>
+  </div>
+  <p class="hint" id="assist-provider-note"></p>
+  <details id="assist-selection"><summary>Escolher chamados <span id="assist-count" class="count">0</span></summary><fieldset id="assist-cases" aria-label="Chamados da extração"></fieldset></details>
+  <div class="head-actions"><button type="button" class="button primary" id="assist-run" disabled>Preparar extração</button><a class="button outline" id="assist-open" hidden target="_blank" rel="noopener noreferrer">Abrir conversa</a></div>
+  <p id="assist-status" class="hint" role="status"></p>
+  <div id="assist-output" hidden>
+    <label class="control" for="assist-text">Prévia da extração — confira antes de compartilhar</label><textarea id="assist-text" rows="10" readonly></textarea>
+    <div class="head-actions"><button type="button" class="button primary" id="assist-zip">Baixar pacote com mídias</button><button type="button" class="button outline" id="assist-copy">Copiar extração</button><button type="button" class="button outline" id="assist-download">Baixar só o texto</button></div>
+  </div>
+  <div id="assist-results"></div>
+</section>
 <nav class="closing-steps" aria-label="Etapas da revisão"><a href="#review">1. Chamados</a><a id="settings-link" href="#settings" hidden>2. Preventivas e emissão</a></nav>
 <div class="workbench">
-<section class="surface closing-list" id="review"><h2>1. Revisar chamados</h2><p class="hint">Inclui chamados anteriores em aberto. Você decide o que entra.</p><div id="list"></div></section>
+<section class="surface closing-list" id="review"><h2>1. Conferir fontes dos chamados</h2><p class="hint">Confira o contexto e selecione os anexos da extração. Não precisa redigir o item nesta etapa.</p><div id="list"></div></section>
 <section class="surface closing-editor" id="editor"><h2>Selecione um chamado</h2></section>
 </div>
 <section class="surface closing-settings" id="settings" hidden>

@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {CaseError,localDay,STATUSES} from './board.mjs';
 import {open,seal} from '../core.mjs';
+import {reportAttachmentPath} from './report-archive.mjs';
 
 const monthPattern=/^20\d\d-(0[1-9]|1[0-2])$/;
 const codePattern=/^R-[A-F0-9]{8}$/;
@@ -23,7 +24,8 @@ export class MonthlyClosing{
   load(month){
     if(!monthPattern.test(month||''))throw new CaseError('Competência inválida.');
     const row=this.db.prepare('SELECT payload FROM monthly_closings WHERE month=?').get(month);
-    return row?JSON.parse(open(this.key,row.payload,'closing:'+month)):{version:0,reviews:{},settings:null};
+    const data=row?JSON.parse(open(this.key,row.payload,'closing:'+month)):{version:0,reviews:{},settings:null};
+    data.sourceReviews??={};return data;
   }
   candidates(month){
     return this.board.list(month,true).items.map(i=>({...i,stageLabel:STATUSES[i.status],stamp:stamp(this.board.detail(i.code))}));
@@ -39,7 +41,8 @@ export class MonthlyClosing{
     const rows=items.map(i=>{
       const review=data.reviews[i.code]||null;
       const state=!review?'unreviewed':review.stamp!==i.stamp?'stale':review.decision;
-      return {...i,state,review};
+      const sourceReview=data.sourceReviews[i.code]||null;
+      return {...i,state,review,sourceReview,sourceReviewState:!sourceReview?'unreviewed':sourceReview.stamp===i.stamp?'reviewed':'stale'};
     });
     if(rows.some(i=>!['include','exclude'].includes(i.state)))checks.push('Revise os chamados não decididos ou que receberam novas informações.');
     return {month,version:data.version,settings:data.settings,items:rows,checks,coverage,archiveCount:archive.count,template:template?{name:template.name,groups:template.groups}:null};
@@ -47,7 +50,15 @@ export class MonthlyClosing{
   save(month,input){
     const data=this.load(month);
     if(input?.version!==data.version)throw new CaseError('A revisão mudou. Recarregue antes de salvar.',409);
-    if(input.kind==='settings'){
+    if(input.kind==='sources'){
+      shape(input,['kind','version','code','stamp','attachments']);
+      if(!codePattern.test(input.code||''))throw new CaseError('Chamado inválido.');
+      const entry=this.candidates(month).find(i=>i.code===input.code);
+      if(!entry||entry.stamp!==input.stamp)throw new CaseError('As fontes mudaram. Recarregue e revise.',409);
+      const sources=this.board.detail(input.code).sources;
+      if(!Array.isArray(input.attachments)||input.attachments.length>100||new Set(input.attachments).size!==input.attachments.length||input.attachments.some(n=>!Number.isInteger(n)||!sources[n]?.hasMedia||sources[n].mediaState!=='saved'))throw new CaseError('Selecione apenas anexos arquivados deste chamado.');
+      data.sourceReviews[input.code]={stamp:entry.stamp,attachments:input.attachments,at:new Date().toISOString()};
+    }else if(input.kind==='settings'){
       shape(input,['kind','version','issued','statuses','observations','coverage']);
       const template=this.template();
       if(!template)throw new CaseError('Modelo local não configurado.');
@@ -90,5 +101,34 @@ export class MonthlyClosing{
     const template=this.template();
     const items=view.items.filter(i=>i.state==='include').map(i=>({code:i.code,...i.review})).sort((a,b)=>(a.start||'9999').localeCompare(b.start||'9999')||a.code.localeCompare(b.code));
     return {month,version:view.version,name:template.name,footer:template.footer,groups:template.groups,settings:view.settings,items};
+  }
+  contextPackage(month,codes){
+    if(!Array.isArray(codes)||!codes.length||codes.length>100||new Set(codes).size!==codes.length||codes.some(c=>typeof c!=='string'||!codePattern.test(c)))throw new CaseError('Selecione de 1 a 100 chamados distintos.');
+    const view=this.get(month);
+    const allowed=new Map(view.items.filter(i=>i.state!=='exclude').map(i=>[i.code,i]));
+    const cases=codes.map(code=>{
+      const row=allowed.get(code);
+      if(!row)throw new CaseError('Há chamados excluídos ou fora da competência. Recarregue a seleção.',409);
+      const d=this.board.detail(code),review=row.state==='include'?row.review:null;
+      const reviewedAttachments=row.sourceReviewState==='reviewed'?new Set(row.sourceReview.attachments):new Set();
+      const sources=d.sources.map((s,n)=>({ref:n+1,recordedAt:s.timestamp?new Date(s.timestamp*1000).toISOString():null,
+        kind:s.kind,text:s.text||'',media:s.hasMedia?{state:s.mediaState,type:s.mime||s.type,
+          path:reviewedAttachments.has(n)?reportAttachmentPath(code,n+1,s.mime||s.type):null,selectedForPrint:!!review?.photos.includes(n)}:null}));
+      return {code,area:d.area,title:review?.title||d.title,location:d.location||null,locationConfirmed:d.locationConfirmed,
+        serviceDate:review?.historical?null:(review?.start||d.serviceDay||null),endDate:review?.end||null,historical:!!review?.historical,
+        fromEarlierMonth:row.carryover,stage:{label:row.stageLabel,origin:d.stage?.origin,reason:d.stage?.reason||'',scheduledFor:d.stage?.scheduledFor||null},
+        sourceReviewState:row.sourceReviewState,reviewState:row.state,reviewedText:review?.narrative||null,question:row.state==='defer'?row.review.reason:null,
+        stageQuestion:d.stageQuestion||null,missing:d.missing,facts:d.facts.map(f=>({field:f.field,text:f.quote,confirmed:!!f.confirmed})),
+        tasks:d.profile.tasks.filter(t=>!t.resolvedAt).map(t=>t.text),
+        updates:d.profile.events.filter(e=>['note','profile','context','task','resolve'].includes(e.kind)&&e.text).map(e=>({kind:e.kind,serviceDate:e.occurredOn||null,registeredAt:e.registeredAt,text:e.text})),
+        sources};
+    });
+    const settings=view.settings,preventiveStatuses=settings?.template===digest(this.template())?settings.statuses:[];
+    let offset=0;
+    const preventive=view.template?.groups.map(g=>({name:g.name,rows:g.rows.map(([week,task,category])=>({week,task,category,status:preventiveStatuses[offset++]||null}))}))||[];
+    const output={schemaVersion:1,month,preparedAt:new Date().toISOString(),coverageConfirmed:!!settings&&settings.coverage===view.coverage,
+      checks:view.checks,project:view.template?.name||null,issued:settings?.issued||null,observations:settings?.observations||null,preventive,cases};
+    if(Buffer.byteLength(JSON.stringify(output))>2*1024*1024)throw new CaseError('A extração excede 2 MB de texto. Exporte os chamados em grupos menores.',413);
+    return output;
   }
 }

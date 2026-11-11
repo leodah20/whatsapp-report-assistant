@@ -32,6 +32,16 @@ Se a detecção falhar, ajuste REPORT_PYTHON e REPORT_CHROME_PATH no .env.local.
 
 Para retomar uma instalação autorizada: `npm run resume`. O script `scripts/windows/start.ps1` inicia em segundo plano. Atalho de inicialização é opcional; o projeto não instala um serviço nem muda energia/suspensão. PC desligado não processa: ao reconectar, tenta buscar o histórico disponível. Não há garantia de recuperar mensagens apagadas ou mídias expiradas.
 
+## Extração mensal e minuta
+
+Abra **Chamados → Fechamento mensal**, selecione a competência e confira as fontes de cada chamado. **Confirmar fontes e anexos** registra o material da extração sem exigir a redação final. Se os registros mudarem, confira novamente.
+
+Em **Preparar o relatório com IA**, escolha a conversa atual, ChatGPT, Claude ou Ollama local. Para as conversas, revise a extração e copie/baixe o TXT ou baixe o ZIP com as mídias confirmadas. Você pode guardar o link privado da conversa neste navegador; não é preciso criar uma chave de API. O painel não envia arquivos: anexe manualmente apenas o que puder compartilhar. Se a conversa não aceitar ZIP, extraia e anexe o TXT e os arquivos necessários.
+
+Para redigir sem cobrança de API, use um modelo GGUF baixado no Ollama. O modelo lê contexto textual, não interpreta anexos, e devolve sugestões por chamado sem salvar nem aprovar a redação. Revise as sugestões no painel. Para uma instalação somente local, também é possível desabilitar as funções de nuvem do Ollama com `OLLAMA_NO_CLOUD=1`, conforme a [documentação oficial](https://docs.ollama.com/faq).
+
+**Abrir minuta** é a etapa de impressão/PDF: fica disponível depois que texto, datas, fotos, preventivas e emissão forem revisados. A extração não precisa esperar essa aprovação.
+
 ## Mesma pasta, mesmo Git, qualquer agente
 
 Abra esta pasta no VS Code e no agente escolhido. **Não crie outra cópia para alternar entre Codex, Claude e OpenCode.**

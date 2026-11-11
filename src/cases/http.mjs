@@ -3,6 +3,8 @@ import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {CaseError,imageType} from './board.mjs';
 import {sendHistoryMedia} from './history-media.mjs';
+import {REPORT_GUIDE,suggestNarrative} from './report-assist.mjs';
+import {buildReportZip,contextFingerprint,extractionText} from './report-archive.mjs';
 
 const assets={'/chamados':['web/cases.html','text/html'],'/cases.js':['web/cases.js','text/javascript'],'/cases.css':['web/cases.css','text/css'],'/fechamento':['web/closing.html','text/html'],'/minuta':['web/draft.html','text/html'],'/historico':['web/history.html','text/html'],'/history.js':['web/history.js','text/javascript'],'/closing.js':['web/closing.js','text/javascript'],'/closing.css':['web/closing.css','text/css'],'/draft.js':['web/draft.js','text/javascript'],'/draft.css':['web/draft.css','text/css']};
 const age=12*60*60;
@@ -18,8 +20,9 @@ async function body(req,limit=8192){
   try{return JSON.parse(data.toString('utf8'));}catch{throw new CaseError('Atualização inválida.');}
 }
 
-export function createCaseHandler({origin,root,board,readMedia,closing,historical,readCover,getRuntime=()=>null}){
+export function createCaseHandler({origin,root,board,readMedia,closing,historical,readCover,getRuntime=()=>null,generateNarrative=suggestNarrative}){
   const host=new URL(origin).host,sessions=new Map();
+  let generating=false;
   return async function handle(req,res,url){
     const asset=Object.hasOwn(assets,url.pathname)?assets[url.pathname]:null;
     if(!asset&&url.pathname!=='/api/cases'&&!url.pathname.startsWith('/api/cases/'))return false;
@@ -64,6 +67,36 @@ export function createCaseHandler({origin,root,board,readMedia,closing,historica
       if(url.pathname.startsWith('/api/cases/closing')){
         if(!closing)throw new CaseError('Fechamento indisponível.',404);
         const month=url.searchParams.get('month');
+        if(req.method==='POST'&&['/api/cases/closing/context','/api/cases/closing/local','/api/cases/closing/package'].includes(url.pathname)&&req.headers.origin===origin&&req.headers['content-type']==='application/json'){
+          const input=await body(req);
+          const pack=url.pathname.endsWith('/package');
+          if(!input||!Array.isArray(input.codes)||Object.keys(input).some(k=>k!=='codes'&&!(pack&&k==='fingerprint')))throw new CaseError('Seleção inválida.');
+          if(url.pathname.endsWith('/context')){
+            const context=closing.contextPackage(month,input.codes);
+            json(res,{text:extractionText(context,REPORT_GUIDE),fingerprint:contextFingerprint(context),
+              attachments:context.cases.flatMap(i=>i.sources).filter(s=>s.media?.path).length,
+              pendingReview:context.cases.filter(i=>i.sourceReviewState!=='reviewed').length});return true;
+          }
+          if(pack){
+            const context=closing.contextPackage(month,input.codes);
+            if(input.fingerprint!==contextFingerprint(context))throw new CaseError('O contexto mudou. Prepare uma nova extração antes de baixar.',409);
+            const sourceByCase=new Map();
+            const zip=buildReportZip({context,guide:REPORT_GUIDE,readAttachment:(code,index,limit)=>{
+              if(!sourceByCase.has(code))sourceByCase.set(code,board.sources(board.item(code)));
+              const source=sourceByCase.get(code)[index];
+              return source?.mediaState==='saved'?readMedia(source.id,limit):null;
+            }});
+            res.writeHead(200,{'Content-Type':'application/zip','Content-Length':zip.length,'Content-Disposition':`attachment; filename="contexto-relatorio-${month}.zip"`});
+            res.cork();for(const chunk of zip.chunks)res.write(chunk);res.end();return true;
+          }
+          if(input.codes.length!==1)throw new CaseError('A IA local trabalha em um chamado por vez.');
+          if(generating)throw new CaseError('Já há uma sugestão local em andamento. Aguarde a conclusão.',409);
+          const packet=closing.contextPackage(month,input.codes);
+          generating=true;
+          try{json(res,await generateNarrative(packet.cases[0]));}
+          finally{generating=false;}
+          return true;
+        }
         if(req.method==='GET'&&url.pathname==='/api/cases/closing'){json(res,closing.get(month));return true;}
         if(req.method==='GET'&&url.pathname==='/api/cases/closing/draft'){json(res,closing.draft(month));return true;}
         if(req.method==='GET'&&url.pathname==='/api/cases/closing/cover'){
@@ -81,6 +114,12 @@ export function createCaseHandler({origin,root,board,readMedia,closing,historica
       if(req.method==='GET'&&url.pathname==='/api/cases/runtime'){json(res,getRuntime());return true;}
       if(req.method==='GET'&&url.pathname==='/api/cases'){
         json(res,board.list(url.searchParams.get('month'),url.searchParams.get('carry')==='1',url.searchParams.get('archived')==='1'));return true;
+      }
+      const attachment=url.pathname.match(/^\/api\/cases\/(R-[A-F0-9]{8})\/attachment\/(\d{1,4})$/);
+      if(attachment&&req.method==='GET'){
+        const source=board.sources(board.item(attachment[1]))[Number(attachment[2])];
+        if(!source?.hasMedia||source.mediaState!=='saved')throw new CaseError('Anexo não disponível.',404);
+        sendHistoryMedia(req,res,source,readMedia,url.searchParams.get('download')==='1');return true;
       }
       const upload=url.pathname.match(/^\/api\/cases\/(R-[A-F0-9]{8})\/photo$/);
       if(upload&&req.method==='POST'&&req.headers.origin===origin&&['image/jpeg','image/png','image/webp'].includes(req.headers['content-type'])){

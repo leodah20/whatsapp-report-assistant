@@ -7,6 +7,8 @@ import {fileURLToPath} from 'node:url';
 import {CaseBoard,suggestArea,imageType} from '../src/cases/board.mjs';
 import {createCaseHandler} from '../src/cases/http.mjs';
 import {MonthlyClosing} from '../src/cases/closing.mjs';
+import {suggestNarrative} from '../src/cases/report-assist.mjs';
+import {crc32} from 'node:zlib';
 
 const code='R-ABCDEF12',id='case:synthetic',occurredOn='2025-10-03';
 test('source timestamp is distinct from confirmed service day and location',t=>{
@@ -116,4 +118,59 @@ test('case HTTP requires local session and origin for writes',async t=>{
   options.headers.origin=origin;
   assert.equal((await fetch(url,options)).status,200);
   assert.equal((await (await fetch(url,{headers:{cookie}})).json()).profile.events.length,1);
+});
+test('source review needs no narrative and exports one ZIP with only confirmed attachments',async t=>{
+  const {board,db,dependencies,source}=fixture(t);source.hasMedia=true;
+  const month='2025-09',closing=new MonthlyClosing({db,key:dependencies.key,board,template:()=>null});
+  const row=closing.get(month).items[0];
+  assert.equal(closing.contextPackage(month,[code]).cases[0].sources[0].media.path,null);
+  const reviewed=closing.save(month,{version:0,kind:'sources',code,stamp:row.stamp,attachments:[0]});
+  assert.equal(reviewed.items[0].sourceReviewState,'reviewed');
+  assert.equal(reviewed.items[0].state,'unreviewed');
+  assert.equal(closing.contextPackage(month,[code]).cases[0].serviceDate,null);
+  assert.throws(()=>closing.draft(month),{status:409});
+  const bytes=Buffer.from([255,216,255,0]);
+  let handler,origin;
+  const server=createServer((req,res)=>void handler(req,res,new URL(req.url,origin)));
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>server.close(resolve)));
+  origin='http://127.0.0.1:'+server.address().port;
+  handler=createCaseHandler({origin,root:fileURLToPath(new URL('../',import.meta.url)),board,closing,readMedia:()=>bytes,
+    generateNarrative:async item=>({narrative:item.facts[0].text,questions:[]})});
+  const page=await fetch(origin+'/fechamento'),cookie=page.headers.get('set-cookie').split(';')[0];await page.body.cancel();
+  const post=(path,payload,from=origin)=>fetch(origin+'/api/cases/closing/'+path+'?month='+month,{method:'POST',headers:{cookie,origin:from,'content-type':'application/json'},body:JSON.stringify(payload)});
+  assert.equal((await post('context',{codes:[code]},'https://example.invalid')).status,403);
+  const packet=await (await post('context',{codes:[code]})).json();
+  assert.equal(packet.attachments,1);assert.equal(packet.pendingReview,0);assert.match(packet.text,/Câmera de teste/);
+  assert.equal((await post('context',{codes:['R-00000000']})).status,409);
+  const zip=await post('package',{codes:[code],fingerprint:packet.fingerprint});
+  assert.equal(zip.status,200);assert.equal(zip.headers.get('content-type'),'application/zip');
+  const data=Buffer.from(await zip.arrayBuffer()),files=new Map();
+  for(let pos=0;data.readUInt32LE(pos)===0x04034b50;){
+    const size=data.readUInt32LE(pos+18),nameSize=data.readUInt16LE(pos+26),start=pos+30+nameSize;
+    const payload=data.subarray(start,start+size);assert.equal(crc32(payload),data.readUInt32LE(pos+14));
+    files.set(data.toString('utf8',pos+30,start),payload);pos=start+size;
+  }
+  assert.match(files.get('contexto-relatorio-'+month+'.txt').toString(),/Câmera de teste/);
+  assert.deepEqual(files.get('anexos/'+code+'/fonte-1.jpg'),bytes);
+  assert.equal((await (await post('local',{codes:[code]})).json()).narrative,'Câmera de teste');
+  source.text='Evidência atualizada';
+  assert.equal((await post('package',{codes:[code],fingerprint:packet.fingerprint})).status,409);
+  assert.equal(closing.get(month).items[0].sourceReviewState,'stale');
+  assert.equal(closing.contextPackage(month,[code]).cases[0].sources[0].media.path,null);
+});
+test('local narrative verifies GGUF before passing content and separates data from instructions',async()=>{
+  const config={ollamaURL:'http://127.0.0.1:11434',model:'example:4b',context:4096,threads:2,modelTimeout:30000};
+  const calls=[];
+  const fetcher=async (url,req)=>{calls.push([url,req]);return {ok:true,json:async()=>url.endsWith('/show')?{details:{format:'gguf'},model_info:{'general.architecture':'example'}}:{message:{content:'{"narrative":"Revisão em curso.","questions":[]}'}}};};
+  const item={title:'Exemplo de atendimento',sources:[{text:'Mensagem de teste'}],updates:[]};
+  await assert.rejects(suggestNarrative(item,{config:{...config,model:'example:cloud'},fetcher}),/baixado/);
+  assert.equal(calls.length,0);
+  await assert.rejects(suggestNarrative(item,{config,fetcher:async()=>({ok:true,json:async()=>({remote_host:'example.invalid'})})}),/GGUF local/);
+  const output=await suggestNarrative(item,{config,fetcher});
+  assert.equal(output.narrative,'Revisão em curso.');
+  assert.equal(calls.length,2);
+  assert.ok(calls.every(([,req])=>req.redirect==='error'));
+  assert.ok(!calls[0][1].body.includes(item.title));
+  assert.equal(JSON.parse(JSON.parse(calls[1][1].body).messages[1].content).dados_nao_confiaveis.title,item.title);
 });
