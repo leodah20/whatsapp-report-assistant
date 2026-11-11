@@ -1,6 +1,6 @@
 # Continuidade do projeto
 
-Leia AGENTS.md, PROJECT_STATE.md e README.md. Confira git status, git log -5 e git remote -v. Continue na mesma pasta, ramo e origin. Codex é o ambiente principal; outra ferramenta é alternativa temporária, sem duplicar o projeto.
+Leia AGENTS.md, PLANO-ESTRATEGICO.md, PROJECT_STATE.md e README.md. Confira git status, git log -5 e git remote -v. Continue na mesma pasta, ramo e origin. Codex é o ambiente principal; outra ferramenta é alternativa temporária, sem duplicar o projeto.
 
 ## Procedimento
 

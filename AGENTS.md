@@ -1,6 +1,6 @@
 # Instruções compartilhadas pelos agentes
 
-Leia PROJECT_STATE.md e HANDOFF.md; confira git status antes de alterar. Português brasileiro, comunicação direta. Use esta pasta Git e seu origin existente. Codex é o ambiente principal; OpenCode/Claude são alternativas, não substituições obrigatórias.
+Leia PLANO-ESTRATEGICO.md, PROJECT_STATE.md e HANDOFF.md; confira git status antes de alterar. Português brasileiro, comunicação direta. Use esta pasta Git e seu origin existente. Codex é o ambiente principal; OpenCode/Claude são alternativas, não substituições obrigatórias.
 
 ## Prioridade do produto
 
