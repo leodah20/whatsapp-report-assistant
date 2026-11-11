@@ -18,6 +18,8 @@ import { verifyTransport, brokenTransport, closeOwnedClient } from './whatsapp/t
 import { CONFIG } from './config.mjs';
 import { CaseBoard } from './cases/board.mjs';
 import { createCaseHandler } from './cases/http.mjs';
+import { MonthlyClosing } from './cases/closing.mjs';
+import { HistoricalCases } from './cases/history.mjs';
 const {Client,LocalAuth,Message}=pkg;
 const ROOT=CONFIG.root;
 const PY=CONFIG.python;
@@ -36,7 +38,7 @@ const sessions=new Set(); let choices=[];
 function persist(){writeFileSync(CFG,seal(KEY,Buffer.from(JSON.stringify(scope)),'scope'));}
 function requireLink(){reauthRequired=true;if(scope.groupId&&!scope.linkRequired){scope.linkRequired=true;persist();}}
 function readSource(id){const row=db.prepare('SELECT payload FROM messages WHERE id=?').get(id);return row?JSON.parse(open(KEY,row.payload,id)):null;}
-const assistant=new ReportAssistant({db,key:KEY,readSource,isActive:()=>!stopping&&state==='conectado'&&!scope.paused&&!!scope.groupId&&!!scope.questionsEnabled,enabled:!!scope.questionsEnabled,send:async(text,quotedMessageId,options={})=>{
+const assistant=new ReportAssistant({db,key:KEY,readSource,isArchived:id=>!!caseBoard.profile(id).archived,isActive:()=>!stopping&&state==='conectado'&&!scope.paused&&!!scope.groupId&&!!scope.questionsEnabled,enabled:!!scope.questionsEnabled,send:async(text,quotedMessageId,options={})=>{
   if(stopping||state!=='conectado'||scope.paused||!scope.questionsEnabled||!scope.groupId?.endsWith('@g.us')||text.length>1200)throw Error('Mensagem fora do escopo autorizado');
   if(options.kind==='intake'){
     const item=assistant.all().find(i=>i.id===options.itemId);
@@ -49,7 +51,23 @@ const assistant=new ReportAssistant({db,key:KEY,readSource,isActive:()=>!stoppin
   const id=result?.id?._serialized||result?.id?.['$1'];if(!id)throw Error('Envio sem identificador confirmado');return id;
 }});
 const caseBoard=new CaseBoard({db,key:KEY,assistant,readSource});
-const serveCases=createCaseHandler({origin:ORIGIN,root:ROOT,board:caseBoard,getRuntime:runtimePulse,readMedia(id){
+const coverPath=join(DATA,'report-cover.png');
+const closing=new MonthlyClosing({db,key:KEY,board:caseBoard,template(){
+  try{
+    const path=join(DATA,'report-template.json');
+    if(statSync(path).size>32768||statSync(coverPath).size>8*1024*1024)return null;
+    const t=JSON.parse(readFileSync(path,'utf8').replace(/^\uFEFF/,''));
+    const str=(v,n)=>typeof v==='string'&&v.length<=n;
+    if(!str(t.name,100)||!t.name.trim()||!str(t.footer,250)||!Array.isArray(t.groups)||t.groups.length!==6||!t.groups.every(g=>str(g.name,70)&&Array.isArray(g.rows)&&g.rows.length>0&&g.rows.length<=20&&g.rows.every(row=>Array.isArray(row)&&row.length===3&&str(row[0],12)&&str(row[1],400)&&str(row[2],25))))return null;
+    return {name:t.name,footer:t.footer,groups:t.groups};
+  }catch{return null;}
+},archive(month){
+  const hash=createHash('sha256');let count=0;
+  for(const row of db.prepare('SELECT id,payload FROM messages WHERE month=? ORDER BY id').iterate(month)){hash.update(row.id);hash.update(row.payload);count++;}
+  return {count,revision:hash.digest('hex')};
+}});
+const historical=new HistoricalCases({db,board:caseBoard,assistant,readSource});
+const serveCases=createCaseHandler({origin:ORIGIN,root:ROOT,board:caseBoard,closing,historical,readCover:()=>readFileSync(coverPath),getRuntime:runtimePulse,readMedia(id){
   const size=db.prepare('SELECT length(media) AS n FROM messages WHERE id=?').get(id)?.n;
   if(!size||size>8*1024*1024+28)return null;
   const {media}=db.prepare('SELECT media FROM messages WHERE id=?').get(id);

@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {CaseError,imageType} from './board.mjs';
 
-const assets={'/chamados':['web/cases.html','text/html'],'/cases.js':['web/cases.js','text/javascript'],'/cases.css':['web/cases.css','text/css']};
+const assets={'/chamados':['web/cases.html','text/html'],'/cases.js':['web/cases.js','text/javascript'],'/cases.css':['web/cases.css','text/css'],'/fechamento':['web/closing.html','text/html'],'/minuta':['web/draft.html','text/html'],'/historico':['web/history.html','text/html'],'/history.js':['web/history.js','text/javascript'],'/closing.js':['web/closing.js','text/javascript'],'/closing.css':['web/closing.css','text/css'],'/draft.js':['web/draft.js','text/javascript'],'/draft.css':['web/draft.css','text/css']};
 const age=12*60*60;
 const json=(res,value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(value));};
 async function body(req){
@@ -12,7 +12,7 @@ async function body(req){
   try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new CaseError('Atualização inválida.');}
 }
 
-export function createCaseHandler({origin,root,board,readMedia,getRuntime=()=>null}){
+export function createCaseHandler({origin,root,board,readMedia,closing,historical,readCover,getRuntime=()=>null}){
   const host=new URL(origin).host,sessions=new Map();
   return async function handle(req,res,url){
     const asset=Object.hasOwn(assets,url.pathname)?assets[url.pathname]:null;
@@ -26,7 +26,7 @@ export function createCaseHandler({origin,root,board,readMedia,getRuntime=()=>nu
     const authorized=(sessions.get(token)||0)>Date.now();
     try{
       if(asset&&req.method==='GET'){
-        if(url.pathname==='/chamados'&&!authorized){
+        if(['/chamados','/fechamento','/minuta','/historico'].includes(url.pathname)&&!authorized){
           const newToken=randomBytes(32).toString('hex');sessions.set(newToken,Date.now()+age*1000);
           while(sessions.size>40)sessions.delete(sessions.keys().next().value);
           res.setHeader('Set-Cookie',`case_session=${newToken}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${age}`);
@@ -34,9 +34,38 @@ export function createCaseHandler({origin,root,board,readMedia,getRuntime=()=>nu
         res.writeHead(200,{'Content-Type':asset[1]+'; charset=utf-8'});res.end(readFileSync(join(root,asset[0])));return true;
       }
       if(!authorized){json(res,{error:'Reabra o painel para renovar a sessão local.'},401);return true;}
+      if(url.pathname==='/api/cases/history'){
+        if(!historical)throw new CaseError('Histórico indisponível.',404);
+        const month=url.searchParams.get('month');
+        if(req.method==='GET'){json(res,historical.view(month,Number(url.searchParams.get('offset')||0)));return true;}
+        if(req.method==='POST'&&req.headers.origin===origin&&req.headers['content-type']==='application/json'){
+          if(Number(req.headers['content-length'])>8192)throw new CaseError('Atualização acima do limite.',413);
+          const data=await body(req);
+          if(data?.kind==='prepare'){json(res,historical.prepare(month,data.before??null),202);return true;}
+          if(data?.kind==='assign'){json(res,{code:historical.assign(month,data.ids,data.code)});return true;}
+        }
+        throw new CaseError('Operação local não autorizada.',403);
+      }
+      if(url.pathname.startsWith('/api/cases/closing')){
+        if(!closing)throw new CaseError('Fechamento indisponível.',404);
+        const month=url.searchParams.get('month');
+        if(req.method==='GET'&&url.pathname==='/api/cases/closing'){json(res,closing.get(month));return true;}
+        if(req.method==='GET'&&url.pathname==='/api/cases/closing/draft'){json(res,closing.draft(month));return true;}
+        if(req.method==='GET'&&url.pathname==='/api/cases/closing/cover'){
+          closing.draft(month);
+          const bytes=readCover();
+          if(!imageType(bytes,'image/png'))throw new CaseError('Capa local indisponível.',404);
+          res.writeHead(200,{'Content-Type':'image/png'});res.end(bytes);return true;
+        }
+        if(req.method==='POST'&&url.pathname==='/api/cases/closing'&&req.headers.origin===origin&&req.headers['content-type']==='application/json'){
+          if(Number(req.headers['content-length'])>8192)throw new CaseError('Atualização acima do limite.',413);
+          json(res,closing.save(month,await body(req)));return true;
+        }
+        throw new CaseError('Operação local não autorizada.',403);
+      }
       if(req.method==='GET'&&url.pathname==='/api/cases/runtime'){json(res,getRuntime());return true;}
       if(req.method==='GET'&&url.pathname==='/api/cases'){
-        json(res,board.list(url.searchParams.get('month'),url.searchParams.get('carry')==='1'));return true;
+        json(res,board.list(url.searchParams.get('month'),url.searchParams.get('carry')==='1',url.searchParams.get('archived')==='1'));return true;
       }
       const path=url.pathname.match(/^\/api\/cases\/(R-[A-F0-9]{8})(?:\/media\/(\d{1,4}))?$/);
       if(!path)throw new CaseError('Rota de chamados não encontrada.',404);

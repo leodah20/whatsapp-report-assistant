@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fechamento mensal</title><link rel="stylesheet" href="/cases.css"><link rel="stylesheet" href="/closing.css"><script defer src="/closing.js"></script>
+</head><body class="closing">
+<main>
+<header class="page-head"><div><a href="/chamados">← Central de chamados</a><p class="eyebrow">REVISÃO DO MÊS</p><h1>Fechamento mensal</h1><p class="lead">Confirme o que entra na minuta, o que fica de fora e o que ainda precisa de resposta.</p></div>
+<form id="period" class="head-actions"><label class="control">Competência <input id="month" type="month" required></label><button class="button primary">Carregar mês</button></form></header>
+<p id="notice" role="status" class="notice" hidden></p>
+<section class="surface closing-progress" aria-labelledby="progress"><h2 id="progress">Antes de gerar</h2><p id="counts">Carregando…</p><p><a id="history" href="/historico">Conferir fontes sem chamado</a></p><ul id="checks"></ul><a id="draft" class="button primary" hidden>Abrir minuta para impressão</a></section>
+<div class="workbench">
+<section class="surface closing-list"><h2>Chamados para revisar</h2><p class="hint">Inclui registros anteriores em aberto. Não entram no relatório sem sua decisão.</p><div id="list"></div></section>
+<section class="surface closing-editor" id="editor"><h2>Selecione um chamado</h2></section>
+</div>
+<section class="surface closing-settings" id="settings" hidden>
+<h2>Preventivas e emissão</h2>
+<p class="hint">A semana é a referência da rotina, não a data em que ela foi executada. Nenhum status vem marcado de outro mês.</p>
+<form id="settings-form">
+<label class="control">Data real de emissão <input id="issued" type="date" required></label>
+<div id="preventives"></div>
+<label class="control">Observações confirmadas (opcional)<textarea id="observations" maxlength="2500" rows="4"></textarea></label>
+<label class="check"><input id="coverage" type="checkbox"> Conferi o arquivo do período, os chamados e as pendências anteriores. Sei que a coleta não garante cobertura integral.</label>
+<button class="button primary">Salvar preventivas e emissão</button>
+</form>
+</section>
+</main></body></html>

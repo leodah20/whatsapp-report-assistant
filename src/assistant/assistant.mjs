@@ -37,7 +37,8 @@ export function questionText(item){
 }
 
 export class ReportAssistant{
-  constructor({db,key,readSource,send,isActive,enabled=true,analyze=analyzeSources,debounceMs=120000}){
+  constructor({db,key,readSource,send,isActive,isArchived=()=>false,enabled=true,analyze=analyzeSources,debounceMs=120000}){
+    this.isArchived=isArchived;
     Object.assign(this,{db,key,readSource,send,isActive,enabled,analyze,debounceMs});
     this.busy=false;this.lastError=null;this.timer=null;this.handling=Promise.resolve();
     db.exec('CREATE TABLE IF NOT EXISTS assistant_items (id TEXT PRIMARY KEY, month TEXT NOT NULL, payload BLOB NOT NULL); CREATE TABLE IF NOT EXISTS assistant_inbox (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, state TEXT NOT NULL); CREATE TABLE IF NOT EXISTS assistant_links (message_id TEXT PRIMARY KEY, item_id TEXT NOT NULL);');
@@ -47,6 +48,7 @@ export class ReportAssistant{
   all(){return this.db.prepare('SELECT id,payload FROM assistant_items').all().map(r=>JSON.parse(open(this.key,r.payload,r.id)));}
   status(){const items=this.all();return {enabled:this.enabled,busy:this.busy,pending:this.db.prepare("SELECT COUNT(*) AS n FROM assistant_inbox WHERE state='pending'").get().n,items:items.length,questionsSent:items.filter(i=>i.questionState==='sent').length,newCallsConfirmed:items.filter(i=>i.intakeState==='sent').length,...this.receipts.status(),error:this.lastError};}
   async confirmNew(item){
+    if(this.isArchived(item.id))return;
     if(!this.enabled||!this.isActive()||item.missing.length||item.questionAttemptAt||item.questionId||item.intakeState!=='not-sent'||item.intakeAttemptAt)return;
     const today=new Date().toISOString().slice(0,10);
     if(this.all().filter(i=>i.intakeAttemptAt?.startsWith(today)).length>=60)return;
@@ -71,6 +73,7 @@ export class ReportAssistant{
     }
   }
   async askPending(item){
+    if(this.isArchived(item.id))return;
     if(!this.enabled||!this.isActive()||!item.missing.length||!['not-sent','rate-limited'].includes(item.questionState)||item.questionAttemptAt)return;
     const today=new Date().toISOString().slice(0,10);
     if(this.all().filter(i=>i.questionAttemptAt?.startsWith(today)).length>=12){item.questionState='rate-limited';this.save(item);return;}

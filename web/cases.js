@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id);
 const labels={ALL:'Todas as frentes',CFTV:'CFTV',SDAI:'SDAI',SCA:'SCA',PABX:'PABX',MEDICAO:'Medição',BMS:'BMS',ZABBIX:'Zabbix',UNCLASSIFIED:'Sem classificação'};
 const fields={local:'Local',equipamento:'Equipamento',ocorrencia:'Ocorrência',procedimento:'Procedimento',resultado:'Resultado / pendência'};
-const kinds={source:'Registro do WhatsApp',answer:'Resposta do WhatsApp',question:'Pergunta do assistente',receipt:'Confirmação de registro',note:'Atualização local',task:'Pendência registrada',resolve:'Pendência concluída',profile:'Cadastro atualizado'};
+const kinds={source:'Registro do WhatsApp',answer:'Resposta do WhatsApp',question:'Pergunta do assistente',receipt:'Confirmação de registro',note:'Atualização local',task:'Pendência registrada',resolve:'Pendência concluída',profile:'Cadastro atualizado',archive:'Arquivado',restore:'Restaurado'};
 const tz='America/Sao_Paulo';
 const day=new Intl.DateTimeFormat('sv-SE',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'});
 const clock=new Intl.DateTimeFormat('pt-BR',{timeZone:tz,dateStyle:'short',timeStyle:'short'});
@@ -38,10 +38,10 @@ function renderList(){
     const head=node('div',undefined,'card-head');head.append(node('span',i.code,'case-code'),badge(labels[i.area]));
     b.append(head,node('h3',i.title),node('p',i.summary||date(i.firstSourceAt)));
     const flags=node('div',undefined,'badges');
-    flags.append(badge(model.statuses[i.status]||i.status,i.status==='completed'?'green':''));if(i.carryover)flags.append(badge('Mês anterior'));if(i.openTasks)flags.append(badge(i.openTasks+' pendência(s)','amber'));b.append(flags);return b;
+    flags.append(badge(model.statuses[i.status]||i.status,i.status==='completed'?'green':''));if(i.archived)flags.append(badge('Arquivado'));if(i.historical)flags.append(badge('Histórico · revisar'));if(i.carryover)flags.append(badge('Mês anterior'));if(i.openTasks)flags.append(badge(i.openTasks+' pendência(s)','amber'));b.append(flags);return b;
   }));
   if(!visible.length)$('case-list').append(node('p','Nenhum chamado neste recorte. Ajuste o mês ou os filtros.','empty'));
-  $('export').disabled=!items.length;
+  $('export').disabled=!items.some(i=>!i.archived);
   return visible;
 }
 function timeline(i){
@@ -58,8 +58,10 @@ function renderDetail(){
   flags.append(badge(labels[i.area]+(i.areaSuggested&&i.area!=='UNCLASSIFIED'?' · sugerida':'')),badge(model.statuses[i.status]||i.status,i.status==='completed'?'green':''),badge(context(i),i.contextState==='complete'?'green':'amber'));
   head.append(node('p',i.code,'case-code'),node('h2',i.title),flags,node('p','Primeira fonte: '+date(i.firstSourceAt)+' · '+i.sourceCount+' fonte(s) · '+i.answerCount+' resposta(s)','hint'));
   const actions=node('div',undefined,'detail-actions');
+  if(i.profile.archived)head.append(node('p','Arquivado: '+i.profile.archived.reason,'notice'));
   actions.append(button('Editar chamado',()=>edit('profile')),button('Registrar atualização',()=>edit('note'),'button primary'),button('Nova pendência',()=>edit('task')));
   head.append(actions);
+  actions.append(button(i.profile.archived?'Restaurar chamado':'Arquivar chamado',()=>edit(i.profile.archived?'restore':'archive')));
   const tabs=node('nav',undefined,'tabs');tabs.setAttribute('aria-label','Detalhes do chamado');
   for(const [id,label] of [['overview','Visão geral'],['history','Histórico'],['sources','Fontes e fotos']]){const b=button(label,()=>{tab=id;renderDetail();$('detail').querySelector('.tab[aria-pressed=true]')?.focus();},'tab');b.setAttribute('aria-pressed',String(tab===id));tabs.append(b);}
   const body=node('div',undefined,'tab-body');
@@ -103,7 +105,7 @@ function historyReplace(code){window.history.replaceState(null,'','#'+code);}
 async function refresh(manual=false){
   const request=++listRequest;
   try{
-    const next=await api('?month='+encodeURIComponent($('month').value)+'&carry='+Number($('carry').checked));
+    const next=await api('?month='+encodeURIComponent($('month').value)+'&carry='+Number($('carry').checked)+'&archived='+Number($('archived').checked));
     if(request!==listRequest)return;
     model=next;const visible=renderList();
     const chosen=selected||visible[0]?.code;
@@ -121,31 +123,33 @@ async function pulse(){
 }
 function edit(kind,task){
   editing={kind,task,code:detail.code,version:detail.version,status:detail.status};
-  $('dialog-title').textContent={profile:'Editar chamado',note:'Registrar atualização',task:'Nova pendência',resolve:'Concluir pendência'}[kind];
+  $('dialog-title').textContent={profile:'Editar chamado',note:'Registrar atualização',task:'Nova pendência',resolve:'Concluir pendência',archive:'Arquivar chamado',restore:'Restaurar chamado'}[kind];
   $('dialog-code').textContent=detail.code;$('profile-fields').hidden=kind!=='profile';
   $('edit-title').value=detail.profile.title;
   $('edit-area').replaceChildren(new Option('Usar sugestão automática',''),...Object.entries(labels).filter(([k])=>k!=='ALL').map(([k,v])=>new Option(v,k)));
   $('edit-area').value=detail.profile.area||'';
   $('edit-status').replaceChildren(...Object.entries(model.statuses).map(([k,v])=>new Option(v,k)));$('edit-status').value=detail.status;
   $('edit-note').maxLength=kind==='task'?500:2000;$('edit-note').value='';$('edit-day').value='';$('edit-day').max=day.format(new Date());
-  $('note-label').textContent=kind==='resolve'?'Como a pendência foi resolvida?':kind==='profile'?'Justificativa da mudança de andamento':'Descrição';
+  $('note-label').textContent=kind==='archive'?'Motivo (ex.: duplicado do chamado R-…)':kind==='resolve'?'Como a pendência foi resolvida?':kind==='profile'?'Observação ou correção técnica':'Descrição';
+  $('edit-note').parentElement.hidden=kind==='restore';
+  if(kind==='archive')$('edit-note').maxLength=1000;
   $('form-error').hidden=true;configureForm();$('edit-dialog').showModal();
 }
-function configureForm(){if(!editing)return;const required=editing.kind!=='profile'||$('edit-status').value!==editing.status;$('date-field').hidden=!required;$('edit-day').required=required;$('edit-note').required=required;}
+function configureForm(){if(!editing)return;const required=!['archive','restore'].includes(editing.kind)&&(editing.kind!=='profile'||$('edit-status').value!==editing.status);$('date-field').hidden=!required;$('edit-day').required=required;$('edit-note').required=required||editing.kind==='archive';}
 $('edit-status').onchange=configureForm;
 for(const id of ['cancel','cancel-top'])$(id).onclick=()=>$('edit-dialog').close();
 $('edit-dialog').onclose=()=>{editing=null;};
 $('edit-form').onsubmit=async e=>{
   e.preventDefault();if(!editing)return;
   const {kind,version,code,task}=editing,occurredOn=$('edit-day').value,note=$('edit-note').value;
-  const payload=kind==='profile'?{kind,version,area:$('edit-area').value||null,title:$('edit-title').value,status:$('edit-status').value,note,occurredOn}:{kind,version,text:note,occurredOn,...(task?{taskId:task.id}:{})};
+  const payload=kind==='archive'?{kind,version,text:note}:kind==='restore'?{kind,version}:kind==='profile'?{kind,version,area:$('edit-area').value||null,title:$('edit-title').value,status:$('edit-status').value,note,occurredOn}:{kind,version,text:note,occurredOn,...(task?{taskId:task.id}:{})};
   $('save').disabled=true;
   try{detail=await api('/'+code,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});$('edit-dialog').close();renderDetail();await refresh();notify('Alteração salva no painel. Nenhuma mensagem enviada.');}
   catch(e){$('form-error').textContent=e.message;$('form-error').hidden=false;}
   finally{$('save').disabled=false;}
 };
 $('export').onclick=async()=>{
-  const month=model.month,items=[...model.items];$('export').disabled=true;
+  const month=model.month,items=model.items.filter(i=>!i.archived);$('export').disabled=true;
   try{
     const lines=['BASE DE CONFERÊNCIA · '+month,'Não é o relatório final. Andamentos atuais; confira as datas de cada fonte e atualização.'];
     for(const row of items){
@@ -161,6 +165,9 @@ $('export').onclick=async()=>{
 };
 $('month').value=day.format(new Date()).slice(0,7);
 $('month').onchange=$('carry').onchange=()=>void refresh();
+$('archived').onchange=()=>void refresh();
+function monthLinks(){for(const [id,route] of [['closing-link','/fechamento'],['history-link','/historico']])$(id).href=route+'?month='+encodeURIComponent($('month').value);}
+$('month').addEventListener('change',monthLinks);monthLinks();
 $('search').oninput=$('filter').onchange=renderList;
 $('refresh').onclick=()=>{void refresh(true);void pulse();};
 window.addEventListener('hashchange',()=>{const code=codeFromHash();if(code&&!editing)void openCase(code);});

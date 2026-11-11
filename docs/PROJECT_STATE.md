@@ -12,7 +12,7 @@ O funcionamento não depende de Codex/OpenCode/Claude abertos ou dos créditos d
 
 ## Próximas prioridades de produto
 
-1. Fluxo de fechamento mensal: conciliar fontes, confirmar pendências, redigir itens variados e objetivos, revisar e gerar relatório. Não inventar datas nem conclusões.
+1. Acompanhar o primeiro fechamento real, validar a cobertura histórica e ajustar o fluxo de revisão conforme o uso. Não inventar datas nem conclusões.
 2. Documentação interativa e explorador técnico somente como apoio; não ampliar infraestrutura enquanto o fluxo de chamados estiver pendente.
 
 ## Concluído nesta etapa
@@ -21,7 +21,7 @@ Código completo sanitizado publicado em https://github.com/leodah20/whatsapp-re
 
 Validação: 60 testes sintéticos aprovados na instalação e também em clone limpo baixado do GitHub; npm ci --ignore-scripts concluiu nesse clone. Doctor confirmou Node, Python, navegador e modelo local. OpenCode 1.19.5 instalado; catálogo confirmou o modelo Free. Não houve inferência de programação nem acesso ao arquivo privado por esse provedor. Não foi validada uma instalação Python limpa ponta a ponta.
 
-Em 11/11/2026, a central local por frente de serviço e a supervisão Windows entraram em operação. A recuperação de um perfil de navegador travado foi verificada com o vínculo existente. A central oferece histórico, fontes, atualizações locais, pendências e base TXT. O gerador mensal e o explorador técnico continuam pendentes.
+Em 11/11/2026, a central local por frente de serviço e a supervisão Windows entraram em operação. A central oferece arquivo reversível de chamados, fila de fontes históricas sem vínculo, revisão por competência, preventivas com status explícito e minuta A4 imprimível. A capa e as rotinas do projeto ficam no modelo privado local. O explorador técnico e a exportação DOCX não estão implementados.
 
 ## Limites
 

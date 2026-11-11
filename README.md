@@ -139,6 +139,14 @@ Interpretação de fotos/áudios, explorador técnico interativo e geração do 
 
 ## Verificação e continuidade
 
+### Fechamento mensal
+
+No painel, abra **Fechamento mensal**. Revise cada chamado, confirme data ou acompanhamento sem intervenção datada, edite a narrativa e selecione as fotos do próprio chamado. Marque **Aguardar contexto** com a pergunta se faltar uma informação. A revisão é local e não envia mensagens. Registre os status das preventivas, a emissão e a conferência da cobertura; a minuta abre em A4 para imprimir ou salvar pelo navegador. Não é uma exportação DOCX.
+
+O modelo privado fica em `data/report-template.json` com `name`, `footer` e seis `groups`; cada grupo tem `name` e `rows` com trios `[semana, tarefa, classificação]`. Use `data/report-cover.png` para a capa autorizada. Nunca versione esses arquivos. Para outra pasta de dados, use o diretório configurado na instalação.
+
+**Histórico sem chamado** exibe fontes já arquivadas, com opção de criar rascunho, vincular a um chamado ou preparar sugestões em lotes locais sem notificação retroativa. **Arquivar chamado** tira um duplicado da lista ativa e da minuta, sem apagar fontes. Para reverter, use **Mostrar chamados arquivados**.
+
 ```powershell
 npm run doctor  # não lê chaves/mensagens, não conecta WhatsApp
 npm test        # fontes sintéticas, sem envios reais

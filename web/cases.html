@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Central de chamados</title>
   <link rel="stylesheet" href="/cases.css">
+  <link rel="stylesheet" href="/closing.css">
   <script src="/cases.js" defer></script>
 </head>
 <body>
@@ -20,6 +21,8 @@
       <div class="head-actions">
         <label class="control">Competência <input type="month" id="month" required></label>
         <button type="button" class="button outline" id="refresh">Atualizar</button>
+        <a class="button outline" href="/fechamento" id="closing-link">Fechamento mensal</a>
+        <a class="button outline" href="/historico" id="history-link">Histórico sem chamado</a>
         <button type="button" class="button primary" id="export">Baixar base do mês</button>
       </div>
     </header>
@@ -35,6 +38,7 @@
           <label class="sr-only" for="filter">Filtrar andamento</label>
           <select id="filter"><option value="all">Todos os andamentos</option><option value="attention">Com informações ou providências pendentes</option><option value="unconfirmed">Andamento a confirmar</option><option value="open">Em atendimento</option><option value="pending">Aguardando providência</option><option value="completed">Concluído confirmado</option></select>
           <label class="check"><input type="checkbox" id="carry"> Incluir chamados em aberto de meses anteriores</label>
+          <label class="check"><input type="checkbox" id="archived"> Mostrar chamados arquivados</label>
         </div>
         <div id="case-list" class="case-list" aria-label="Chamados encontrados"></div>
       </section>

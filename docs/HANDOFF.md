@@ -22,4 +22,6 @@ O supervisor recuperou uma instância travada; a central /chamados foi conferida
 
 ## Pedido para retomar
 
+Fechamento: /fechamento revisa inclusões, exclusões e perguntas, guarda decisões criptografadas e exige nova revisão após mudanças nas fontes. /minuta gera a versão imprimível, sem editar arquivos finais. /historico lista fontes não vinculadas, permite atribuição manual e prepara rascunhos silenciosos por IA local. Arquivar é reversível e não apaga evidências. Verificar cobertura mês a mês; importação do WhatsApp não garante histórico completo.
+
 “Leia os arquivos de continuidade, confira Git e continue a próxima prioridade de chamados. Use esta pasta e o origin existente. Preserve dados privados, rode testes e atualize HANDOFF.md. Pergunte antes de acessar o arquivo privado com um modelo remoto ou ampliar os envios automáticos.”

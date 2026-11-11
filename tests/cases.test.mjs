@@ -6,8 +6,45 @@ import {createServer} from 'node:http';
 import {fileURLToPath} from 'node:url';
 import {CaseBoard,suggestArea,imageType} from '../src/cases/board.mjs';
 import {createCaseHandler} from '../src/cases/http.mjs';
+import {MonthlyClosing} from '../src/cases/closing.mjs';
 
 const code='R-ABCDEF12',id='case:synthetic',occurredOn='2025-10-03';
+test('monthly draft requires manual dates, evidence review and preventive confirmation',t=>{
+  const {board,db,source,dependencies}=fixture(t);
+  const groups=Array.from({length:6},(_,n)=>({name:'Grupo '+n,rows:[['1','Tarefa sintética','Técnico']]}));
+  let revision='a';
+  const closing=new MonthlyClosing({db,key:dependencies.key,board,template:()=>({name:'Exemplo',footer:'Exemplo',groups}),archive:()=>({count:1,revision})});
+  const month='2025-09',initial=closing.get(month);
+  assert.throws(()=>closing.draft(month),{status:409});
+  const review={kind:'review',version:0,code,stamp:initial.items[0].stamp,decision:'include',title:'Verificação',narrative:'A causa permanece em análise.',start:'',end:'',photos:[0],verified:true};
+  assert.throws(()=>closing.save(month,review),/data real/);
+  assert.throws(()=>closing.save(month,{...review,start:'2025-10-01'}),/competência/);
+  const edited=closing.save(month,{...review,start:'2025-09-04'});
+  assert.throws(()=>closing.save(month,{...review,start:'2025-09-04'}),{status:409});
+  const settings={kind:'settings',version:1,issued:'2025-10-02',statuses:Array(6).fill('unknown'),observations:'',coverage:edited.coverage};
+  assert.throws(()=>closing.save(month,{...settings,statuses:[]}),/status/);
+  closing.save(month,settings);
+  const output=closing.draft(month);
+  assert.equal(output.items[0].start,'2025-09-04');
+  assert.equal(output.items[0].narrative,review.narrative);
+  assert.equal(output.settings.statuses[0],'unknown');
+  revision='b';assert.throws(()=>closing.draft(month),{status:409});
+  source.text='Evidência revisada';
+  assert.equal(closing.get(month).items[0].state,'stale');
+});
+test('archiving removes case from closing and can be reversed without losing sources',t=>{
+  const {board,db,dependencies}=fixture(t);
+  const month='2025-09',closing=new MonthlyClosing({db,key:dependencies.key,board,template:()=>null});
+  board.change(code,{version:0,kind:'archive',text:'Duplicado; ver chamado principal.'});
+  assert.equal(board.list(month).items.length,0);
+  assert.equal(board.list(month,false,true).items[0].archived,true);
+  assert.equal(closing.get(month).items.length,0);
+  assert.equal(board.detail(code).sources.length,1);
+  assert.equal(board.detail(code).profile.events[0].kind,'archive');
+  board.change(code,{version:1,kind:'restore'});
+  assert.equal(closing.get(month).items.length,1);
+  assert.equal(board.detail(code).profile.events[1].kind,'restore');
+});
 function fixture(t){
   const db=new DatabaseSync(':memory:');t.after(()=>db.close());
   const item={id,code,month:'2025-09',sourceIds:['a'],answerIds:[],facts:[{field:'equipamento',quote:'Câmera de teste'}],review:'draft-ready',missing:[],createdAt:'2025-09-05T12:00:00Z'};

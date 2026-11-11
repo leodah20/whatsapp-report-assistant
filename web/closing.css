@@ -1,0 +1,21 @@
+.closing main{max-width:1230px;margin:0 auto;padding:28px clamp(14px,3vw,42px)}
+.closing .page-head a{display:inline-block;margin-bottom:12px}
+.closing-progress,.closing-list,.closing-editor,.closing-settings{padding:20px}
+.closing-progress,.closing-settings{margin-bottom:18px}
+.closing-settings{margin-top:18px}
+.closing-progress ul{padding-left:20px;margin:8px 0}
+.closing-progress p,.closing-list .hint{margin:7px 0 12px}
+.closing a.button,#closing-link,#history-link{display:inline-flex;align-items:center;text-decoration:none}
+.closing a[hidden]{display:none}
+.closing #list{display:grid;gap:7px}
+.closing .control,.closing .check,.closing details{margin:12px 0}
+.closing fieldset{border:1px solid var(--line,#dce4e7);border-radius:8px;margin:14px 0;padding:12px;min-width:0}
+.closing legend{font-weight:650}
+.closing .evidence{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0}
+.closing .date-row{display:flex;gap:14px;flex-wrap:wrap}
+.closing .preventive-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,190px);align-items:center;gap:10px;margin:6px 0}
+.closing .photo-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.closing .photo-list img{width:100%;height:110px;object-fit:contain;background:#eaf0f2}
+.closing .photo-list label{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:5px}
+.closing .photo-list img{grid-column:1/-1}
+@media(max-width:640px){.closing .preventive-row{grid-template-columns:1fr;gap:2px}}

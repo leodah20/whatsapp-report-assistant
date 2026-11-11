@@ -41,9 +41,9 @@ export class CaseBoard{
     const timestamps=sources.map(s=>s.timestamp).filter(Number.isFinite).sort((a,b)=>a-b);
     return {code:item.code,title:title.slice(0,180),summary:item.facts?.find(f=>f.field==='ocorrencia')?.quote||'',area:profile.area||suggestion.area,areaSuggested:!profile.area,candidates:suggestion.candidates,status:profile.status,version:profile.version,contextState:item.review==='clarification-received'?'analysis-pending':item.missing?.length?'needs-context':'complete',missing:item.missing||[],openTasks:profile.tasks.filter(t=>!t.resolvedAt).length,sourceCount:sources.length,answerCount:item.answerIds?.length||0,originMonth:item.month,activityMonths,firstSourceAt:timestamps[0]||null,lastSourceAt:timestamps.at(-1)||null,updatedAt:profile.events.at(-1)?.registeredAt||item.updatedAt||item.createdAt};
   }
-  list(month,carry=false){
+  list(month,carry=false,includeArchived=false){
     if(!/^20\d\d-(0[1-9]|1[0-2])$/.test(month||''))throw new CaseError('Mês inválido.');
-    const all=this.assistant.all().map(i=>this.summary(i));
+    const all=this.assistant.all().map(i=>{const p=this.profile(i.id);return {...this.summary(i,p),archived:!!p.archived,historical:!!i.historical};}).filter(i=>includeArchived||!i.archived);
     const items=all.filter(i=>i.activityMonths.includes(month)||(carry&&i.originMonth<month&&(i.status!=='completed'||i.openTasks>0))).map(i=>({...i,carryover:!i.activityMonths.includes(month)}));
     items.sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
     return {untrusted:true,month,areas:AREAS,statuses:STATUSES,months:[...new Set([localDay().slice(0,7),...all.flatMap(i=>i.activityMonths)])].sort().reverse(),items};
@@ -58,7 +58,7 @@ export class CaseBoard{
   change(code,input){
     const item=this.item(code);
     if(!input||!Number.isInteger(input.version)||input.version<0)throw new CaseError('Versão inválida.');
-    const allowed={profile:['version','kind','area','title','status','note','occurredOn'],note:['version','kind','text','occurredOn'],task:['version','kind','text','occurredOn'],resolve:['version','kind','taskId','text','occurredOn']};
+    const allowed={profile:['version','kind','area','title','status','note','occurredOn'],note:['version','kind','text','occurredOn'],task:['version','kind','text','occurredOn'],resolve:['version','kind','taskId','text','occurredOn'],archive:['version','kind','text'],restore:['version','kind']};
     if(!Object.hasOwn(allowed,input.kind)||Object.keys(input).some(k=>!allowed[input.kind].includes(k)))throw new CaseError('Atualização inválida.');
     this.db.exec('BEGIN IMMEDIATE');
     try{
@@ -66,7 +66,14 @@ export class CaseBoard{
       if(p.version!==input.version)throw new CaseError('Este chamado foi atualizado em outra janela. Recarregue antes de salvar.',409);
       const event={id:randomUUID(),kind:input.kind,registeredAt:new Date().toISOString()};
       if(p.events.length>=2000)throw new CaseError('Limite de histórico atingido; preserve o arquivo e solicite revisão.');
-      if(input.kind==='profile'){
+      if(input.kind==='archive'){
+        if(p.archived)throw new CaseError('Chamado já arquivado.',409);
+        event.text=text(input.text,1000,true);
+        p.archived={at:event.registeredAt,reason:event.text};
+      }else if(input.kind==='restore'){
+        if(!p.archived)throw new CaseError('Chamado já está ativo.',409);
+        p.archived=null;
+      }else if(input.kind==='profile'){
         if(input.area!==null&&![...AREAS,'UNCLASSIFIED'].includes(input.area))throw new CaseError('Frente de serviço inválida.');
         if(!Object.hasOwn(STATUSES,input.status))throw new CaseError('Andamento inválido.');
         const note=text(input.note||'',2000,input.status!==p.status);
