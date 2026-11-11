@@ -26,6 +26,7 @@
 .closing-progress #counts,.closing-progress #count{margin:4px 0}
 .closing-progress #checks{font-size:.85rem;color:var(--muted);margin-bottom:0}
 .closing-steps{display:flex;flex-wrap:wrap;gap:8px 18px;margin:0 0 14px;font-size:.84rem;font-weight:650}
+.closing .closing-mode{margin-bottom:12px}
 .closing .page-head .control,.source-selection .control{margin:0}
 .closing .preventive-group{border:1px solid var(--line);border-radius:8px;margin:8px 0}
 .preventive-group summary{padding:10px 12px;font-size:.86rem;font-weight:650}

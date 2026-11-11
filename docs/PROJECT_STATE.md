@@ -33,6 +33,8 @@ O Histórico permite prévia da mídia arquivada sob demanda, seleção de chama
 
 ## Limites
 
+O fechamento abre no fluxo de extração. A revisão da redação, as decisões de inclusão e as preventivas aparecem somente ao escolher **Fechar PDF pelo painel**. Voltar à extração não descarta o pacote preparado.
+
 A extração mensal usa os chamados selecionados, seus fatos, histórico e evidências vinculadas, separando revisão de fontes de aprovação da narrativa. O ZIP inclui as mídias confirmadas para o pacote. ChatGPT e Claude são destinos manuais; o painel não acessa conversas remotas. A opção Ollama gera sugestões textuais e não interpreta os anexos. Limites da extração: 100 chamados, 2 MB de texto estruturado e ZIP de até 100 MB/200 arquivos.
 
 A central calcula a etapa pelo histórico já vinculado, pelas respostas no painel e pelas atualizações locais. A fila resume por etapa e expõe o motivo de espera sem exigir uma pendência duplicada. Ajuste manual persiste até ser alterado ou voltar ao modo pelos registros. Não há reclassificação automática de material não vinculado nem leitura do conteúdo de fotos ou vídeos. A atualização foi carregada no coletor local e a API de etapas respondeu após reconexão.

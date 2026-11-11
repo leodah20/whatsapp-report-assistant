@@ -40,7 +40,7 @@ Em **Preparar o relatório com IA**, escolha a conversa atual, ChatGPT, Claude o
 
 Para redigir sem cobrança de API, use um modelo GGUF baixado no Ollama. O modelo lê contexto textual, não interpreta anexos, e devolve sugestões por chamado sem salvar nem aprovar a redação. Revise as sugestões no painel. Para uma instalação somente local, também é possível desabilitar as funções de nuvem do Ollama com `OLLAMA_NO_CLOUD=1`, conforme a [documentação oficial](https://docs.ollama.com/faq).
 
-**Abrir minuta** é a etapa de impressão/PDF: fica disponível depois que texto, datas, fotos, preventivas e emissão forem revisados. A extração não precisa esperar essa aprovação.
+**Fechar PDF pelo painel** é opcional: mostra a revisão de texto, datas, fotos, preventivas e emissão. Depois de revisar, use **Abrir minuta** para imprimir ou salvar em PDF. A tela abre no fluxo de extração, sem exigir essa aprovação.
 
 ## Mesma pasta, mesmo Git, qualquer agente
 
@@ -151,7 +151,7 @@ Interpretação de fotos/áudios, explorador técnico interativo e geração do 
 
 ### Fechamento mensal
 
-No painel, abra **Fechamento mensal**. Revise cada chamado, confirme data ou acompanhamento sem intervenção datada, edite a narrativa e selecione as fotos do próprio chamado. Marque **Aguardar contexto** com a pergunta se faltar uma informação. A revisão é local e não envia mensagens. Registre os status das preventivas, a emissão e a conferência da cobertura; a minuta abre em A4 para imprimir ou salvar pelo navegador. Não é uma exportação DOCX.
+No painel, abra **Fechamento mensal → Fechar PDF pelo painel**. Revise cada chamado, confirme data ou acompanhamento sem intervenção datada, edite a narrativa e selecione as fotos do próprio chamado. Escolha **Aguardar contexto** com a pergunta se faltar uma informação. A revisão é local e não envia mensagens. Registre os status das preventivas, a emissão e a conferência da cobertura; a minuta abre em A4 para imprimir ou salvar pelo navegador. Não é uma exportação DOCX.
 
 O modelo privado fica em `data/report-template.json` com `name`, `footer` e seis `groups`; cada grupo tem `name` e `rows` com trios `[semana, tarefa, classificação]`. Use `data/report-cover.png` para a capa autorizada. Nunca versione esses arquivos. Para outra pasta de dados, use o diretório configurado na instalação.
 

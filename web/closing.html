@@ -5,13 +5,14 @@
 </head><body class="closing">
 <main>
 <nav class="workspace-nav" aria-label="Área de trabalho"><a href="/chamados" data-month-nav>Chamados</a><a href="/historico" data-month-nav>Histórico sem chamado</a><a href="/fechamento" aria-current="page">Fechamento mensal</a><a href="/">Configuração</a></nav>
-<header class="page-head"><div><h1>Fechamento mensal</h1><p class="lead">Revise os chamados, confirme as preventivas e gere a minuta.</p></div>
+<header class="page-head"><div><h1>Fechamento mensal</h1><p class="lead" id="closing-lead">Confira as fontes e os anexos e gere a extração do mês.</p></div>
 <form id="period" class="head-actions"><label class="control">Competência <input id="month" type="month" required></label><button class="button primary">Carregar mês</button></form></header>
 <p id="notice" role="status" class="notice" hidden></p>
-<section class="surface closing-progress" aria-labelledby="progress"><div class="section-toolbar"><h2 id="progress">Situação do fechamento</h2><a id="draft" class="button primary" hidden>Abrir minuta</a></div><p id="counts" class="hint">Carregando…</p><ul id="checks"></ul></section>
+<div class="section-toolbar closing-mode"><p class="hint" id="closing-mode-note" role="status">Extração de contexto e mídias</p><button id="print-mode" type="button" class="button outline">Fechar PDF pelo painel</button></div>
+<section class="surface closing-progress" id="print-progress" aria-labelledby="progress" hidden><div class="section-toolbar"><h2 id="progress">Situação do PDF</h2><a id="draft" class="button primary" hidden>Abrir minuta</a></div><p id="counts" class="hint">Carregando…</p><ul id="checks"></ul></section>
 <section class="surface report-assist" id="report-assist" aria-labelledby="assist-title">
   <h2 id="assist-title">Preparar o relatório com IA</h2>
-  <p class="hint">Faça uma extração da competência com o contexto já organizado. A minuta final continua dependendo da sua revisão.</p>
+  <p class="hint">Depois de conferir as fontes, reúna o contexto e as mídias da competência em um pacote.</p>
   <div class="report-controls">
     <label class="control">Onde redigir <select id="assist-provider"><option value="codex">Conversa atual (Codex)</option><option value="chatgpt">ChatGPT</option><option value="claude">Claude</option><option value="local">IA local (Ollama)</option></select></label>
     <label class="control" id="assist-chat-field" hidden>Link privado da conversa (opcional) <input id="assist-chat" type="url" maxlength="400" autocomplete="off"></label>
@@ -26,7 +27,7 @@
   </div>
   <div id="assist-results"></div>
 </section>
-<nav class="closing-steps" aria-label="Etapas da revisão"><a href="#review">1. Chamados</a><a id="settings-link" href="#settings" hidden>2. Preventivas e emissão</a></nav>
+<nav class="closing-steps" aria-label="Atalhos do fechamento"><a href="#review" id="review-link">Conferir fontes</a><a id="extract-link" href="#report-assist">Gerar extração</a><a id="settings-link" href="#settings" hidden>2. Preventivas e emissão</a></nav>
 <div class="workbench">
 <section class="surface closing-list" id="review"><h2>1. Conferir fontes dos chamados</h2><p class="hint">Confira o contexto e selecione os anexos da extração. Não precisa redigir o item nesta etapa.</p><div id="list"></div></section>
 <section class="surface closing-editor" id="editor"><h2>Selecione um chamado</h2></section>

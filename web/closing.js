@@ -9,7 +9,7 @@ const fields={local:'Qual é o local exato?',equipamento:'Qual equipamento foi a
 const fieldLabels={local:'Local',equipamento:'Equipamento',ocorrencia:'Ocorrência',procedimento:'Procedimento',resultado:'Resultado ou pendência'};
 const statuses={'':'Selecione…',done:'Concluída',pending:'Pendente',unknown:'Sem confirmação',na:'Não aplicável'};
 let view=null,selected=null,serial=0,dirty=false,saving=false;
-let assistMonth='',assistRunning=false,extraction=null;
+let assistMonth='',assistRunning=false,extraction=null,printMode=false;
 const assistPicked=new Set(),localSuggestions=new Map();
 const cloudHosts={chatgpt:'chatgpt.com',claude:'claude.ai'};
 const localTimeout=920000;
@@ -44,6 +44,7 @@ function refreshProvider(){
 function refreshSelection(){
   $('assist-count').textContent=assistPicked.size;
   $('assist-run').disabled=assistRunning||!assistPicked.size||assistPicked.size>100;
+  $('print-mode').disabled=assistRunning;
 }
 function renderAssist(){
   const eligible=view.items.filter(x=>x.state!=='exclude');
@@ -132,8 +133,20 @@ function reviewAttachment(code,s,index){
   };
   return details;
 }
+function renderMode(){
+  $('print-progress').hidden=!printMode;
+  $('report-assist').hidden=$('extract-link').hidden=printMode;
+  $('settings-link').hidden=$('settings').hidden=!printMode||!view?.template;
+  $('closing-mode-note').textContent=printMode?'Revisão para impressão':'Extração de contexto e mídias';
+  $('closing-lead').textContent=printMode?'Revise o texto, as datas, as fotos e as preventivas para salvar em PDF.':'Confira as fontes e os anexos e gere a extração do mês.';
+  $('print-mode').textContent=printMode?'Voltar para extração':'Fechar PDF pelo painel';
+  $('review-link').textContent=printMode?'1. Revisar chamados':'Conferir fontes';
+  const final=$('editor').querySelector('.final-review');
+  if(final)final.hidden=!printMode;
+}
 function renderOverview(){
   renderAssist();
+  renderMode();
   for(const a of document.querySelectorAll('[data-month-nav]'))a.href=a.pathname+'?month='+encodeURIComponent(view.month);
   $('counts').textContent=view.archiveCount+' mensagens no arquivo · '+view.items.length+' chamados · '+view.items.filter(x=>x.state==='include').length+' incluídos';
   $('checks').replaceChildren(...(view.checks.length?view.checks:['Revisão registrada. Você já pode abrir a minuta.']).map(x=>el('li',x)));
@@ -144,13 +157,13 @@ function renderOverview(){
     b.append(el('span',x.code,'case-code'),el('span',x.location?(x.locationConfirmed?x.location:'Local sugerido: '+x.location):'Local a confirmar','case-location'),el('h3',x.title));
     if(x.stageLabel)b.append(el('span',x.stageLabel,'badge stage-badge stage-'+x.status));
     const sourceState={unreviewed:'Fontes por conferir',reviewed:'Fontes conferidas',stale:'Fontes alteradas — conferir de novo'};
-    b.append(el('p',(x.carryover?'Anterior · ':'')+(sourceState[x.sourceReviewState]||stateLabels[x.state])));
+    b.append(el('p',(x.carryover?'Anterior · ':'')+(printMode?stateLabels[x.state]:(sourceState[x.sourceReviewState]||'Fontes por conferir'))));
     b.onclick=()=>{if(!saving&&(!dirty||confirm('Descartar alterações não salvas?')))void openCase(x.code);};return b;
   }));
   if(!view.items.length)$('list').append(el('p','Nenhum chamado localizado neste recorte. Confira o arquivo antes de confirmar a cobertura.','hint'));
 }
 function renderSettings(){
-  $('settings-link').hidden=$('settings').hidden=!view.template;if(!view.template)return;
+  if(!view.template)return;
   $('issued').value=view.settings?.issued||'';$('issued').max=local.format(new Date());
   $('observations').value=view.settings?.observations||'';$('coverage').checked=view.settings?.coverage===view.coverage;
   let index=0;
@@ -183,7 +196,7 @@ async function openCase(code){
     selected=code;dirty=false;renderOverview();
     const row=view.items.find(x=>x.code===code),r=row.review||{};
     const title=el('h2',d.title),form=el('form'),evidence=el('section',undefined,'source-review');
-    evidence.append(el('h3','Contexto para a extração'),el('p','Confira os dados abaixo e marque os anexos para o pacote. Isso não aprova a redação final.','hint'));
+    evidence.append(el('h3','Contexto para a extração'),el('p','Confira os dados abaixo e marque os anexos que devem entrar no pacote.','hint'));
     if(row.stageLabel)evidence.append(el('p',[row.stageLabel,d.stage?.reason].filter(Boolean).join(' — '),'evidence'));
     for(const task of d.profile.tasks||[])if(!task.resolvedAt)evidence.append(el('p','Pendência: '+task.text,'hint'));
     const facts=el('dl',undefined,'facts');
@@ -215,12 +228,13 @@ async function openCase(code){
     for(const [,choice] of attachments)choice.addEventListener('change',markSources);
     sourceSave.onclick=async()=>{
       if(await saveData({kind:'sources',code,stamp:row.stamp,attachments:attachments.filter(([,c])=>c.checked).map(([i])=>i)},sourceSave)){
-        if(!formDirty)dirty=false;sourceNote.textContent='Fontes e anexos conferidos. A redação ainda não foi aprovada.';
+        if(!formDirty)dirty=false;sourceNote.textContent='Fontes e anexos conferidos. Já podem entrar na extração.';
       }
     };
     evidence.append(sourceSave,sourceNote);
     const context=el('p',row.state==='stale'?'Há informação nova. Reconfirme o texto e as imagens.':d.missing.length?d.missing.map(k=>fields[k]).filter(Boolean).join(' '):'Confira se o texto distingue execução, resultado observado e pendência.','notice');
-    const decision=control(form,'Decisão',select({include:'Incluir na minuta',exclude:'Não incluir',defer:'Aguardar contexto'},r.decision||'defer'));
+    const decision=control(form,'Decisão para o PDF',select({'':'Selecione uma decisão',include:'Incluir na minuta',exclude:'Não incluir no PDF',defer:'Aguardar contexto'},r.decision||''));
+    decision.required=true;
     const body=el('div'),reasonWrap=el('div');
     const reason=control(reasonWrap,'O que falta confirmar ou por que não incluir?',textarea(r.reason,1000));
     const heading=control(body,'Título técnico',input('text',r.title||d.title,180));
@@ -249,17 +263,18 @@ async function openCase(code){
     }
     form.append(body,reasonWrap);
     const save=el('button','Salvar decisão','button primary');form.append(save);
-    function toggle(){const include=decision.value==='include';body.hidden=!include;reasonWrap.hidden=include;reason.required=!include;heading.required=narrative.required=verified.required=include;dates.hidden=historical.checked;start.required=include&&!historical.checked;}
+    function toggle(){const include=decision.value==='include',needsReason=!!decision.value&&!include;body.hidden=!include;reasonWrap.hidden=!needsReason;reason.required=needsReason;reason.parentElement.firstChild.textContent=decision.value==='exclude'?'Por que este chamado fica fora do PDF?':'O que falta confirmar para incluir no PDF?';heading.required=narrative.required=verified.required=include;dates.hidden=historical.checked;start.required=include&&!historical.checked;}
     decision.onchange=historical.onchange=toggle;toggle();
     let formDirty=false;
     form.oninput=()=>{dirty=true;formDirty=true;};
     form.onsubmit=async e=>{
       e.preventDefault();
+      if(!printMode)return;
       const payload=decision.value==='include'?{title:heading.value,start:historical.checked?'':start.value,end:historical.checked?'':end.value,historical:historical.checked,narrative:narrative.value,verified:verified.checked,photos:media.filter(([,c])=>c.checked).map(([index])=>index)}:{reason:reason.value};
       if(await saveData({kind:'review',code,stamp:row.stamp,decision:decision.value,...payload},save)){formDirty=false;dirty=sourceNote.textContent.startsWith('Seleção alterada');notify('Decisão salva. Nenhuma mensagem enviada.');}
     };
-    const final=el('details',undefined,'final-review');final.open=!!suggestion;final.append(el('summary','Revisar texto final para impressão'),form);
-    $('editor').replaceChildren(title,context,evidence,final);
+    const final=el('details',undefined,'final-review');final.open=true;final.hidden=!printMode;final.append(el('summary','Revisar texto final para impressão'),context,form);
+    $('editor').replaceChildren(title,evidence,final);
   }catch(e){if(n===serial)notify(e.message);}
 }
 async function saveData(payload,button){
@@ -273,9 +288,11 @@ async function saveData(payload,button){
   finally{saving=false;button.disabled=false;}
 }
 $('period').onsubmit=e=>{e.preventDefault();void load($('month').value);};
+$('print-mode').onclick=()=>{printMode=!printMode;if(view)renderOverview();else renderMode();};
 $('settings-form').addEventListener('invalid',e=>{const group=e.target.closest('.preventive-group');if(group)group.open=true;},true);
 $('settings-form').onsubmit=async e=>{
   e.preventDefault();
+  if(!printMode)return;
   if(await saveData({kind:'settings',issued:$('issued').value,statuses:[...e.currentTarget.querySelectorAll('[name=preventive]')].map(x=>x.value),observations:$('observations').value,coverage:$('coverage').checked?view.coverage:null},e.submitter))notify('Preventivas e emissão salvas.');
 };
 const given=new URLSearchParams(location.search).get('month');
