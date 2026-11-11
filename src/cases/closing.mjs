@@ -17,8 +17,8 @@ const shape=(obj,keys)=>{if(!obj||typeof obj!=='object'||Array.isArray(obj)||Obj
 const states=['done','pending','unknown','na'];
 
 export class MonthlyClosing{
-  constructor({db,key,board,template,archive=()=>({count:0,revision:''})}){
-    Object.assign(this,{db,key,board,template,archive});
+  constructor({db,key,board,template,archive=()=>({count:0,revision:''}),unlinkedCount=()=>0}){
+    Object.assign(this,{db,key,board,template,archive,unlinkedCount});
     db.exec('CREATE TABLE IF NOT EXISTS monthly_closings (month TEXT PRIMARY KEY, payload BLOB NOT NULL)');
   }
   load(month){
@@ -48,7 +48,7 @@ export class MonthlyClosing{
       return {...i,state,review,sourceReview,sourceReviewState:!sourceReview?'unreviewed':sourceReview.stamp===i.stamp?'reviewed':'stale'};
     });
     if(rows.some(i=>!['include','exclude'].includes(i.state)))checks.push('Revise os chamados não decididos ou que receberam novas informações.');
-    return {month,version:data.version,settings:data.settings?{...data.settings,statuses:currentStatuses||[]}:null,items:rows,checks,coverage,archiveCount:archive.count,template:template?{name:template.name,groups:template.groups,stamp:templateStamp}:null};
+    return {month,version:data.version,settings:data.settings?{...data.settings,statuses:currentStatuses||[]}:null,items:rows,checks,coverage,archiveCount:archive.count,unlinkedCount:this.unlinkedCount(month),template:template?{name:template.name,groups:template.groups,stamp:templateStamp}:null};
   }
   save(month,input){
     const data=this.load(month);
@@ -137,7 +137,7 @@ export class MonthlyClosing{
     let offset=0;
     const preventive=view.template?.groups.map(g=>({name:g.name,rows:g.rows.map(([week,task,category])=>({week,task,category,status:preventiveStatuses[offset++]||null}))}))||[];
     const output={schemaVersion:1,month,preparedAt:new Date().toISOString(),coverageConfirmed:!!settings&&settings.coverage===view.coverage,
-      checks:view.checks,project:view.template?.name||null,issued:settings?.issued||null,observations:settings?.observations||null,preventive,cases};
+      checks:view.checks,unlinkedCount:view.unlinkedCount,project:view.template?.name||null,issued:settings?.issued||null,observations:settings?.observations||null,preventive,cases};
     if(Buffer.byteLength(JSON.stringify(output))>2*1024*1024)throw new CaseError('A extração excede 2 MB de texto. Exporte os chamados em grupos menores.',413);
     return output;
   }

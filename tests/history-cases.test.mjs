@@ -4,14 +4,15 @@ import {randomBytes} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import {CaseBoard} from '../src/cases/board.mjs';
 import {HistoricalCases} from '../src/cases/history.mjs';
+import {MonthlyClosing} from '../src/cases/closing.mjs';
 import {ReportAssistant} from '../src/assistant/assistant.mjs';
 
 test('historical preparation creates silent drafts and preserves quoted context for manual linking',async t=>{
   const db=new DatabaseSync(':memory:'),key=randomBytes(32),month='2025-09';t.after(()=>db.close());
   const timestamp=Date.parse('2025-09-03T14:00:00Z')/1000;
-  const readSource=id=>({id,month,timestamp,type:'chat',text:id==='a'?'Inspeção de câmera':'Complemento da verificação',...(id==='b'?{quotedId:'a'}:{})});
+  const readSource=id=>({id,month,timestamp,type:'chat',text:id==='a'?'Inspeção de câmera':id==='b'?'Complemento da verificação':'Mensagem sem relevância',...(id!=='a'?{quotedId:'a'}:{})});
   db.exec('CREATE TABLE messages(id TEXT PRIMARY KEY,month TEXT NOT NULL,ts INTEGER NOT NULL)');
-  for(const id of ['a','b'])db.prepare('INSERT INTO messages VALUES(?,?,?)').run(id,month,timestamp);
+  for(const id of ['a','b','c'])db.prepare('INSERT INTO messages VALUES(?,?,?)').run(id,month,timestamp);
   const assistant=new ReportAssistant({db,key,readSource,isActive:()=>true,send:async()=>assert.fail('Histórico não envia mensagens')});
   const board=new CaseBoard({db,key,assistant,readSource});
   const history=new HistoricalCases({db,board,assistant,readSource,analyze:async()=>[{sources:[0],facts:[{field:'ocorrencia',quote:'Inspeção de câmera',source:0}]}]});
@@ -20,8 +21,15 @@ test('historical preparation creates silent drafts and preserves quoted context 
   assert.equal(job.state,'done');assert.equal(job.created,1);
   const [item]=assistant.all();assert.equal(item.historical,true);
   assert.equal(item.intakeState,'silent');assert.equal(item.questionState,'silent');
-  assert.deepEqual(history.view(month).sources.map(s=>s.id),['b']);
+  const closing=new MonthlyClosing({db,key,board,template:()=>null,unlinkedCount:month=>history.unlinked(month).length});
+  assert.deepEqual(history.view(month).sources.map(s=>s.id),['b','c']);
+  assert.equal(closing.get(month).unlinkedCount,2);
+  history.ignore(month,['c']);
+  assert.equal(history.view(month,0,true).unlinkedCount,1);
+  const before=closing.contextPackage(month,[item.code]);assert.equal(before.unlinkedCount,1);
+  assert.equal(before.cases[0].sources.length,1);
   history.assign(month,['b'],item.code);
+  assert.equal(closing.contextPackage(month,[item.code]).unlinkedCount,0);
   assert.equal(assistant.all().length,1);
   assert.equal(board.detail(item.code).sources.length,2);
   assert.throws(()=>history.assign(month,['b'],item.code),{status:409});

@@ -21,6 +21,15 @@ function textarea(value,max){const i=el('textarea');i.value=value||'';i.maxLengt
 function select(values,value){const s=el('select');s.replaceChildren(...Object.entries(values).map(([k,v])=>new Option(v,k)));s.value=value||'';return s;}
 function checkbox(parent,label,checked=false){const l=el('label',undefined,'check'),c=input('checkbox');c.checked=checked;l.append(c,el('span',label));parent.append(l);return c;}
 function clearExtraction(){extraction=null;$('assist-text').value='';$('assist-output').hidden=true;}
+function renderHistoryPending(count){
+  $('history-pending').hidden=$('assist-history-pending').hidden=!count;
+  const label=count===1?'1 registro sem chamado neste mês':count+' registros sem chamado neste mês';
+  $('history-pending-title').textContent=label;
+  $('assist-history-text').textContent=count===1?'1 registro do histórico fica fora deste pacote.':count+' registros do histórico ficam fora deste pacote.';
+  const link=$('history-link');$('history-dot').hidden=!count;
+  if(count){link.title=label;link.setAttribute('aria-label','Histórico sem chamado: '+label);}
+  else{link.removeAttribute('title');link.removeAttribute('aria-label');}
+}
 function targetURL(provider,value){
   const host=cloudHosts[provider];if(!host||!value.trim())return null;
   try{
@@ -70,6 +79,7 @@ async function runAssist(){
     if(provider!=='local'){
       const packet=await assistRequest(month,'/context',codes);
       if(view?.month!==month||view.version!==version)throw Error('A revisão mudou. Prepare a extração novamente.');
+      if(Number.isInteger(packet.unlinkedCount)){view.unlinkedCount=packet.unlinkedCount;renderHistoryPending(view.unlinkedCount);}
       extraction={month,codes,fingerprint:packet.fingerprint};
       $('assist-text').value=packet.text;
       $('assist-output').hidden=false;
@@ -155,6 +165,7 @@ function renderMode(){
 function renderOverview(){
   renderAssist();
   renderMode();
+  renderHistoryPending(view.unlinkedCount||0);
   for(const a of document.querySelectorAll('[data-month-nav]'))a.href=a.pathname+'?month='+encodeURIComponent(view.month);
   $('counts').textContent=view.archiveCount+' mensagens no arquivo · '+view.items.length+' chamados · '+view.items.filter(x=>x.state==='include').length+' incluídos';
   $('checks').replaceChildren(...(view.checks.length?view.checks:['Revisão registrada. Você já pode abrir a minuta.']).map(x=>el('li',x)));
@@ -386,6 +397,11 @@ async function saveData(payload,button){
   finally{saving=false;button.disabled=false;}
 }
 $('period').onsubmit=e=>{e.preventDefault();void load($('month').value);};
+window.addEventListener('pageshow',e=>{
+  if(!e.persisted||!view)return;
+  if(dirty||preventivesDirty||saving||assistRunning){notify('Recarregue a competência após conferir o Histórico para atualizar os chamados.');return;}
+  assistMonth='';void load(view.month);
+});
 $('print-mode').onclick=()=>{
   printMode=!printMode;reviewGroup='pending';$('list').scrollTop=0;
   if(printMode&&$('editor').contains($('report-assist')))resetEditor();

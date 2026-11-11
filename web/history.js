@@ -69,6 +69,10 @@ async function load({replace=true}={}){
   if(loading)return;loading=true;selection();
   try{
     const data=await api();job=data.job;
+    const link=$('history-link'),count=data.unlinkedCount??(showingIgnored()?0:data.count);$('history-dot').hidden=!count;
+    const label=count===1?'1 registro sem chamado neste mês':count+' registros sem chamado neste mês';
+    if(count){link.title=label;link.setAttribute('aria-label','Histórico sem chamado: '+label);}
+    else{link.removeAttribute('title');link.removeAttribute('aria-label');}
     $('count').textContent=data.count+(showingIgnored()?' mensagens ignoradas':' fontes sem chamado')+(job?' · '+(job.state==='running'?'Varredura em andamento':'Varredura encerrada')+': '+job.scanned+'/'+job.total+(job.kind==='context'?' chamados; '+job.created+' revisados; ':' fontes; '+job.created+' rascunhos; ')+((job.needsReview||0)+job.failed)+' mantidos para conferência.':'');
     $('prepare').disabled=showingIgnored()||job?.state==='running'||!data.count;
     $('recheck').disabled=job?.state==='running';

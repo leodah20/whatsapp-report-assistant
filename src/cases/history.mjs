@@ -38,7 +38,7 @@ export class HistoricalCases{
     if(!Number.isInteger(offset)||offset<0)throw new CaseError('Página inválida.');
     const sources=this.unlinked(month,showIgnored);
     const items=new Map(this.assistant.all().map(i=>[i.id,i.code]));
-    return {count:sources.length,offset,sources:sources.slice(offset,offset+50).map(record=>{
+    return {count:sources.length,unlinkedCount:showIgnored?this.unlinked(month).length:sources.length,offset,sources:sources.slice(offset,offset+50).map(record=>{
       const source=record.hasMedia&&record.mediaState==='saved'?{...record,mediaKind:historyMediaKind(record)}:record;
       if(!isUncaptionedMedia(source)){
         const suggested=this.assistant.followup?.(source);

@@ -249,7 +249,7 @@ async function refresh(manual=false){
   try{
     const next=await api('?month='+encodeURIComponent($('month').value)+'&carry='+Number($('carry').checked)+'&archived='+Number($('archived').checked));
     if(request!==listRequest)return;
-    model=next;const visible=renderList();
+    model=next;renderHistoryDot(next.unlinkedCount||0);const visible=renderList();
     const chosen=selected||visible[0]?.code;
     const row=next.items.find(i=>i.code===chosen);
     if(chosen&&!editing&&!contextDirty&&(!detail||manual||(row&&(row.updatedAt!==detail.updatedAt||row.version!==detail.version||row.contextState!==detail.contextState||row.sourceCount!==detail.sourceCount))))await openCase(chosen);
@@ -314,13 +314,20 @@ $('export').onclick=async()=>{
 };
 const requestedMonth=new URLSearchParams(location.search).get('month');
 $('month').value=/^20\d\d-(0[1-9]|1[0-2])$/.test(requestedMonth||'')?requestedMonth:day.format(new Date()).slice(0,7);
-$('month').onchange=()=>{const url=new URL(location.href);url.searchParams.set('month',$('month').value);window.history.replaceState(null,'',url);void refresh();};
+$('month').onchange=()=>{const url=new URL(location.href);url.searchParams.set('month',$('month').value);window.history.replaceState(null,'',url);renderHistoryDot(0);void refresh();};
 $('carry').onchange=()=>void refresh();
 $('archived').onchange=()=>void refresh();
 $('sort').onchange=()=>renderList();
 function monthLinks(){for(const [id,route] of [['closing-link','/fechamento'],['history-link','/historico']])$(id).href=route+'?month='+encodeURIComponent($('month').value);}
+function renderHistoryDot(count){
+  const link=$('history-link');$('history-dot').hidden=!count;
+  const label=count===1?'1 registro sem chamado neste mês':count+' registros sem chamado neste mês';
+  if(count){link.title=label;link.setAttribute('aria-label','Histórico sem chamado: '+label);}
+  else{link.removeAttribute('title');link.removeAttribute('aria-label');}
+}
 $('month').addEventListener('change',monthLinks);monthLinks();
 $('search').oninput=$('filter').onchange=renderList;
 $('refresh').onclick=()=>{void refresh(true);void pulse();};
 window.addEventListener('hashchange',()=>{const code=codeFromHash();if(code&&!editing)void openCase(code);});
+window.addEventListener('pageshow',e=>{if(e.persisted)void refresh();});
 void refresh();void pulse();setInterval(()=>{if(!document.hidden){void refresh();void pulse();}},15000);

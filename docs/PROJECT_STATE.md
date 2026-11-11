@@ -46,3 +46,5 @@ A extração mensal usa os chamados selecionados, seus fatos, histórico e evid�
 A central calcula a etapa pelo histórico já vinculado, pelas respostas no painel e pelas atualizações locais. A fila resume por etapa e expõe o motivo de espera sem exigir uma pendência duplicada. Ajuste manual persiste até ser alterado ou voltar ao modo pelos registros. Não há reclassificação automática de material não vinculado nem leitura do conteúdo de fotos ou vídeos. A atualização foi carregada no coletor local e a API de etapas respondeu após reconexão.
 
 Ainda sem interpretação de fotos/áudios e sem gerador completo de relatório final. Histórico depende do WhatsApp; envio exatamente uma vez não é garantido em falha externa. CPU pode demorar minutos. Armazenamento de credenciais Linux/macOS não implementado. Clientes OpenCode/Claude e provedores alternativos não foram testados ponta a ponta. Ofertas Free podem expirar; API direta da DeepSeek é paga.
+
+O alerta de registros sem chamado usa a competência aberta: há uma bolinha na navegação e um aviso no fechamento e na extração. Registros ignorados ou já vinculados não contam; os pendentes não são exportados.

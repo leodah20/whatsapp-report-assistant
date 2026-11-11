@@ -38,6 +38,7 @@
 - [x] Abrir no fluxo de extração; exibir decisões, preventivas e emissão somente ao escolher fechar o PDF pelo painel.
 - [x] Separar chamados a revisar dos conferidos, devolver fontes alteradas à revisão e abrir o conteúdo sem exigir que o usuário volte ao topo da página.
 - [x] Avançar pela fila após confirmar fontes, oferecer a extração ao concluir e registrar preventivas para o pacote sem exigir emissão do PDF.
+- [x] Sinalizar pendências da competência na aba Histórico sem chamado e no fechamento. Mostrar a contagem no aviso da extração, sem exportar os registros avulsos.
 
 **Pronto quando:** a minuta mantém o formato aprovado, um item por atendimento distinto, texto profissional e variado, sem rótulos artificiais repetidos. Tabelas do modelo são preservadas conforme orientação do responsável. O resultado é rastreável às fontes ou confirmações, e não inventa datas, normalização ou causas.
 

@@ -26,11 +26,11 @@ const routes={
 };
 const types={html:'text/html',css:'text/css',js:'text/javascript'};
 const data={
-  '/api/cases':{month,statuses:STATUSES,items:[row,{...row,code:'R-00000002',status:'completed',stage:{status:'completed',origin:'manual'}}]},
+  '/api/cases':{month,statuses:STATUSES,unlinkedCount:3,items:[row,{...row,code:'R-00000002',status:'completed',stage:{status:'completed',origin:'manual'}}]},
   ['/api/cases/'+code]:detail,
   '/api/cases/runtime':{connected:true},
   '/api/cases/history':{count:1,sources:[{id:'synthetic-source',timestamp,text:'Legenda de teste',hasMedia:true,mediaState:'saved',mediaKind:'image'}]},
-  '/api/cases/closing':{month,version:0,archiveCount:1,items:initialClosingItems(),checks:[],template:{groups,stamp:'template-test'},settings:{...settings}},
+  '/api/cases/closing':{month,version:0,archiveCount:1,unlinkedCount:3,items:initialClosingItems(),checks:[],template:{groups,stamp:'template-test'},settings:{...settings}},
   '/api/cases/closing/draft':{month,groups,settings,items:[],name:'Edifício de teste',footer:'Equipe de teste'},
   '/api/status':{state:'desconectado',groups:[],count:0}
 };
@@ -38,7 +38,7 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42
 const server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1'),path=url.pathname;
   if(req.method==='POST'&&path==='/api/cases/closing/context'){
-    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({text:'Extração sintética com contexto',fingerprint:'test',attachments:0,pendingReview:1}));return;
+    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({text:'Extração sintética com contexto',fingerprint:'test',attachments:0,pendingReview:1,unlinkedCount:2}));return;
   }
   if(req.method==='POST'&&path==='/api/cases/closing'){
     const chunks=[];for await(const chunk of req)chunks.push(chunk);
@@ -90,10 +90,13 @@ try{
   for(const width of [1366,390]){
     data['/api/cases/closing'].items=initialClosingItems();
     data['/api/cases/closing'].version=0;
+    data['/api/cases/closing'].unlinkedCount=3;
     data['/api/cases/closing'].settings={...settings};
     await page.setViewport({width,height:850});
     const noOverflow=async()=>assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Página excede a largura: '+page.url());
     await open('/chamados','.detail-actions');await noOverflow();
+    await page.waitForSelector('#history-dot:not([hidden])');
+    assert.match(await page.$eval('#history-link',x=>x.title),/3 registros/);
     assert.deepEqual(await page.$$eval('.workspace-bar nav a',links=>links.map(a=>a.textContent.trim())),['Chamados','Histórico sem chamado','Fechamento mensal','Configuração']);
     assert.ok(await page.$eval('.workspace-bar',bar=>bar.getBoundingClientRect().bottom<document.querySelector('.page-head').getBoundingClientRect().top));
     assert.equal(await page.$eval('#month',x=>x.value),month);
@@ -138,6 +141,9 @@ try{
     assert.equal(await page.$eval('#target-controls',x=>x.hidden),true);
     await open('/chamados','.detail-actions');
     await goFromCases('#closing-link','/fechamento','.closing-list .case-card');await noOverflow();
+    await page.waitForSelector('#history-dot:not([hidden])');
+    assert.match(await page.$eval('#history-pending-title',x=>x.textContent),/3 registros/);
+    assert.equal(await page.$eval('#history-pending-link',x=>x.pathname+x.search),'/historico?month='+month);
     assert.equal(await page.$eval('#review-pending-count',x=>x.textContent),'16');
     assert.equal(await page.$eval('#review-done-count',x=>x.textContent),'1');
     assert.match(await page.$eval('#list .case-card',x=>x.textContent),/Fontes atualizadas/);
@@ -170,6 +176,7 @@ try{
     await page.waitForFunction(()=>document.getElementById('notice').textContent.includes('Preventivas salvas'));
     await clickText('#editor #assist-run','Gerar extração');
     await page.waitForSelector('#editor #assist-output',{visible:true});
+    assert.match(await page.$eval('#assist-history-text',x=>x.textContent),/2 registros/);
     await page.click('#review-done');
     assert.equal(await page.$$eval('#list .case-card',x=>x.length),17);
     await page.type('#review-search','FALHA');
@@ -201,6 +208,10 @@ try{
     await page.waitForSelector('#assist-output',{visible:true});
     assert.equal(await page.$eval('.final-review',x=>x.hidden),true);
     assert.equal(await page.$eval('#print-settings',x=>x.hidden),true);
+    data['/api/cases/closing'].unlinkedCount=0;
+    await open('/fechamento','.review-finished');
+    assert.equal(await page.$eval('#history-dot',x=>x.hidden),true);
+    assert.equal(await page.$eval('#history-pending',x=>x.hidden),true);
     await open('/minuta','.page.preventive table');await noOverflow();
     assert.equal(await page.$eval('#print',x=>x.disabled),false);
     await page.emulateMediaType('print');

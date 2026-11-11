@@ -14,6 +14,7 @@ dialog{border:1px solid var(--line);border-radius:15px;width:min(540px,calc(100%
 .workspace-nav{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:22px;border-bottom:1px solid var(--line);padding-bottom:8px}
 .workspace-nav a{color:var(--muted)}
 .workspace-nav a:hover,.workspace-nav a[aria-current=page]{background:var(--accent-bg);color:var(--accent)}
+.history-dot{display:inline-block;width:8px;height:8px;margin-left:6px;border-radius:50%;vertical-align:middle;background:#ac5417}
 .workspace-bar{max-width:1800px;margin-left:226px;padding:20px clamp(16px,2.6vw,39px) 0}
 .workspace-bar .workspace-nav{margin-bottom:0}
 .cases-page main{padding-top:16px}

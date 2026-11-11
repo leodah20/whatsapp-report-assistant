@@ -46,3 +46,5 @@ O resumo do mês conta cada chamado uma vez por etapa e filtra a fila. A depend�
 Após a revisão visual, passaram `npm test` (78 testes) e `node scripts/ui-smoke.mjs` (desktop e celular, cinco telas com fontes sintéticas). O coletor ativo serviu as rotas locais sem reiniciar. Não houve acesso ao WhatsApp para teste, alterações em registros ou mudanças no formato de impressão. Próximo passo: acompanhar um fechamento real, especialmente cobertura, preventivas e revisão da minuta.
 
 “Leia os arquivos de continuidade, confira Git e continue a próxima prioridade de chamados. Use esta pasta e o origin existente. Preserve dados privados, rode testes e atualize HANDOFF.md. Pergunte antes de acessar o arquivo privado com um modelo remoto ou ampliar os envios automáticos.”
+
+O alerta de registros sem chamado foi validado com 88 testes e em Chrome a 1366 e 390 px. A bolinha some quando a competência não tem pendências; a extração avisa se fontes avulsas ficaram de fora.

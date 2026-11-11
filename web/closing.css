@@ -27,6 +27,8 @@
 .closing-progress #checks{font-size:.85rem;color:var(--muted);margin-bottom:0}
 .closing-steps{display:flex;flex-wrap:wrap;gap:8px 18px;margin:0 0 14px;font-size:.84rem;font-weight:650}
 .closing .closing-mode{margin-bottom:12px}
+.closing .history-pending{padding:10px 12px;margin:0 0 12px;border:1px solid #ead19a;border-radius:9px;background:var(--amber-bg,#fff6df);color:var(--amber,#7a4c08);font-size:.86rem}
+.history-pending p{margin-top:3px}
 .closing .page-head .control,.source-selection .control{margin:0}
 .closing .preventive-group{border:1px solid var(--line);border-radius:8px;margin:8px 0}
 .preventive-group summary{padding:10px 12px;font-size:.86rem;font-weight:650}

@@ -74,7 +74,7 @@ export function createCaseHandler({origin,root,board,readMedia,closing,historica
           if(url.pathname.endsWith('/context')){
             const context=closing.contextPackage(month,input.codes);
             json(res,{text:extractionText(context,REPORT_GUIDE),fingerprint:contextFingerprint(context),
-              attachments:context.cases.flatMap(i=>i.sources).filter(s=>s.media?.path).length,
+              unlinkedCount:context.unlinkedCount,attachments:context.cases.flatMap(i=>i.sources).filter(s=>s.media?.path).length,
               pendingReview:context.cases.filter(i=>i.sourceReviewState!=='reviewed').length});return true;
           }
           if(pack){
@@ -113,7 +113,9 @@ export function createCaseHandler({origin,root,board,readMedia,closing,historica
       }
       if(req.method==='GET'&&url.pathname==='/api/cases/runtime'){json(res,getRuntime());return true;}
       if(req.method==='GET'&&url.pathname==='/api/cases'){
-        json(res,board.list(url.searchParams.get('month'),url.searchParams.get('carry')==='1',url.searchParams.get('archived')==='1'));return true;
+        const month=url.searchParams.get('month');
+        const list=board.list(month,url.searchParams.get('carry')==='1',url.searchParams.get('archived')==='1');
+        json(res,{...list,unlinkedCount:historical?.unlinked(month).length??0});return true;
       }
       const attachment=url.pathname.match(/^\/api\/cases\/(R-[A-F0-9]{8})\/attachment\/(\d{1,4})$/);
       if(attachment&&req.method==='GET'){

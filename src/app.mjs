@@ -51,8 +51,9 @@ const assistant=new ReportAssistant({db,key:KEY,readSource,isArchived:id=>!!case
   const id=result?.id?._serialized||result?.id?.['$1'];if(!id)throw Error('Envio sem identificador confirmado');return id;
 }});
 const caseBoard=new CaseBoard({db,key:KEY,assistant,readSource});
+const historical=new HistoricalCases({db,board:caseBoard,assistant,readSource});
 const coverPath=join(DATA,'report-cover.png');
-const closing=new MonthlyClosing({db,key:KEY,board:caseBoard,template(){
+const closing=new MonthlyClosing({db,key:KEY,board:caseBoard,unlinkedCount:month=>historical.unlinked(month).length,template(){
   try{
     const path=join(DATA,'report-template.json');
     if(statSync(path).size>32768||statSync(coverPath).size>8*1024*1024)return null;
@@ -66,7 +67,6 @@ const closing=new MonthlyClosing({db,key:KEY,board:caseBoard,template(){
   for(const row of db.prepare("SELECT id,payload FROM messages WHERE month=? AND id NOT LIKE 'manual-photo:%' ORDER BY id").iterate(month)){hash.update(row.id);hash.update(row.payload);count++;}
   return {count,revision:hash.digest('hex')};
 }});
-const historical=new HistoricalCases({db,board:caseBoard,assistant,readSource});
 const serveCases=createCaseHandler({origin:ORIGIN,root:ROOT,board:caseBoard,closing,historical,readCover:()=>readFileSync(coverPath),getRuntime:runtimePulse,readMedia(id,max=8*1024*1024){
   const size=db.prepare('SELECT length(media) AS n FROM messages WHERE id=?').get(id)?.n;
   if(!size||size>max+28)return null;
