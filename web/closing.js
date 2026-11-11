@@ -9,7 +9,7 @@ const fields={local:'Qual é o local exato?',equipamento:'Qual equipamento foi a
 const fieldLabels={local:'Local',equipamento:'Equipamento',ocorrencia:'Ocorrência',procedimento:'Procedimento',resultado:'Resultado ou pendência'};
 const statuses={'':'Selecione…',done:'Concluída',pending:'Pendente',unknown:'Sem confirmação',na:'Não aplicável'};
 let view=null,selected=null,serial=0,dirty=false,saving=false;
-let assistMonth='',assistRunning=false,extraction=null,printMode=false;
+let assistMonth='',assistRunning=false,extraction=null,printMode=false,reviewGroup='pending';
 const assistPicked=new Set(),localSuggestions=new Map();
 const cloudHosts={chatgpt:'chatgpt.com',claude:'claude.ai'};
 const localTimeout=920000;
@@ -88,7 +88,7 @@ async function runAssist(){
           for(const q of suggestion.questions)card.append(el('p',q,'hint'));
           if(suggestion.limited)card.append(el('p','Parte das fontes não coube no modelo. Consulte a extração completa.','hint'));
           const open=el('button','Revisar chamado','button outline');open.type='button';
-          open.onclick=()=>{if(!saving&&(!dirty||confirm('Descartar alterações não salvas?')))void openCase(code).then(()=>$('editor').scrollIntoView({block:'start'}));};
+          open.onclick=()=>{if(!saving&&(!dirty||confirm('Descartar alterações não salvas?')))void openCase(code);};
           card.append(open);results.append(card);
         }catch(e){errors++;results.append(el('p',(row?.title||code)+': '+e.message,'notice'));if(e.status===503||e.status===409||e.name==='TimeoutError')break;}
       }
@@ -141,6 +141,7 @@ function renderMode(){
   $('closing-lead').textContent=printMode?'Revise o texto, as datas, as fotos e as preventivas para salvar em PDF.':'Confira as fontes e os anexos e gere a extração do mês.';
   $('print-mode').textContent=printMode?'Voltar para extração':'Fechar PDF pelo painel';
   $('review-link').textContent=printMode?'1. Revisar chamados':'Conferir fontes';
+  $('review-title').textContent=printMode?'Revisar chamados para o PDF':'Conferir fontes';
   const final=$('editor').querySelector('.final-review');
   if(final)final.hidden=!printMode;
 }
@@ -152,15 +153,64 @@ function renderOverview(){
   $('checks').replaceChildren(...(view.checks.length?view.checks:['Revisão registrada. Você já pode abrir a minuta.']).map(x=>el('li',x)));
   $('draft').hidden=!!view.checks.length;
   $('draft').href='/minuta?month='+encodeURIComponent(view.month);
-  $('list').replaceChildren(...view.items.map(x=>{
+  renderQueue();
+}
+const searchKey=value=>String(value||'').normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
+const isReviewed=row=>printMode?['include','exclude'].includes(row.state):row.sourceReviewState==='reviewed';
+function reviewBadge(row){
+  if(!row)return null;
+  const stale=printMode?row.state==='stale':row.sourceReviewState==='stale';
+  const text=printMode?stateLabels[row.state]:stale?'Fontes atualizadas':isReviewed(row)?'Conferido':'A revisar';
+  return el('span',text,'badge '+(isReviewed(row)?'green':stale?'amber':''));
+}
+function renderQueue({reset=false}={}){
+  if(!view)return;
+  const list=$('list'),scroll=reset?0:list.scrollTop,query=searchKey($('review-search').value.trim());
+  const reviewed=view.items.filter(isReviewed),pending=view.items.filter(x=>!isReviewed(x));
+  const groups={pending,done:reviewed};
+  for(const key of Object.keys(groups)){
+    const button=$('review-'+key);
+    button.firstElementChild.textContent=key==='pending'?(printMode?'A decidir':'A revisar'):(printMode?'Decididos':'Conferidos');
+    $('review-'+key+'-count').textContent=groups[key].length;
+    button.setAttribute('aria-pressed',String(key===reviewGroup));
+  }
+  const name=$('review-'+reviewGroup).firstElementChild.textContent;
+  list.setAttribute('aria-label','Chamados — '+name);
+  const visible=groups[reviewGroup].filter(row=>searchKey([row.title,row.location,row.code,row.area].join(' ')).includes(query));
+  list.replaceChildren(...visible.map(x=>{
     const b=el('button',undefined,'case-card');b.type='button';b.setAttribute('aria-current',String(selected===x.code));
-    b.append(el('span',x.code,'case-code'),el('span',x.location?(x.locationConfirmed?x.location:'Local sugerido: '+x.location):'Local a confirmar','case-location'),el('h3',x.title));
-    if(x.stageLabel)b.append(el('span',x.stageLabel,'badge stage-badge stage-'+x.status));
-    const sourceState={unreviewed:'Fontes por conferir',reviewed:'Fontes conferidas',stale:'Fontes alteradas — conferir de novo'};
-    b.append(el('p',(x.carryover?'Anterior · ':'')+(printMode?stateLabels[x.state]:(sourceState[x.sourceReviewState]||'Fontes por conferir'))));
+    b.dataset.code=x.code;
+    const code=el('div',undefined,'card-head');code.append(el('span',x.code,'case-code'));
+    if(x.carryover)code.append(el('span','Mês anterior','hint'));
+    const tags=el('div',undefined,'badges');tags.append(reviewBadge(x));
+    if(x.stageLabel)tags.append(el('span',x.stageLabel,'badge stage-badge stage-'+x.status));
+    b.append(code,el('h3',x.title),el('span',x.location?(x.locationConfirmed?x.location:'Local sugerido: '+x.location):'Local a confirmar','case-location'),tags);
     b.onclick=()=>{if(!saving&&(!dirty||confirm('Descartar alterações não salvas?')))void openCase(x.code);};return b;
   }));
-  if(!view.items.length)$('list').append(el('p','Nenhum chamado localizado neste recorte. Confira o arquivo antes de confirmar a cobertura.','hint'));
+  if(!visible.length)list.append(el('p',query?'Nenhum chamado encontrado nesta lista.':
+    !view.items.length?'Nenhum chamado localizado nesta competência.':
+    reviewGroup==='done'?(printMode?'Nenhuma decisão registrada ainda.':'Nenhum chamado conferido ainda.'):
+      printMode?'Todos os chamados foram decididos.':'Tudo conferido. Abra Conferidos para revisar novamente.','hint review-empty'));
+  list.scrollTop=scroll;
+  const current=$('editor').querySelector('.review-current-badge'),row=view.items.find(x=>x.code===selected);
+  if(current&&row)current.replaceChildren(reviewBadge(row));
+}
+function focusCase(){
+  const editor=$('editor'),heading=editor.querySelector('.review-editor-head h2');
+  editor.scrollTop=0;
+  const top=editor.getBoundingClientRect().top;
+  if(matchMedia('(max-width: 720px)').matches||top<0||top>36)editor.scrollIntoView({block:'start'});
+  heading?.focus({preventScroll:true});
+}
+function backToQueue(){
+  const queue=$('review'),list=$('list'),active=[...list.querySelectorAll('.case-card')].find(b=>b.dataset.code===selected);
+  queue.scrollIntoView({block:'start'});
+  if(active){
+    const bounds=list.getBoundingClientRect(),card=active.getBoundingClientRect();
+    if(card.top<bounds.top)list.scrollTop+=card.top-bounds.top-3;
+    else if(card.bottom>bounds.bottom)list.scrollTop+=card.bottom-bounds.bottom+3;
+  }
+  (active||$('review-'+reviewGroup)).focus({preventScroll:true});
 }
 function renderSettings(){
   if(!view.template)return;
@@ -184,9 +234,9 @@ async function load(month){
   const n=++serial;
   try{
     const next=await request(url(month));if(n!==serial)return;
-    view=next;selected=null;dirty=false;
+    view=next;selected=null;dirty=false;reviewGroup='pending';$('review-search').value='';$('list').scrollTop=0;
     history.replaceState(null,'','/fechamento?month='+encodeURIComponent(month));
-    $('editor').replaceChildren(el('h2','Selecione um chamado'));renderOverview();renderSettings();notify('');
+    $('editor').replaceChildren(el('h2','Selecione um chamado'),el('p','O contexto e os anexos aparecem aqui.','hint'));renderOverview();renderSettings();notify('');
   }catch(e){if(n===serial)notify(e.message);}
 }
 async function openCase(code){
@@ -196,6 +246,13 @@ async function openCase(code){
     selected=code;dirty=false;renderOverview();
     const row=view.items.find(x=>x.code===code),r=row.review||{};
     const title=el('h2',d.title),form=el('form'),evidence=el('section',undefined,'source-review');
+    title.tabIndex=-1;
+    const headingBar=el('header',undefined,'review-editor-head'),headingText=el('div'),currentBadge=el('div',undefined,'review-current-badge');
+    const back=el('button','Voltar à lista','button outline compact review-back');back.type='button';back.onclick=backToQueue;
+    currentBadge.append(reviewBadge(row));
+    headingText.append(el('span',d.code,'case-code'),title);
+    if(d.location)headingText.append(el('p',d.location,'hint'));
+    headingText.append(currentBadge);headingBar.append(headingText,back);
     evidence.append(el('h3','Contexto para a extração'),el('p','Confira os dados abaixo e marque os anexos que devem entrar no pacote.','hint'));
     if(row.stageLabel)evidence.append(el('p',[row.stageLabel,d.stage?.reason].filter(Boolean).join(' — '),'evidence'));
     for(const task of d.profile.tasks||[])if(!task.resolvedAt)evidence.append(el('p','Pendência: '+task.text,'hint'));
@@ -274,7 +331,7 @@ async function openCase(code){
       if(await saveData({kind:'review',code,stamp:row.stamp,decision:decision.value,...payload},save)){formDirty=false;dirty=sourceNote.textContent.startsWith('Seleção alterada');notify('Decisão salva. Nenhuma mensagem enviada.');}
     };
     const final=el('details',undefined,'final-review');final.open=true;final.hidden=!printMode;final.append(el('summary','Revisar texto final para impressão'),context,form);
-    $('editor').replaceChildren(title,evidence,final);
+    $('editor').replaceChildren(headingBar,evidence,final);focusCase();
   }catch(e){if(n===serial)notify(e.message);}
 }
 async function saveData(payload,button){
@@ -288,7 +345,9 @@ async function saveData(payload,button){
   finally{saving=false;button.disabled=false;}
 }
 $('period').onsubmit=e=>{e.preventDefault();void load($('month').value);};
-$('print-mode').onclick=()=>{printMode=!printMode;if(view)renderOverview();else renderMode();};
+$('print-mode').onclick=()=>{printMode=!printMode;reviewGroup='pending';$('list').scrollTop=0;if(view)renderOverview();else renderMode();};
+for(const key of ['pending','done'])$('review-'+key).onclick=()=>{reviewGroup=key;renderQueue({reset:true});};
+$('review-search').oninput=()=>renderQueue({reset:true});
 $('settings-form').addEventListener('invalid',e=>{const group=e.target.closest('.preventive-group');if(group)group.open=true;},true);
 $('settings-form').onsubmit=async e=>{
   e.preventDefault();

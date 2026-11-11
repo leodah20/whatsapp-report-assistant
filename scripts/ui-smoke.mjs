@@ -1,5 +1,5 @@
 // Run with node scripts/ui-smoke.mjs and an installed Chrome/Chromium.
-// This server is read-only, uses synthetic data and never connects to the collector.
+// This server uses synthetic data in memory and never connects to the collector.
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
@@ -15,6 +15,11 @@ const profile={title:'Falha de leitura',location:row.location,events:[],tasks:[]
 const detail={...row,profile,sources:[source],notices:[],facts:[{field:'ocorrencia',quote:source.text}]};
 const groups=[{name:'Controle de acesso',rows:[[1,'Verificação de teste','Operacional']]}];
 const settings={issued:'2026-10-20',statuses:['done']};
+const initialClosingItems=()=>[
+  ...Array.from({length:15},(_,n)=>({...row,code:'R-'+(n+2).toString(16).padStart(8,'0').toUpperCase(),title:'Chamado de teste '+(n+2),state:'unreviewed',sourceReviewState:n===0?'stale':'unreviewed'})),
+  {...row,state:'unreviewed',sourceReviewState:'unreviewed',stamp:'snapshot-1'},
+  {...row,code:'R-00000020',title:'Fonte já conferida',state:'unreviewed',sourceReviewState:'reviewed'}
+];
 const routes={
   '/':'setup.html','/ui.js':'setup.js','/style.css':'setup.css',
   '/chamados':'cases.html','/historico':'history.html','/fechamento':'closing.html','/minuta':'draft.html'
@@ -25,7 +30,7 @@ const data={
   ['/api/cases/'+code]:detail,
   '/api/cases/runtime':{connected:true},
   '/api/cases/history':{count:1,sources:[{id:'synthetic-source',timestamp,text:'Legenda de teste',hasMedia:true,mediaState:'saved',mediaKind:'image'}]},
-  '/api/cases/closing':{month,archiveCount:1,items:[{...row,state:'unreviewed'}],checks:[],template:{groups},settings},
+  '/api/cases/closing':{month,version:0,archiveCount:1,items:initialClosingItems(),checks:[],template:{groups},settings},
   '/api/cases/closing/draft':{month,groups,settings,items:[],name:'Edifício de teste',footer:'Equipe de teste'},
   '/api/status':{state:'desconectado',groups:[],count:0}
 };
@@ -34,6 +39,14 @@ const server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1'),path=url.pathname;
   if(req.method==='POST'&&path==='/api/cases/closing/context'){
     res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({text:'Extração sintética com contexto',fingerprint:'test',attachments:0,pendingReview:1}));return;
+  }
+  if(req.method==='POST'&&path==='/api/cases/closing'){
+    const chunks=[];for await(const chunk of req)chunks.push(chunk);
+    const input=JSON.parse(Buffer.concat(chunks).toString());
+    const current=data[path],item=current.items.find(x=>x.code===input.code);
+    if(input.kind!=='sources'||!item||input.stamp!==item.stamp){res.writeHead(400).end('{}');return;}
+    item.sourceReviewState='reviewed';item.sourceReview={attachments:input.attachments};current.version++;
+    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify(current));return;
   }
   if(req.method!=='GET'){res.writeHead(405).end();return;}
   if(path==='/api/cases/history'&&url.searchParams.get('targets')==='1'){
@@ -68,6 +81,8 @@ try{
     await page.waitForSelector(ready,{visible:true});
   };
   for(const width of [1366,390]){
+    data['/api/cases/closing'].items=initialClosingItems();
+    data['/api/cases/closing'].version=0;
     await page.setViewport({width,height:850});
     const noOverflow=async()=>assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Página excede a largura: '+page.url());
     await open('/chamados','.detail-actions');await noOverflow();
@@ -115,10 +130,28 @@ try{
     assert.equal(await page.$eval('#target-controls',x=>x.hidden),true);
     await open('/chamados','.detail-actions');
     await goFromCases('#closing-link','/fechamento','.closing-list .case-card');await noOverflow();
-    await page.click('.closing-list .case-card');
+    assert.equal(await page.$eval('#review-pending-count',x=>x.textContent),'16');
+    assert.equal(await page.$eval('#review-done-count',x=>x.textContent),'1');
+    assert.match(await page.$eval('#list .case-card',x=>x.textContent),/Fontes atualizadas/);
+    assert.ok(await page.$eval('#list',x=>x.scrollHeight>x.clientHeight));
+    const card='#list .case-card[data-code="'+code+'"]';
+    await page.click(card);
     await page.waitForSelector('.review-attachment summary',{visible:true});
+    assert.ok(await page.$eval('.review-editor-head',x=>{const r=x.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));
+    assert.ok(await page.$eval('#list',x=>x.scrollTop>0));
     await page.click('.review-attachment summary');
     await page.waitForFunction(()=>document.querySelector('.review-attachment img')?.naturalWidth>0);
+    await page.click('.source-review > button');
+    await page.waitForFunction(()=>document.querySelector('#review-done-count').textContent==='2');
+    assert.equal(await page.$(card),null);
+    assert.match(await page.$eval('.review-current-badge',x=>x.textContent),/Conferido/);
+    await page.click('.review-back');
+    await page.click('#review-done');
+    assert.equal(await page.$$eval('#list .case-card',x=>x.length),2);
+    await page.type('#review-search','FALHA');
+    assert.equal(await page.$$eval('#list .case-card',x=>x.length),1);
+    await page.click(card);
+    await page.waitForFunction(()=>document.activeElement?.textContent==='Falha de leitura');
     assert.equal(await page.$eval('.final-review',x=>x.hidden),true);
     assert.equal(await page.$eval('#settings',x=>x.hidden),true);
     assert.equal(await page.$eval('#print-progress',x=>x.hidden),true);

@@ -63,6 +63,37 @@
 .review-attachment audio{max-width:100%;margin:8px 0}
 .source-review>button+p{margin-top:6px}
 .closing .final-review{padding:10px;border:1px solid var(--line);border-radius:8px}
+.closing:has(.closing-workbench) main{max-width:1520px}
+.closing .closing-workbench{grid-template-columns:minmax(245px,290px) minmax(0,1fr);gap:14px;align-items:start}
+.closing-list,.closing-editor{scroll-margin-top:14px}
+.closing-list{padding:14px;display:flex;flex-direction:column;gap:10px}
+.closing .closing-list #list{display:block;min-height:0;overflow-y:auto;scrollbar-gutter:stable;overscroll-behavior-y:contain;padding:3px 4px}
+.closing-list #list .case-card{display:block;padding:9px 10px}
+.closing-list #list .case-card+.case-card{margin-top:6px}
+.closing-list #list .case-card h3{font-size:.96rem;margin:3px 0}
+.closing-list #list .case-location{margin:0 0 6px;color:var(--muted)}
+.review-views{display:flex;gap:5px;flex-wrap:wrap}
+.review-view{display:inline-flex;gap:5px;align-items:center;padding:5px 6px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:.8rem;font-weight:650}
+.review-view[aria-pressed=true]{border-color:#278d81;background:var(--accent-bg);color:var(--accent)}
+.review-view .count{font-variant-numeric:tabular-nums;padding:2px 5px}
+.closing-list #review-search{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--paper)}
+.closing-list #list .review-empty{padding:7px;margin:0}
+.closing-editor{padding:clamp(14px,2vw,24px)}
+.review-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.review-editor-head h2{font-size:clamp(1.25rem,2vw,1.65rem);overflow-wrap:anywhere;margin:3px 0}
+.review-editor-head h2:focus{outline:none}
+.review-editor-head .review-back{flex-shrink:0}
+.review-current-badge{margin-top:5px}
+.source-review .record{padding:12px 14px}
+@media(min-width:721px){
+  .closing-list,.closing-editor{max-height:calc(100dvh - 32px)}
+  .closing-editor{overflow-y:auto;scrollbar-gutter:stable}
+}
+@media(max-width:720px){
+  .closing .closing-workbench{grid-template-columns:minmax(0,1fr)}
+  .closing-list #list{max-height:40dvh}
+  .review-editor-head{flex-wrap:wrap}
+}
 @media(max-width:640px){.report-controls{grid-template-columns:1fr}}
 @media(max-width:640px){.history-targets{grid-template-columns:1fr}}
 .history-pagination,.history-empty{margin-top:12px}

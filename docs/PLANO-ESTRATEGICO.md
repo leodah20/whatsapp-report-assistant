@@ -36,6 +36,7 @@
 - [x] Organizar a revisão mensal em chamados e preventivas, com progresso por grupo e acesso à minuta quando liberada. Não alterar o formato impresso.
 - [x] Conferir contexto e mídias antes de escrever. Preparar uma extração da competência com TXT e mídias confirmadas em ZIP, para envio manual na conversa escolhida, ou sugestões textuais pelo modelo local.
 - [x] Abrir no fluxo de extração; exibir decisões, preventivas e emissão somente ao escolher fechar o PDF pelo painel.
+- [x] Separar chamados a revisar dos conferidos, devolver fontes alteradas à revisão e abrir o conteúdo sem exigir que o usuário volte ao topo da página.
 
 **Pronto quando:** a minuta mantém o formato aprovado, um item por atendimento distinto, texto profissional e variado, sem rótulos artificiais repetidos. Tabelas do modelo são preservadas conforme orientação do responsável. O resultado é rastreável às fontes ou confirmações, e não inventa datas, normalização ou causas.
 

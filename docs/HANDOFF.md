@@ -30,6 +30,8 @@ No fechamento, confirme fontes e anexos de cada chamado sem precisar redigir o i
 
 As decisões de impressão e as preventivas ficam ocultas no fluxo padrão de extração. **Fechar PDF pelo painel** abre os controles, sem selecionar uma decisão por padrão. O teste de interface cobre a troca de modos e o retorno à extração sem perder a prévia.
 
+A fila de revisão abre em **A revisar**. Conferir um chamado o move para **Conferidos** sem fechar o detalhe; mudanças nas fontes o trazem de volta à fila ao atualizar o fechamento. Testados 87 casos automatizados e, no Chrome a 1366 e 390 px, abertura do último cartão da fila rolável, confirmação, reabertura em Conferidos e busca.
+
 No Histórico, abrir imagem/vídeo/áudio não seleciona nem vincula a mensagem. A prévia é local, sob demanda, e só serve fontes elegíveis para o mês; arquivos de outros tipos são entregues como download. Vincular usa o menu de chamados não arquivados, e criar novo exige ação distinta. Ignorar tira a fonte da fila e da análise, sem apagá-la; a opção Ver mensagens ignoradas permite restaurar. Validação: 85 testes, incluindo HTTP com banco sintético, e navegação em Chrome a 1366 e 390 px.
 
 O histórico sugere o texto posterior à mídia sem legenda em até três minutos, com prioridade para resposta citada. A proximidade não confirma vínculo nem abre chamado. Na central, data do atendimento e local só são confirmados manualmente; o registro continua datado e há ordenação por data, nome ou andamento. A etapa usa evidência operacional explícita, distingue origem manual/automática e não cria conclusão a partir de hipótese, encaminhamento ou reparo parcial.

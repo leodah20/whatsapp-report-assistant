@@ -34,7 +34,7 @@ Para retomar uma instalação autorizada: `npm run resume`. O script `scripts/wi
 
 ## Extração mensal e minuta
 
-Abra **Chamados → Fechamento mensal**, selecione a competência e confira as fontes de cada chamado. **Confirmar fontes e anexos** registra o material da extração sem exigir a redação final. Se os registros mudarem, confira novamente.
+Abra **Chamados → Fechamento mensal**, selecione a competência e abra um item em **A revisar**. **Confirmar fontes e anexos** registra o material da extração sem exigir a redação final e move o chamado para **Conferidos**. Se as fontes mudarem, o chamado volta a **A revisar**.
 
 Em **Preparar o relatório com IA**, escolha a conversa atual, ChatGPT, Claude ou Ollama local. Para as conversas, revise a extração e copie/baixe o TXT ou baixe o ZIP com as mídias confirmadas. Você pode guardar o link privado da conversa neste navegador; não é preciso criar uma chave de API. O painel não envia arquivos: anexe manualmente apenas o que puder compartilhar. Se a conversa não aceitar ZIP, extraia e anexe o TXT e os arquivos necessários.
 

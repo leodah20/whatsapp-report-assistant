@@ -28,9 +28,18 @@
   <div id="assist-results"></div>
 </section>
 <nav class="closing-steps" aria-label="Atalhos do fechamento"><a href="#review" id="review-link">Conferir fontes</a><a id="extract-link" href="#report-assist">Gerar extração</a><a id="settings-link" href="#settings" hidden>2. Preventivas e emissão</a></nav>
-<div class="workbench">
-<section class="surface closing-list" id="review"><h2>1. Conferir fontes dos chamados</h2><p class="hint">Confira o contexto e selecione os anexos da extração. Não precisa redigir o item nesta etapa.</p><div id="list"></div></section>
-<section class="surface closing-editor" id="editor"><h2>Selecione um chamado</h2></section>
+<div class="workbench closing-workbench">
+<section class="surface closing-list" id="review" aria-labelledby="review-title">
+  <h2 id="review-title">Conferir fontes</h2>
+  <div class="review-views" role="group" aria-label="Lista de chamados">
+    <button type="button" id="review-pending" class="review-view" aria-pressed="true"><span>A revisar</span> <span class="count" id="review-pending-count">0</span></button>
+    <button type="button" id="review-done" class="review-view" aria-pressed="false"><span>Conferidos</span> <span class="count" id="review-done-count">0</span></button>
+  </div>
+  <label for="review-search" class="sr-only">Buscar chamado por título, local ou código</label>
+  <input id="review-search" type="search" placeholder="Buscar chamado..." autocomplete="off">
+  <div id="list" tabindex="0" role="region" aria-label="Chamados a revisar"></div>
+</section>
+<section class="surface closing-editor" id="editor" tabindex="-1" aria-label="Conteúdo do chamado"><h2>Selecione um chamado</h2><p class="hint">O contexto e os anexos aparecem aqui.</p></section>
 </div>
 <section class="surface closing-settings" id="settings" hidden>
 <h2>2. Confirmar preventivas e emissão</h2>

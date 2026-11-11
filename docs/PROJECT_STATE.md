@@ -31,6 +31,8 @@ A Central exibe Chamados, Histórico sem chamado, Fechamento mensal e Configura�
 
 O Histórico permite prévia da mídia arquivada sob demanda, seleção de chamado existente por título/local/frente, criação explícita de chamado e ignorar/restaurar sem apagar a fonte. Tipos sem prévia compatível ficam disponíveis para baixar; anexos não arquivados não podem ser abertos.
 
+No fechamento, **A revisar** e **Conferidos** têm listas e contagens próprias, com busca. A lista rola separadamente no desktop; abrir um chamado revela o início do conteúdo também no celular. Fontes alteradas voltam a **A revisar**.
+
 ## Limites
 
 O fechamento abre no fluxo de extração. A revisão da redação, as decisões de inclusão e as preventivas aparecem somente ao escolher **Fechar PDF pelo painel**. Voltar à extração não descarta o pacote preparado.
