@@ -12,10 +12,8 @@ O funcionamento não depende de Codex/OpenCode/Claude abertos ou dos créditos d
 
 ## Próximas prioridades de produto
 
-1. Console de chamados por CFTV, SDAI, SCA, PABX, MEDICAO, BMS e ZABBIX, busca e acesso direto ao histórico.
-2. Atualizações, fontes, perguntas/respostas e pendências de cada chamado; distinguir informação completa de serviço concluído. Classificação sugerida conservadora e revisão humana.
-3. Fluxo de fechamento mensal: conciliar fontes, confirmar pendências, redigir itens variados e objetivos, revisar e gerar relatório. Não inventar datas nem conclusões.
-4. Documentação interativa e explorador técnico somente como apoio; não ampliar infraestrutura enquanto o fluxo de chamados estiver pendente.
+1. Fluxo de fechamento mensal: conciliar fontes, confirmar pendências, redigir itens variados e objetivos, revisar e gerar relatório. Não inventar datas nem conclusões.
+2. Documentação interativa e explorador técnico somente como apoio; não ampliar infraestrutura enquanto o fluxo de chamados estiver pendente.
 
 ## Concluído nesta etapa
 
