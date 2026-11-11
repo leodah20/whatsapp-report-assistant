@@ -23,6 +23,8 @@ Validação: 60 testes sintéticos aprovados na instalação e também em clone 
 
 Em 11/11/2026, a central local por frente de serviço e a supervisão Windows entraram em operação. A central oferece arquivo reversível de chamados, fila de fontes históricas sem vínculo, revisão por competência, preventivas com status explícito e minuta A4 imprimível. A capa e as rotinas do projeto ficam no modelo privado local. O explorador técnico e a exportação DOCX não estão implementados.
 
+Na revisão de contexto, Tab aceita a sugestão compatível e avança. Isso apenas preenche o formulário; o responsável ainda precisa salvar.
+
 ## Limites
 
 Ainda sem interpretação de fotos/áudios e sem gerador completo de relatório final. Histórico depende do WhatsApp; envio exatamente uma vez não é garantido em falha externa. CPU pode demorar minutos. Armazenamento de credenciais Linux/macOS não implementado. Clientes OpenCode/Claude e provedores alternativos não foram testados ponta a ponta. Ofertas Free podem expirar; API direta da DeepSeek é paga.

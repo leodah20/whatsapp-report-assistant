@@ -115,18 +115,35 @@ function renderDetail(){
   if(tab==='context')renderContext(body,i);
   $('detail').replaceChildren(head,tabs,body);
 }
+function offerTabSuggestion(control,suggestion,id){
+  if(!suggestion||suggestion.length>control.maxLength)return;
+  control.placeholder=suggestion;
+  const hint=node('span','Tab para usar a sugestão','hint');
+  hint.id=id;control.parentElement.append(hint);
+  control.setAttribute('aria-describedby',id);
+  const canAccept=()=>control.value!==suggestion&&suggestion.startsWith(control.value);
+  const updateHint=()=>{hint.hidden=!canAccept();};
+  control.addEventListener('input',updateHint);updateHint();
+  control.addEventListener('keydown',event=>{
+    if(event.key!=='Tab'||event.defaultPrevented||event.shiftKey||event.ctrlKey||event.altKey||event.metaKey||event.isComposing||!canAccept())return;
+    control.value=suggestion;
+    control.dispatchEvent(new Event('input',{bubbles:true}));
+    // Let the browser move focus normally after accepting the suggestion.
+  });
+}
 function renderContext(parent,item){
   const section=block(parent,'Respostas confirmadas'),form=node('form');
   const questions={equipamento:'Qual equipamento foi atendido?',ocorrencia:'O que aconteceu?',procedimento:'O que foi executado?',resultado:'Qual foi o resultado observado ou a pendência?'};
   const label=(name,control)=>{const l=node('label',name,'control');l.append(control);form.append(l);return control;};
   section.append(node('p','Preencha só o que você puder confirmar. Os trechos extraídos aparecem como referência, não como respostas confirmadas.','hint'));
   const place=label('Onde? Torre, setor, pavimento ou unidade',node('input'));place.maxLength=150;place.value=item.profile.location||'';place.placeholder=item.location||'Informe o local exato';
+  if(!item.locationConfirmed)offerTabSuggestion(place,item.location,'context-suggestion-local');
   const when=label('Qual foi a data real do atendimento?',node('input'));when.type='date';when.max=day.format(new Date());when.value=item.serviceDay||'';
   const controls={};
   for(const [k,q] of Object.entries(questions)){
     const t=label(q,node('textarea'));t.rows=2;t.maxLength=1000;t.value=item.profile.answers?.[k]||'';
     const evidence=item.facts.filter(f=>f.field===k&&!f.confirmed).map(f=>f.quote).join(' · ');
-    if(evidence)t.placeholder=evidence.slice(0,280);
+    offerTabSuggestion(t,evidence,'context-suggestion-'+k);
     controls[k]=t;
   }
   const save=node('button','Salvar respostas','button primary');form.append(save);section.append(form);

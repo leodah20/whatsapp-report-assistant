@@ -50,6 +50,7 @@
 - [x] Destacar o local no título. Quando não confirmado, pedir torre, setor, pavimento ou unidade; não preencher por suposição.
 - [x] Oferecer conclusão manual em ação direta. Retorno operacional textual pode sugerir confirmação; encaminhamento, pendência e contexto completo não encerram atendimento.
 - [x] Sinalizar lacunas na fila e concentrar perguntas, respostas confirmadas, fontes e anexos locais numa tela. Reprocessar trechos documentados sem apagar confirmações humanas.
+- [x] Aceitar sugestão de contexto com Tab no campo vazio ou com prefixo correspondente, avançando o foco e preservando texto divergente. Salvar continua explícito.
 - [x] Reunir duplicados confirmados com trilha de auditoria. Respeitar código/resposta citada e identificação inequívoca de equipamento em atualizações posteriores; mostrar sugestões quando houver ambiguidade.
 - [ ] Acompanhar reclassificações e novas atualizações reais. Refinar identificação de ativos e locais conforme confirmações, sem criar regra genérica a partir de um único caso.
 

@@ -26,4 +26,6 @@ Fechamento: /fechamento revisa inclusões, exclusões e perguntas, guarda decis�
 
 O histórico sugere o texto posterior à mídia sem legenda em até três minutos, com prioridade para resposta citada. A proximidade não confirma vínculo nem abre chamado. Na central, data do atendimento e local só são confirmados manualmente; o registro continua datado e há ordenação por data, nome ou andamento. Uma indicação textual de retorno à operação sugere confirmação de conclusão no painel, sem mudar o status nem enviar pergunta extra no WhatsApp.
 
+Em Completar contexto, Tab aceita o trecho sugerido e deixa o navegador avançar o foco. Shift+Tab e texto divergente não são afetados; a alteração só é persistida ao salvar. O teste de teclado usa apenas dados sintéticos.
+
 “Leia os arquivos de continuidade, confira Git e continue a próxima prioridade de chamados. Use esta pasta e o origin existente. Preserve dados privados, rode testes e atualize HANDOFF.md. Pergunte antes de acessar o arquivo privado com um modelo remoto ou ampliar os envios automáticos.”
