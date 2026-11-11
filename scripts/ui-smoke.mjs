@@ -24,15 +24,19 @@ const data={
   '/api/cases':{month,statuses:STATUSES,items:[row,{...row,code:'R-00000002',status:'completed',stage:{status:'completed',origin:'manual'}}]},
   ['/api/cases/'+code]:detail,
   '/api/cases/runtime':{connected:true},
-  '/api/cases/history':{count:1,sources:[{id:'synthetic-source',timestamp,text:'Fonte de teste'}]},
+  '/api/cases/history':{count:1,sources:[{id:'synthetic-source',timestamp,text:'Legenda de teste',hasMedia:true,mediaState:'saved',mediaKind:'image'}]},
   '/api/cases/closing':{month,archiveCount:1,items:[{...row,state:'unreviewed'}],checks:[],template:{groups},settings},
   '/api/cases/closing/draft':{month,groups,settings,items:[],name:'Edifício de teste',footer:'Equipe de teste'},
   '/api/status':{state:'desconectado',groups:[],count:0}
 };
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aDncAAAAASUVORK5CYII=','base64');
 const server=createServer(async(req,res)=>{
-  const path=new URL(req.url,'http://127.0.0.1').pathname;
+  const url=new URL(req.url,'http://127.0.0.1'),path=url.pathname;
   if(req.method!=='GET'){res.writeHead(405).end();return;}
+  if(path==='/api/cases/history'&&url.searchParams.get('targets')==='1'){
+    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({targets:[{...row,current:true,month,status:'Aguardando'}]}));return;
+  }
+  if(path==='/api/cases/history/media'){res.writeHead(200,{'Content-Type':'image/png'}).end(png);return;}
   if(data[path]){res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify(data[path]));return;}
   if(path==='/api/cases/closing/cover'){res.writeHead(200,{'Content-Type':'image/png'}).end(png);return;}
   const file=routes[path]||(/^\/(cases|history|closing|draft)\.(js|css)$/.test(path)?path.slice(1):null);
@@ -89,9 +93,22 @@ try{
     await page.waitForSelector('.evidence-upload input',{visible:true});await noOverflow();
     await goFromCases('#history-link','/historico','.source-record');await noOverflow();
     assert.equal(await page.$eval('#assign-save',x=>x.disabled),true);
+    assert.match(await page.$eval('.source-content',x=>x.textContent),/Legenda original.*Legenda de teste/);
+    await page.click('.source-preview summary');
+    await page.waitForFunction(()=>document.querySelector('.source-preview img')?.naturalWidth>0);
+    assert.equal(await page.$eval('#selected-count',x=>x.textContent),'0 selecionadas');
     await page.click('.source-record input');
     assert.equal(await page.$eval('#selected-count',x=>x.textContent),'1 selecionada');
+    assert.equal(await page.$eval('#create-case',x=>x.disabled),false);
+    assert.equal(await page.$eval('#ignore-sources',x=>x.textContent),'Ignorar mensagem');
+    assert.equal(await page.$eval('#assign-save',x=>x.disabled),true);
+    await page.type('#target-search','setor');
+    await page.waitForSelector('#target optgroup option');
+    await page.select('#target',code);
     assert.equal(await page.$eval('#assign-save',x=>x.disabled),false);
+    await page.click('#ignored');
+    await page.waitForFunction(()=>document.querySelector('#ignore-sources').textContent==='Restaurar seleção');
+    assert.equal(await page.$eval('#target-controls',x=>x.hidden),true);
     await open('/chamados','.detail-actions');
     await goFromCases('#closing-link','/fechamento','.preventive-group summary');await noOverflow();
     await page.click('.preventive-group summary');

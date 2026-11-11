@@ -39,4 +39,14 @@
 .source-record:hover,.source-record:has(:checked){background:#f0faf7}
 .source-record input{accent-color:var(--accent);margin-top:4px}
 .source-content>span{display:block}
+.source-content{cursor:pointer}
+.source-preview{grid-column:2;margin:0!important;min-width:0;color:var(--muted);font-size:.84rem}
+.source-preview summary{width:fit-content;color:var(--accent);font-weight:650}
+.source-preview-body{margin-top:8px}
+.source-preview-body img,.source-preview-body video{display:block;max-width:min(100%,760px);max-height:60vh;object-fit:contain;border-radius:8px}
+.source-preview-body audio{max-width:100%}
+.source-preview-body+a{display:inline-block;margin-top:6px}
+.history-targets{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:8px;max-width:940px}
+.history-actions{margin-top:9px}
+@media(max-width:640px){.history-targets{grid-template-columns:1fr}}
 .history-pagination,.history-empty{margin-top:12px}

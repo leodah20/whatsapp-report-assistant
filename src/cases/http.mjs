@@ -2,6 +2,7 @@ import {randomBytes} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {CaseError,imageType} from './board.mjs';
+import {sendHistoryMedia} from './history-media.mjs';
 
 const assets={'/chamados':['web/cases.html','text/html'],'/cases.js':['web/cases.js','text/javascript'],'/cases.css':['web/cases.css','text/css'],'/fechamento':['web/closing.html','text/html'],'/minuta':['web/draft.html','text/html'],'/historico':['web/history.html','text/html'],'/history.js':['web/history.js','text/javascript'],'/closing.js':['web/closing.js','text/javascript'],'/closing.css':['web/closing.css','text/css'],'/draft.js':['web/draft.js','text/javascript'],'/draft.css':['web/draft.css','text/css']};
 const age=12*60*60;
@@ -39,15 +40,23 @@ export function createCaseHandler({origin,root,board,readMedia,closing,historica
         res.writeHead(200,{'Content-Type':asset[1]+'; charset=utf-8'});res.end(readFileSync(join(root,asset[0])));return true;
       }
       if(!authorized){json(res,{error:'Reabra o painel para renovar a sessão local.'},401);return true;}
+      if(req.method==='GET'&&url.pathname==='/api/cases/history/media'){
+        if(!historical)throw new CaseError('Histórico indisponível.',404);
+        const source=historical.mediaSource(url.searchParams.get('month'),url.searchParams.get('id'),url.searchParams.get('ignored')==='1');
+        sendHistoryMedia(req,res,source,readMedia,url.searchParams.get('download')==='1');return true;
+      }
       if(url.pathname==='/api/cases/history'){
         if(!historical)throw new CaseError('Histórico indisponível.',404);
         const month=url.searchParams.get('month');
-        if(req.method==='GET'){json(res,historical.view(month,Number(url.searchParams.get('offset')||0)));return true;}
+        if(req.method==='GET'){
+          json(res,url.searchParams.get('targets')==='1'?{targets:historical.targets(month)}:historical.view(month,Number(url.searchParams.get('offset')||0),url.searchParams.get('ignored')==='1'));return true;
+        }
         if(req.method==='POST'&&req.headers.origin===origin&&req.headers['content-type']==='application/json'){
           if(Number(req.headers['content-length'])>8192)throw new CaseError('Atualização acima do limite.',413);
           const data=await body(req);
           if(data?.kind==='prepare'){json(res,historical.prepare(month,data.before??null),202);return true;}
           if(data?.kind==='assign'){json(res,{code:historical.assign(month,data.ids,data.code)});return true;}
+          if(data?.kind==='ignore'||data?.kind==='restore'){json(res,historical.ignore(month,data.ids,data.kind==='restore'));return true;}
           if(data?.kind==='recheck'){json(res,historical.recheck(month),202);return true;}
         }
         throw new CaseError('Operação local não autorizada.',403);

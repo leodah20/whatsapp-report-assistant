@@ -55,9 +55,12 @@ export class CaseBoard{
     const stage=currentStage(profile,sources);
     return {code:item.code,title:title.slice(0,180),location,locationConfirmed:!!profile.location,serviceDay:profile.serviceDay||null,referenceAt,referenceKind:timestamps.length?'source':'created',summary:confirmed.ocorrencia||item.facts?.find(f=>f.field==='ocorrencia')?.quote||'',area:profile.area||suggestion.area,areaSuggested:!profile.area,candidates:suggestion.candidates,status:stage.status,stage,version:profile.version,contextState:missing.length?(item.review==='clarification-received'?'analysis-pending':'needs-context'):'complete',missing,openTasks:profile.tasks.filter(t=>!t.resolvedAt).length,sourceCount:sources.length,answerCount:item.answerIds?.length||0,originMonth:item.month,activityMonths,firstSourceAt:timestamps[0]||null,lastSourceAt:timestamps.at(-1)||null,updatedAt:[profile.events.at(-1)?.registeredAt,item.updatedAt,item.createdAt].filter(Boolean).sort().at(-1)};
   }
+  summaries(includeArchived=false){
+    return this.assistant.all().flatMap(i=>{const p=this.profile(i.id);return !includeArchived&&p.archived?[]:[{...this.summary(i,p),archived:!!p.archived,historical:!!i.historical}];});
+  }
   list(month,carry=false,includeArchived=false){
     if(!/^20\d\d-(0[1-9]|1[0-2])$/.test(month||''))throw new CaseError('Mês inválido.');
-    const all=this.assistant.all().map(i=>{const p=this.profile(i.id);return {...this.summary(i,p),archived:!!p.archived,historical:!!i.historical};}).filter(i=>includeArchived||!i.archived);
+    const all=this.summaries(includeArchived);
     const items=all.filter(i=>i.activityMonths.includes(month)||(carry&&i.originMonth<month&&(!isTerminal(i.status)||i.openTasks>0))).map(i=>({...i,carryover:!i.activityMonths.includes(month)}));
     items.sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
     return {untrusted:true,month,areas:AREAS,statuses:STATUSES,months:[...new Set([localDay().slice(0,7),...all.flatMap(i=>i.activityMonths)])].sort().reverse(),items};

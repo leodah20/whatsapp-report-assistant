@@ -67,9 +67,9 @@ const closing=new MonthlyClosing({db,key:KEY,board:caseBoard,template(){
   return {count,revision:hash.digest('hex')};
 }});
 const historical=new HistoricalCases({db,board:caseBoard,assistant,readSource});
-const serveCases=createCaseHandler({origin:ORIGIN,root:ROOT,board:caseBoard,closing,historical,readCover:()=>readFileSync(coverPath),getRuntime:runtimePulse,readMedia(id){
+const serveCases=createCaseHandler({origin:ORIGIN,root:ROOT,board:caseBoard,closing,historical,readCover:()=>readFileSync(coverPath),getRuntime:runtimePulse,readMedia(id,max=8*1024*1024){
   const size=db.prepare('SELECT length(media) AS n FROM messages WHERE id=?').get(id)?.n;
-  if(!size||size>8*1024*1024+28)return null;
+  if(!size||size>max+28)return null;
   const {media}=db.prepare('SELECT media FROM messages WHERE id=?').get(id);
   return open(KEY,media,id+':media');
 }});

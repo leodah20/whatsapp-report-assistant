@@ -106,6 +106,7 @@ export class ReportAssistant{
       return;
     }
     if(!this.enabled||record.type==='album')return;
+    if(this.db.prepare("SELECT 1 FROM assistant_inbox WHERE id=? AND state='ignored'").get(record.id))return;
     let itemId=record.quotedId?this.db.prepare('SELECT item_id FROM assistant_links WHERE message_id=?').get(record.quotedId)?.item_id:null;
     const code=record.text.match(/\bR-[A-F0-9]{8}\b/i)?.[0]?.toUpperCase();
     if(!itemId&&code)itemId=this.all().find(i=>i.code===code)?.id;

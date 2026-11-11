@@ -2,9 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
+import {createServer} from 'node:http';
+import {fileURLToPath} from 'node:url';
 import {CaseBoard} from '../src/cases/board.mjs';
 import {ReportAssistant} from '../src/assistant/assistant.mjs';
 import {HistoricalCases} from '../src/cases/history.mjs';
+import {createCaseHandler} from '../src/cases/http.mjs';
 import {followupMatch} from '../src/assistant/followup.mjs';
 import {seal,open} from '../src/core.mjs';
 
@@ -33,6 +36,60 @@ test('manual answers persist independently and photo is encrypted and linked to 
   const updated=board.addPhoto(item.code,picture,'image/jpeg'),photo=updated.sources.find(s=>s.kind==='manual-photo');
   const data=db.prepare('SELECT media FROM messages WHERE id=?').get(photo.id).media;
   assert(!Buffer.from(data).equals(picture));assert.deepEqual(open(key,data,photo.id+':media'),picture);
+});
+test('historical media and case picker use local session; ignore and restore preserve original evidence',async t=>{
+  const {db,key,board,assistant,readSource,add}=setup(t);
+  const current=add('linked','R-00000001','Atendimento concluído.');
+  const existing=add('old','R-00000002','Chamado arquivado.');
+  board.change(existing.code,{kind:'archive',version:0,text:'Arquivo sintético'});
+  const photo=Buffer.from([255,216,255,1,2,3]),html=Buffer.from('<html><script>throw Error()</script></html>');
+  function insert(id,bytes,mime,filename){
+    const record={id,month,timestamp:t0,text:'Legenda\nOriginal',type:'image',hasMedia:true,mediaState:'saved',mime,filename};
+    db.prepare('INSERT INTO messages VALUES(?,?,?,?,?)').run(id,month,t0,seal(key,Buffer.from(JSON.stringify(record)),id),seal(key,bytes,id+':media'));
+  }
+  insert('source /+1',photo,'image/jpeg','foto.jpg');
+  insert('document',html,'text/html','../arquivo.html');
+  const historical=new HistoricalCases({db,board,assistant,readSource});
+  let handle,origin;
+  const server=createServer((req,res)=>void handle(req,res,new URL(req.url,origin)));
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
+  origin='http://127.0.0.1:'+server.address().port;
+  handle=createCaseHandler({origin,root:fileURLToPath(new URL('../',import.meta.url)),board,historical,readMedia:id=>{
+    const {media}=db.prepare('SELECT media FROM messages WHERE id=?').get(id);
+    return open(key,media,id+':media');
+  }});
+  const url=origin+'/api/cases/history',query='?month='+month,preview=id=>url+'/media?'+new URLSearchParams({month,id});
+  assert.equal((await fetch(preview('source /+1'))).status,401);
+  const page=await fetch(origin+'/historico'),cookie=page.headers.get('set-cookie').split(';')[0];await page.body.cancel();
+  const get=(p,extra)=>fetch(p,{headers:{cookie,...extra}});
+  const post=(kind,ids,code='',from=origin)=>fetch(url+query,{method:'POST',headers:{cookie,origin:from,'Content-Type':'application/json'},body:JSON.stringify({kind,ids,code})});
+  const rows=(await (await get(url+query)).json()).sources;
+  assert.equal(rows.find(x=>x.id==='source /+1').text,'Legenda\nOriginal');
+  assert.equal(rows.find(x=>x.id==='source /+1').mediaKind,'image');
+  assert.deepEqual((await (await get(url+query+'&targets=1')).json()).targets.map(x=>x.code),[current.code]);
+  assert.equal((await get(preview('linked'))).status,404);
+  assert.equal((await get(preview('source /+1').replace(month,'2025-10'))).status,404);
+  const partial=await get(preview('source /+1'),{range:'bytes=1-3'});
+  assert.equal(partial.status,206);assert.equal(partial.headers.get('content-range'),'bytes 1-3/6');
+  assert.deepEqual(Buffer.from(await partial.arrayBuffer()),photo.subarray(1,4));
+  assert.equal((await get(preview('source /+1'),{range:'bytes=99-100'})).status,416);
+  const attachment=await get(preview('document'));
+  assert.equal(attachment.headers.get('content-type'),'application/octet-stream');
+  assert.equal(attachment.headers.get('content-disposition'),'attachment; filename="arquivo.html"');
+  assert.deepEqual(Buffer.from(await attachment.arrayBuffer()),html);
+  assert.equal((await post('ignore',['source /+1'],'','https://example.invalid')).status,403);
+  assert.equal((await post('ignore',['source /+1','missing'])).status,409);
+  assert.equal((await get(preview('source /+1'))).status,200);
+  assert.equal((await post('ignore',['source /+1'])).status,200);
+  assert.equal((await get(preview('source /+1'))).status,404);
+  assert.equal((await get(preview('source /+1')+'&ignored=1')).status,200);
+  assert.equal((await post('assign',['source /+1'],current.code)).status,409);
+  await assistant.accept({...readSource('source /+1'),text:'Atualização '+current.code});
+  assert.ok(!board.item(current.code).sourceIds.includes('source /+1'));
+  assert.equal((await post('restore',['source /+1'])).status,200);
+  assert.equal((await post('assign',['source /+1'],current.code)).status,200);
+  assert.equal((await get(preview('source /+1'))).status,404);
+  assert.ok(board.item(current.code).sourceIds.includes('source /+1'));
 });
 test('existing context exposes the documented blocker without a separate task',t=>{
   const {board,add}=setup(t);const item=add('one','R-11111111','Vistoria de um sensor.');

@@ -29,6 +29,8 @@ Interface revisada de ponta a ponta: fila com filtros recolhíveis, detalhe com 
 
 A Central exibe Chamados, Histórico sem chamado, Fechamento mensal e Configuração na barra superior. Histórico e fechamento mantêm a competência selecionada na Central.
 
+O Histórico permite prévia da mídia arquivada sob demanda, seleção de chamado existente por título/local/frente, criação explícita de chamado e ignorar/restaurar sem apagar a fonte. Tipos sem prévia compatível ficam disponíveis para baixar; anexos não arquivados não podem ser abertos.
+
 ## Limites
 
 A central calcula a etapa pelo histórico já vinculado, pelas respostas no painel e pelas atualizações locais. A fila resume por etapa e expõe o motivo de espera sem exigir uma pendência duplicada. Ajuste manual persiste até ser alterado ou voltar ao modo pelos registros. Não há reclassificação automática de material não vinculado nem leitura do conteúdo de fotos ou vídeos. A atualização foi carregada no coletor local e a API de etapas respondeu após reconexão.

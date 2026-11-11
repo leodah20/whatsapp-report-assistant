@@ -49,6 +49,7 @@
 
 - [x] Conferir histórico do mês contra o WhatsApp disponível; expor fontes sem vínculo e revisar foto ou vídeo antes de anexar. Não confundir cobertura disponível com histórico integral.
 - [x] Para mídia sem legenda, buscar texto posterior próximo e priorizar resposta citada; mostrar sugestão, sem transformar proximidade em certeza ou abrir chamado só pela foto.
+- [x] No Histórico, mostrar mensagem e legenda separadas das sugestões e abrir a mídia arquivada antes de qualquer vínculo. Buscar um chamado existente sem copiar código, criar um chamado novo ou ignorar/restaurar conversas sem relevância.
 - [x] Exibir data do registro em todos os chamados quando disponível, separada da data real do atendimento. Ordenar por data, nome ou andamento.
 - [x] Destacar o local no título. Quando não confirmado, pedir torre, setor, pavimento ou unidade; não preencher por suposição.
 - [x] Classificar etapa atual por evidência explícita: em andamento, aguardando, remarcado, cancelado, concluído ou não identificada. Encaminhamento, contexto completo e testes isolados não encerram atendimento. Mostrar motivo/dependência e preservar ajustes manuais auditáveis na aba Contexto.
