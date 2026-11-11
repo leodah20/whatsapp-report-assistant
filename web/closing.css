@@ -25,7 +25,6 @@
 .closing-progress{padding:14px 18px}
 .closing-progress #counts,.closing-progress #count{margin:4px 0}
 .closing-progress #checks{font-size:.85rem;color:var(--muted);margin-bottom:0}
-.closing-steps{display:flex;flex-wrap:wrap;gap:8px 18px;margin:0 0 14px;font-size:.84rem;font-weight:650}
 .closing .closing-mode{margin-bottom:12px}
 .closing .history-pending{padding:10px 12px;margin:0 0 12px;border:1px solid #ead19a;border-radius:9px;background:var(--amber-bg,#fff6df);color:var(--amber,#7a4c08);font-size:.86rem}
 .history-pending p{margin-top:3px}
@@ -74,10 +73,6 @@
 .closing-list #list .case-card+.case-card{margin-top:6px}
 .closing-list #list .case-card h3{font-size:.96rem;margin:3px 0}
 .closing-list #list .case-location{margin:0 0 6px;color:var(--muted)}
-.review-views{display:flex;gap:5px;flex-wrap:wrap}
-.review-view{display:inline-flex;gap:5px;align-items:center;padding:5px 6px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:.8rem;font-weight:650}
-.review-view[aria-pressed=true]{border-color:#278d81;background:var(--accent-bg);color:var(--accent)}
-.review-view .count{font-variant-numeric:tabular-nums;padding:2px 5px}
 .closing-list #review-search{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--paper)}
 .closing-list #list .review-empty{padding:7px;margin:0}
 .closing-editor{padding:clamp(14px,2vw,24px)}

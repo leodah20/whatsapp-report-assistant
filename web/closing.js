@@ -145,7 +145,7 @@ function reviewAttachment(code,s,index){
   return details;
 }
 function renderMode(){
-  $('print-progress').hidden=!printMode;
+  $('print-progress').hidden=$('print-progress-link').hidden=!printMode;
   $('report-assist').hidden=$('extract-link').hidden=printMode;
   $('settings-link').hidden=$('settings').hidden=!view?.template;
   $('print-settings').hidden=!printMode;
@@ -157,7 +157,6 @@ function renderMode(){
   $('closing-mode-note').textContent=printMode?'Revisão para impressão':'Extração de contexto e mídias';
   $('closing-lead').textContent=printMode?'Revise o texto, as datas, as fotos e as preventivas para salvar em PDF.':'Confira as fontes e os anexos e gere a extração do mês.';
   $('print-mode').textContent=printMode?'Voltar para extração':'Fechar PDF pelo painel';
-  $('review-link').textContent=printMode?'1. Revisar chamados':'Conferir fontes';
   $('review-title').textContent=printMode?'Revisar chamados para o PDF':'Conferir fontes';
   const final=$('editor').querySelector('.final-review');
   if(final)final.hidden=!printMode;
@@ -407,7 +406,11 @@ $('print-mode').onclick=()=>{
   if(printMode&&$('editor').contains($('report-assist')))resetEditor();
   if(view){renderOverview();if(!printMode&&!selected&&reviewIsDone())finishReview(false);}else renderMode();
 };
-for(const key of ['pending','done'])$('review-'+key).onclick=()=>{reviewGroup=key;renderQueue({reset:true});};
+for(const key of ['pending','done'])$('review-'+key).onclick=()=>{
+  reviewGroup=key;renderQueue({reset:true});
+  $('review').scrollIntoView({block:'start'});
+  $('list').focus({preventScroll:true});
+};
 $('review-search').oninput=()=>renderQueue({reset:true});
 $('settings-form').addEventListener('invalid',e=>{const group=e.target.closest('.preventive-group');if(group)group.open=true;},true);
 const preventiveValues=()=>[...$('preventives').querySelectorAll('[name=preventive]')].map(x=>x.value);

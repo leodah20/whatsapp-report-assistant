@@ -94,6 +94,13 @@ try{
     data['/api/cases/closing'].settings={...settings};
     await page.setViewport({width,height:850});
     const noOverflow=async()=>assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Página excede a largura: '+page.url());
+    const verifySidebar=async()=>{
+      assert.ok(await page.$eval('.panel-sidebar',side=>{
+        const r=side.getBoundingClientRect(),main=document.querySelector('main').getBoundingClientRect();
+        return innerWidth>860?getComputedStyle(side).position==='fixed'&&r.right<=main.left:r.bottom<=main.top;
+      }));
+      await noOverflow();
+    };
     await open('/chamados','.detail-actions');await noOverflow();
     await page.waitForSelector('#history-dot:not([hidden])');
     assert.match(await page.$eval('#history-link',x=>x.title),/3 registros/);
@@ -121,7 +128,10 @@ try{
     await page.waitForSelector('.evidence-upload summary');
     await page.click('.evidence-upload summary');
     await page.waitForSelector('.evidence-upload input',{visible:true});await noOverflow();
-    await goFromCases('#history-link','/historico','.source-record');await noOverflow();
+    await goFromCases('#history-link','/historico','.source-record');await verifySidebar();
+    assert.equal(await page.$eval('#history-unlinked-count',x=>x.textContent),'1');
+    await page.click('#history-tools-link');
+    assert.equal(await page.$eval('#history-tools',x=>x.open),true);
     assert.equal(await page.$eval('#assign-save',x=>x.disabled),true);
     assert.match(await page.$eval('.source-content',x=>x.textContent),/Legenda original.*Legenda de teste/);
     await page.click('.source-preview summary');
@@ -136,16 +146,22 @@ try{
     await page.waitForSelector('#target optgroup option');
     await page.select('#target',code);
     assert.equal(await page.$eval('#assign-save',x=>x.disabled),false);
-    await page.click('#ignored');
+    await page.click('#history-ignored');
     await page.waitForFunction(()=>document.querySelector('#ignore-sources').textContent==='Restaurar seleção');
     assert.equal(await page.$eval('#target-controls',x=>x.hidden),true);
+    assert.equal(await page.$eval('#history-ignored',x=>x.getAttribute('aria-pressed')),'true');
+    await page.waitForSelector('.source-record');
+    await page.click('#history-unlinked');
+    await page.waitForFunction(()=>document.querySelector('#history-unlinked').getAttribute('aria-pressed')==='true');
     await open('/chamados','.detail-actions');
-    await goFromCases('#closing-link','/fechamento','.closing-list .case-card');await noOverflow();
+    await goFromCases('#closing-link','/fechamento','.closing-list .case-card');await verifySidebar();
     await page.waitForSelector('#history-dot:not([hidden])');
     assert.match(await page.$eval('#history-pending-title',x=>x.textContent),/3 registros/);
     assert.equal(await page.$eval('#history-pending-link',x=>x.pathname+x.search),'/historico?month='+month);
     assert.equal(await page.$eval('#review-pending-count',x=>x.textContent),'16');
     assert.equal(await page.$eval('#review-done-count',x=>x.textContent),'1');
+    await page.click('#extract-link');
+    assert.equal(new URL(page.url()).hash,'#report-assist');
     assert.match(await page.$eval('#list .case-card',x=>x.textContent),/Fontes atualizadas/);
     assert.ok(await page.$eval('#list',x=>x.scrollHeight>x.clientHeight));
     const card='#list .case-card[data-code="'+code+'"]';
@@ -178,6 +194,7 @@ try{
     await page.waitForSelector('#editor #assist-output',{visible:true});
     assert.match(await page.$eval('#assist-history-text',x=>x.textContent),/2 registros/);
     await page.click('#review-done');
+    assert.equal(await page.$eval('#review-done',x=>x.getAttribute('aria-pressed')),'true');
     assert.equal(await page.$$eval('#list .case-card',x=>x.length),17);
     await page.type('#review-search','FALHA');
     assert.equal(await page.$$eval('#list .case-card',x=>x.length),1);
@@ -196,6 +213,8 @@ try{
     await noOverflow();
     await clickText('#print-mode','Fechar PDF pelo painel');
     await page.waitForSelector('.final-review select',{visible:true});
+    await page.waitForSelector('#print-progress-link',{visible:true});
+    assert.equal(await page.$eval('#extract-link',x=>x.hidden),true);
     assert.equal(await page.$eval('.final-review select',x=>x.value),'');
     const reasonVisible=()=>page.$eval('.final-review textarea[maxlength="1000"]',x=>!!x.getClientRects().length);
     assert.equal(await reasonVisible(),false);
@@ -218,7 +237,12 @@ try{
     assert.equal(await page.$eval('.toolbar',x=>getComputedStyle(x).display),'none');
     await page.emulateMediaType('screen');
     await open('/chamados','.detail-actions');
-    await goFromCases('a[href="/"]','/','.setup-grid',false);await noOverflow();
+    await goFromCases('a[href="/"]','/','.setup-grid',false);await verifySidebar();
+    for(const anchor of ['connection','group','automatic','arquivo']){
+      await page.click('.panel-sidebar a[href="#'+anchor+'"]');
+      assert.equal(new URL(page.url()).hash,'#'+anchor);
+      assert.ok(await page.$eval('#'+anchor,x=>{const r=x.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight;}));
+    }
     await page.waitForFunction(()=>document.getElementById('status').textContent.includes('desconectado'));
     console.log(`Interface validada a ${width}px: chamados, histórico, fechamento, minuta e configuração.`);
   }

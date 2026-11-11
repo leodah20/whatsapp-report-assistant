@@ -2,9 +2,23 @@
 <html lang="pt-BR"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fechamento mensal</title><link rel="stylesheet" href="/cases.css"><link rel="stylesheet" href="/closing.css"><script defer src="/closing.js"></script>
-</head><body class="closing">
-<main>
+</head><body class="closing panel-with-sidebar">
+<div class="workspace-bar">
 <nav class="workspace-nav" aria-label="Área de trabalho"><a href="/chamados" data-month-nav>Chamados</a><a href="/historico" id="history-link" data-month-nav>Histórico sem chamado<span class="history-dot" id="history-dot" aria-hidden="true" hidden></span></a><a href="/fechamento" aria-current="page">Fechamento mensal</a><a href="/">Configuração</a></nav>
+</div>
+<aside class="sidebar panel-sidebar" aria-label="Navegação do fechamento">
+<a class="brand" href="/chamados" data-month-nav><span class="brand-icon" aria-hidden="true">▤</span><span>Central de chamados<small>ACOMPANHAMENTO LOCAL</small></span></a>
+<p class="nav-label">ETAPAS DO MÊS</p>
+<nav aria-label="Atalhos do fechamento">
+<button type="button" id="review-pending" class="area" aria-pressed="true" aria-controls="list"><span>A revisar</span> <span class="nav-count" id="review-pending-count">0</span></button>
+<button type="button" id="review-done" class="area" aria-pressed="false" aria-controls="list"><span>Conferidos</span> <span class="nav-count" id="review-done-count">0</span></button>
+<a class="area" id="settings-link" href="#settings" hidden>Preventivas</a>
+<a class="area" id="extract-link" href="#report-assist">Gerar extração</a>
+<a class="area" id="print-progress-link" href="#print-progress" hidden>Situação do PDF</a>
+</nav>
+<div class="sidebar-footer"><span class="local-dot" aria-hidden="true"></span>Dados neste computador</div>
+</aside>
+<main>
 <header class="page-head"><div><h1>Fechamento mensal</h1><p class="lead" id="closing-lead">Confira as fontes e os anexos e gere a extração do mês.</p></div>
 <form id="period" class="head-actions"><label class="control">Competência <input id="month" type="month" required></label><button class="button primary">Carregar mês</button></form></header>
 <p id="notice" role="status" class="notice" hidden></p>
@@ -32,14 +46,9 @@
   </div>
   <div id="assist-results"></div>
 </section></div>
-<nav class="closing-steps" aria-label="Atalhos do fechamento"><a href="#review" id="review-link">Conferir fontes</a><a id="settings-link" href="#settings" hidden>Preventivas</a><a id="extract-link" href="#report-assist">Gerar extração</a></nav>
 <div class="workbench closing-workbench">
 <section class="surface closing-list" id="review" aria-labelledby="review-title">
   <h2 id="review-title">Conferir fontes</h2>
-  <div class="review-views" role="group" aria-label="Lista de chamados">
-    <button type="button" id="review-pending" class="review-view" aria-pressed="true"><span>A revisar</span> <span class="count" id="review-pending-count">0</span></button>
-    <button type="button" id="review-done" class="review-view" aria-pressed="false"><span>Conferidos</span> <span class="count" id="review-done-count">0</span></button>
-  </div>
   <label for="review-search" class="sr-only">Buscar chamado por título, local ou código</label>
   <input id="review-search" type="search" placeholder="Buscar chamado..." autocomplete="off">
   <div id="list" tabindex="0" role="region" aria-label="Chamados a revisar"></div>

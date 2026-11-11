@@ -48,3 +48,5 @@ A central calcula a etapa pelo histórico já vinculado, pelas respostas no pain
 Ainda sem interpretação de fotos/áudios e sem gerador completo de relatório final. Histórico depende do WhatsApp; envio exatamente uma vez não é garantido em falha externa. CPU pode demorar minutos. Armazenamento de credenciais Linux/macOS não implementado. Clientes OpenCode/Claude e provedores alternativos não foram testados ponta a ponta. Ofertas Free podem expirar; API direta da DeepSeek é paga.
 
 O alerta de registros sem chamado usa a competência aberta: há uma bolinha na navegação e um aviso no fechamento e na extração. Registros ignorados ou já vinculados não contam; os pendentes não são exportados.
+
+Cada aba operacional tem menu lateral contextual. Chamados mantém as frentes; Histórico separa A vincular e Ignorados e abre as ferramentas; Fechamento concentra filas, preventivas e saída; Configuração salta para as seções do coletor. Em telas estreitas, os atalhos ficam acima do conteúdo. A minuta imprimível não mudou.

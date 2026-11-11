@@ -2,8 +2,21 @@
 <html lang="pt-BR"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Configuração do coletor</title><link rel="stylesheet" href="/cases.css"><link rel="stylesheet" href="/style.css"><script src="/ui.js" defer></script>
-</head><body class="setup"><main>
+</head><body class="setup panel-with-sidebar"><div class="workspace-bar">
 <nav class="workspace-nav" aria-label="Área de trabalho"><a href="/chamados">Chamados</a><a href="/historico">Histórico sem chamado</a><a href="/fechamento">Fechamento mensal</a><a href="/" aria-current="page">Configuração</a></nav>
+</div>
+<aside class="sidebar panel-sidebar" aria-label="Navegação da configuração">
+<a class="brand" href="/chamados"><span class="brand-icon" aria-hidden="true">▤</span><span>Central de chamados<small>ACOMPANHAMENTO LOCAL</small></span></a>
+<p class="nav-label">COLETOR</p>
+<nav aria-label="Atalhos da configuração">
+<a class="area" href="#connection">Conexão do WhatsApp</a>
+<a class="area" href="#group">Grupo autorizado</a>
+<a class="area" href="#automatic">Mensagens automáticas</a>
+<a class="area" href="#arquivo">Arquivo mensal</a>
+</nav>
+<div class="sidebar-footer"><span class="local-dot" aria-hidden="true"></span>Dados neste computador</div>
+</aside>
+<main>
 <header class="page-head"><div><h1>Configuração do coletor</h1><p class="lead">Gerencie a conexão, o grupo autorizado e as mensagens automáticas.</p></div></header>
 <p id="notice" class="notice" role="status" hidden></p>
 <div class="setup-grid">

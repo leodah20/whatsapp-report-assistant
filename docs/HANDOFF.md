@@ -48,3 +48,5 @@ Após a revisão visual, passaram `npm test` (78 testes) e `node scripts/ui-smok
 “Leia os arquivos de continuidade, confira Git e continue a próxima prioridade de chamados. Use esta pasta e o origin existente. Preserve dados privados, rode testes e atualize HANDOFF.md. Pergunte antes de acessar o arquivo privado com um modelo remoto ou ampliar os envios automáticos.”
 
 O alerta de registros sem chamado foi validado com 88 testes e em Chrome a 1366 e 390 px. A bolinha some quando a competência não tem pendências; a extração avisa se fontes avulsas ficaram de fora.
+
+Menus laterais contextuais testados com cliques em Chrome a 1366 e 390 px: alternância do Histórico, filas e modos do Fechamento e atalhos da Configuração. Os 88 testes sintéticos passaram; as quatro rotas locais serviram a interface atualizada sem reiniciar o coletor. Nenhuma mudança no armazenamento, nos envios ou na minuta. Próximo passo: acompanhar o fechamento real.

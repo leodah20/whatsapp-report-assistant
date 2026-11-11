@@ -6,10 +6,13 @@ const initialTarget=new URLSearchParams(location.search).get('code');
 let selectedTarget=/^R-[A-F0-9]{8}$/.test(initialTarget||'')?initialTarget:'';
 const normalize=s=>String(s||'').normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
 const notify=s=>{$('notice').textContent=s;$('notice').hidden=!s;};
-const showingIgnored=()=>$('ignored').checked;
+let ignoredView=false;
+const showingIgnored=()=>ignoredView;
 const picked=()=>[...$('sources').querySelectorAll('input[name=source]:checked')].map(x=>x.value);
 function selection(){
   const count=picked().length,disabled=assigning||loading||!ready||!count||count>24,ignored=showingIgnored();
+  $('history-unlinked').setAttribute('aria-pressed',String(!ignored));
+  $('history-ignored').setAttribute('aria-pressed',String(ignored));
   $('selected-count').textContent=count+(count===1?' selecionada':' selecionadas');
   $('assign-save').disabled=disabled||ignored||!$('target').value;
   $('create-case').disabled=disabled||ignored;
@@ -70,6 +73,7 @@ async function load({replace=true}={}){
   try{
     const data=await api();job=data.job;
     const link=$('history-link'),count=data.unlinkedCount??(showingIgnored()?0:data.count);$('history-dot').hidden=!count;
+    $('history-unlinked-count').textContent=count;$('history-unlinked-count').hidden=!count;
     const label=count===1?'1 registro sem chamado neste mês':count+' registros sem chamado neste mês';
     if(count){link.title=label;link.setAttribute('aria-label','Histórico sem chamado: '+label);}
     else{link.removeAttribute('title');link.removeAttribute('aria-label');}
@@ -99,10 +103,14 @@ $('next').onclick=()=>{if(!loading&&!assigning){offset+=50;void load();}};
 $('sources').onchange=selection;
 $('target-search').oninput=showTargets;
 $('target').onchange=()=>{selectedTarget=$('target').value;selection();};
-$('ignored').onchange=()=>{
-  if(loading||assigning){$('ignored').checked=!$('ignored').checked;return;}
+function showHistory(ignored){
+  if(loading||assigning||ignoredView===ignored)return;
+  ignoredView=ignored;
   offset=0;ready=false;$('sources').replaceChildren();notify('');void load();
-};
+}
+$('history-unlinked').onclick=()=>showHistory(false);
+$('history-ignored').onclick=()=>showHistory(true);
+$('history-tools-link').onclick=()=>{$('history-tools').open=true;};
 $('prepare').onclick=async()=>{
   $('prepare').disabled=true;
   try{job=await api({kind:'prepare'});await load({replace:false});}
