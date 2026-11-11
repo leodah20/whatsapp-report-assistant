@@ -265,6 +265,14 @@ async function pulse(){
     $('runtime').textContent=[s.supervised?'Supervisão ativa':'Sem supervisão confirmada','Última checagem: '+date(s.lastTransportCheck),'Última sincronização: '+date(s.lastSyncAt),s.recovering?'Recuperando histórico':null,s.analysisPending?s.analysisPending+' aguardando análise':null,s.error].filter(Boolean).join(' · ');
   }catch{$('runtime-label').textContent='Coletor indisponível';$('runtime').parentElement.dataset.online='false';$('runtime').textContent='Sem resposta do coletor local. A conexão do WhatsApp não está confirmada.';}
 }
+function updateMergeDirection(reset=false){
+  if(editing?.kind!=='merge')return;
+  const target=editing.targets?.find(t=>t.code===$('merge-target').value);
+  if(reset||!target)$('merge-keep-open').checked=true;
+  $('merge-other').textContent=target?target.title+' · '+target.code:'';
+  $('merge-direction').hidden=!target;
+  $('save').disabled=!target||!!editing.saving;
+}
 function renderMergeTargets(){
   if(editing?.kind!=='merge')return;
   const select=$('merge-target'),previous=select.value;
@@ -273,7 +281,7 @@ function renderMergeTargets(){
     const text=normal([t.title,t.location,labels[t.area],t.area,t.code,t.month].join(' '));
     return words.every(word=>text.includes(word));
   });
-  select.replaceChildren(new Option(rows.length?'Selecione o chamado duplicado':editing.targets.length?'Nenhum chamado encontrado':'Nenhum outro chamado disponível',''));
+  select.replaceChildren(new Option(rows.length?'Selecione o outro chamado':editing.targets.length?'Nenhum chamado encontrado':'Nenhum outro chamado disponível',''));
   for(const [current,label] of [[true,'Nesta competência'],[false,'Outras competências']]){
     const group=node('optgroup');group.label=label;
     for(const t of rows.filter(t=>t.current===current)){
@@ -284,7 +292,7 @@ function renderMergeTargets(){
   }
   select.disabled=!rows.length;
   select.value=rows.some(t=>t.code===previous)?previous:'';
-  $('save').disabled=!select.value||editing.saving;
+  updateMergeDirection();
 }
 async function loadMergeTargets(dialog){
   try{
@@ -301,7 +309,7 @@ async function loadMergeTargets(dialog){
 }
 function edit(kind,task){
   editing={kind,task,code:detail.code,version:detail.version};
-  $('dialog-title').textContent={profile:'Editar chamado',complete:'Marcar como concluído',note:'Registrar atualização',task:'Nova pendência',resolve:'Concluir pendência',archive:'Arquivar chamado',restore:'Restaurar chamado',merge:'Reunir ao chamado atual'}[kind];
+  $('dialog-title').textContent={profile:'Editar chamado',complete:'Marcar como concluído',note:'Registrar atualização',task:'Nova pendência',resolve:'Concluir pendência',archive:'Arquivar chamado',restore:'Restaurar chamado',merge:'Reunir chamados'}[kind];
   $('dialog-code').textContent=detail.code;$('profile-fields').hidden=kind!=='profile';
   $('edit-title').value=detail.profile.title;
   $('edit-location').value=detail.profile.location||'';
@@ -321,6 +329,8 @@ function edit(kind,task){
   $('form-error').hidden=true;configureForm();$('edit-dialog').showModal();
   if(kind==='merge'){
     $('merge-main').textContent=detail.title+' · '+detail.code;
+    $('merge-direction').hidden=true;
+    $('merge-keep-open').checked=true;
     $('merge-search').value='';
     $('merge-target').disabled=true;
     $('merge-target').replaceChildren(new Option('Carregando chamados…',''));
@@ -329,19 +339,38 @@ function edit(kind,task){
   }
 }
 function configureForm(){if(!editing)return;const required=!['archive','restore','merge','profile'].includes(editing.kind);$('date-field').hidden=!required;$('edit-day').required=required;$('edit-note').required=required||editing.kind==='archive';}
-for(const id of ['cancel','cancel-top'])$(id).onclick=()=>$('edit-dialog').close();
+for(const id of ['cancel','cancel-top'])$(id).onclick=()=>{if(!editing?.saving)$('edit-dialog').close();};
+$('edit-dialog').oncancel=e=>{if(editing?.saving)e.preventDefault();};
 $('merge-search').oninput=()=>{if(editing?.targets)renderMergeTargets();};
-$('merge-target').onchange=()=>{$('save').disabled=!$('merge-target').value||editing?.saving;};
+$('merge-target').onchange=()=>updateMergeDirection(true);
 $('edit-dialog').onclose=()=>{editing=null;};
 $('edit-form').onsubmit=async e=>{
   e.preventDefault();if(!editing||editing.saving)return;
   const {kind,version,code,task}=editing,occurredOn=$('edit-day').value,note=$('edit-note').value;
-  const duplicate=kind==='merge'?editing.targets?.find(t=>t.code===$('merge-target').value):null;
-  if(kind==='merge'&&(!duplicate||!confirm('Reunir “'+duplicate.title+'” ('+duplicate.code+') em “'+detail.title+'” ('+code+')? O chamado atual permanece e o duplicado é arquivado.')))return;
-  const payload=kind==='archive'?{kind,version,text:note}:kind==='restore'?{kind,version}:kind==='merge'?{kind,version,duplicate:duplicate.code}:kind==='complete'?{kind:'profile',version,area:detail.profile.area,title:detail.profile.title,status:'completed',note,occurredOn}:kind==='profile'?{kind,version,area:$('edit-area').value||null,title:$('edit-title').value,status:detail.profile.status||'unconfirmed',location:$('edit-location').value,serviceDay:$('edit-service-day').value,note}:{kind,version,text:note,occurredOn,...(task?{taskId:task.id}:{})};
+  const target=kind==='merge'?editing.targets?.find(t=>t.code===$('merge-target').value):null;
+  if(kind==='merge'&&!target)return;
+  const keepTarget=kind==='merge'&&$('merge-keep-target').checked;
+  const main=keepTarget?target:{code,title:detail.title};
+  const duplicate=keepTarget?{code,title:detail.title}:target;
+  if(kind==='merge'&&!confirm('Reunir “'+duplicate.title+'” ('+duplicate.code+') em “'+main.title+'” ('+main.code+')? O segundo chamado permanece e o primeiro é arquivado.'))return;
   const submission=editing;submission.saving=true;
   $('save').disabled=true;
-  try{detail=await api('/'+code,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});$('edit-dialog').close();renderDetail();await refresh();notify('Alteração salva no painel. Nenhuma mensagem enviada.');}
+  $('form-error').hidden=true;
+  try{
+    let mainVersion=version;
+    if(keepTarget){
+      const latest=await api('/'+main.code);
+      if(latest.code!==main.code||latest.profile.archived||!Number.isInteger(latest.version))throw Error('O chamado escolhido como principal não está mais disponível. Reabra a janela para atualizar a lista.');
+      mainVersion=latest.version;
+    }
+    const payload=kind==='archive'?{kind,version,text:note}:kind==='restore'?{kind,version}:kind==='merge'?{kind,version:mainVersion,duplicate:duplicate.code}:kind==='complete'?{kind:'profile',version,area:detail.profile.area,title:detail.profile.title,status:'completed',note,occurredOn}:kind==='profile'?{kind,version,area:$('edit-area').value||null,title:$('edit-title').value,status:detail.profile.status||'unconfirmed',location:$('edit-location').value,serviceDay:$('edit-service-day').value,note}:{kind,version,text:note,occurredOn,...(task?{taskId:task.id}:{})};
+    detail=await api('/'+main.code,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(kind==='merge'){
+      detailRequest++;selected=main.code;tab='history';historyReplace(main.code);
+    }
+    $('edit-dialog').close();renderDetail();await refresh();
+    notify(kind==='merge'?'Chamados reunidos. Nenhuma mensagem enviada.':'Alteração salva no painel. Nenhuma mensagem enviada.');
+  }
   catch(e){$('form-error').textContent=e.message;$('form-error').hidden=false;}
   finally{submission.saving=false;if(editing===submission)$('save').disabled=kind==='merge'&&!$('merge-target').value;}
 };

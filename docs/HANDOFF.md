@@ -54,3 +54,5 @@ Menus laterais contextuais testados com cliques em Chrome a 1366 e 390 px: alter
 O cartão de mensagens automáticas usa a mesma consulta de estado da configuração e distingue fila, totais e avisos. Validação: 88 testes sintéticos e teste de interface em Chrome a 1366 e 390 px, com transição simulada de envios autorizados para pausados. A página local serviu o novo cartão sem reinício. Não houve teste de envio real; a próxima prioridade continua sendo acompanhar o fechamento real.
 
 A janela de união reaproveita o catálogo de chamados ativos do Histórico e não exige copiar código. Validação: 88 testes sintéticos e Chrome a 1366 e 390 px, com seleção de outra competência e cancelamento ou confirmação simulados. A interface atualizada foi servida sem reinício; nenhuma união real foi executada. Próxima prioridade: acompanhar o fechamento real.
+
+A janela de união permite escolher o principal sem reabrir o outro chamado. O painel usa a versão do principal escolhido, confirma a direção e abre seu histórico. A operação no servidor é a mesma. Validação: 88 testes sintéticos, cliques nos dois sentidos em Chrome a 1366 e 390 px e atualização servida sem reinício.

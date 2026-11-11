@@ -15,6 +15,7 @@ const blocker='Aguardando a chegada da peça.';
 const row={code,version:3,title:'Falha de leitura',area:'SCA',status:'pending',stage:currentStage({},[{timestamp,text:blocker}]),contextState:'missing',location:'Setor de testes',locationConfirmed:true,sourceCount:1,referenceAt:timestamp,missing:['resultado'],openTasks:0};
 const profile={title:'Falha de leitura',location:row.location,events:[],tasks:[]};
 const detail={...row,profile,sources:[source],notices:[],facts:[{field:'ocorrencia',quote:source.text}]};
+const otherDetail={...detail,code:duplicateCode,version:7,title:'Verificação do leitor',location:'Recepção do prédio'};
 const groups=[{name:'Controle de acesso',rows:[[1,'Verificação de teste','Operacional']]}];
 const settings={issued:'2026-10-20',statuses:['done']};
 const initialClosingItems=()=>[
@@ -30,6 +31,7 @@ const types={html:'text/html',css:'text/css',js:'text/javascript'};
 const data={
   '/api/cases':{month,statuses:STATUSES,unlinkedCount:3,items:[row,{...row,code:'R-00000002',status:'completed',stage:{status:'completed',origin:'manual'}}]},
   ['/api/cases/'+code]:detail,
+  ['/api/cases/'+duplicateCode]:otherDetail,
   '/api/cases/runtime':{connected:true},
   '/api/cases/history':{count:1,sources:[{id:'synthetic-source',timestamp,text:'Legenda de teste',hasMedia:true,mediaState:'saved',mediaKind:'image'}]},
   '/api/cases/closing':{month,version:0,archiveCount:1,unlinkedCount:3,items:initialClosingItems(),checks:[],template:{groups,stamp:'template-test'},settings:{...settings}},
@@ -43,10 +45,10 @@ const assistantStatus=()=>({
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aDncAAAAASUVORK5CYII=','base64');
 const server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1'),path=url.pathname;
-  if(req.method==='POST'&&path==='/api/cases/'+code){
+  if(req.method==='POST'&&['/api/cases/'+code,'/api/cases/'+duplicateCode].includes(path)){
     const chunks=[];for await(const chunk of req)chunks.push(chunk);
     mergeRequest={path,...JSON.parse(Buffer.concat(chunks).toString())};
-    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify(detail));return;
+    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify(data[path]));return;
   }
   if(req.method==='POST'&&path==='/api/cases/closing/context'){
     res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({text:'Extração sintética com contexto',fingerprint:'test',attachments:0,pendingReview:1,unlinkedCount:2}));return;
@@ -144,6 +146,8 @@ try{
     assert.equal(await page.$eval('#merge-target optgroup',x=>x.label),'Outras competências');
     await noOverflow();
     await page.select('#merge-target',duplicateCode);
+    assert.equal(await page.$eval('#merge-keep-open',x=>x.checked),true);
+    assert.match(await page.$eval('#merge-other',x=>x.textContent),/Verificação do leitor/);
     assert.equal(await page.$eval('#save',x=>x.disabled),false);
     let confirmation;
     page.once('dialog',dialog=>{confirmation=dialog.message();void dialog.dismiss();});
@@ -154,7 +158,8 @@ try{
     await page.click('#save');
     await page.waitForSelector('#edit-dialog[open]',{hidden:true});
     assert.deepEqual(mergeRequest,{path:'/api/cases/'+code,kind:'merge',version:3,duplicate:duplicateCode});
-    await page.waitForFunction(()=>document.getElementById('notice').textContent.includes('Alteração salva no painel'));
+    await page.waitForFunction(()=>document.getElementById('notice').textContent.includes('Chamados reunidos'));
+    await page.waitForSelector('.timeline');
     await page.click('.tabs .tab:nth-child(4)');
     await page.waitForSelector('.context-form');
     await page.select('.stage-fields select','rescheduled');
@@ -168,6 +173,20 @@ try{
     await page.waitForSelector('.evidence-upload summary');
     await page.click('.evidence-upload summary');
     await page.waitForSelector('.evidence-upload input',{visible:true});await noOverflow();
+    await clickText('.detail-actions summary','Mais ações');
+    await clickText('.detail-actions .action-option:nth-child(3)','Reunir duplicado');
+    await page.waitForSelector('#merge-target optgroup option');
+    await page.select('#merge-target',duplicateCode);
+    await page.click('#merge-keep-target');
+    assert.equal(await page.$eval('#merge-keep-target',x=>x.checked),true);
+    page.once('dialog',dialog=>{confirmation=dialog.message();void dialog.accept();});
+    await page.click('#save');
+    await page.waitForSelector('#edit-dialog[open]',{hidden:true});
+    await page.waitForFunction(()=>document.getElementById('notice').textContent.includes('Chamados reunidos'));
+    assert.match(confirmation,/Falha de leitura.*Verificação do leitor/);
+    assert.deepEqual(mergeRequest,{path:'/api/cases/'+duplicateCode,kind:'merge',version:7,duplicate:code});
+    assert.equal(new URL(page.url()).hash,'#'+duplicateCode);
+    await page.waitForSelector('.timeline');
     await goFromCases('#history-link','/historico','.source-record');await verifySidebar();
     assert.equal(await page.$eval('#history-unlinked-count',x=>x.textContent),'1');
     await page.click('#history-tools-link');

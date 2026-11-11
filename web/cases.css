@@ -23,7 +23,11 @@ body.panel-with-sidebar main{margin-left:max(var(--panel-sidebar-width),calc((10
 .panel-with-sidebar.closing:has(.closing-workbench){--panel-main-width:1520px}
 .panel-with-sidebar.setup{--panel-main-width:1140px}
 .panel-sidebar a.area{text-decoration:none}
-#duplicate-field .hint{overflow-wrap:anywhere}
+.merge-direction{min-width:0;margin:0 0 10px;padding:7px 10px 4px;border:1px solid var(--line);border-radius:8px;font-size:.84rem}
+.merge-direction legend{padding:0 4px;font-weight:700}
+.merge-direction label{display:flex;align-items:flex-start;gap:7px;padding:4px 0;overflow-wrap:anywhere;cursor:pointer}
+.merge-direction input{flex:none;accent-color:var(--accent)}
+.merge-direction .hint{margin:5px 0 3px}
 .panel-with-sidebar main [id]{scroll-margin-top:16px}
 @media(max-width:1100px){.panel-with-sidebar{--panel-sidebar-width:193px}}
 @media(max-width:860px){.panel-with-sidebar{--panel-sidebar-width:0px}.panel-sidebar .brand,.panel-sidebar .sidebar-footer{display:none}}

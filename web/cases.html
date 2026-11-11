@@ -78,10 +78,14 @@
         <label class="control">Frente de serviço <select id="edit-area"></select></label>
       </div>
       <div id="duplicate-field" hidden>
-        <p class="hint"><strong>Chamado que permanece:</strong> <span id="merge-main"></span></p>
         <label class="control">Buscar chamado existente <input type="search" id="merge-search" maxlength="120" placeholder="Título, local ou frente" autocomplete="off"></label>
-        <label class="control">Chamado duplicado <select id="merge-target" aria-describedby="merge-help" disabled></select></label>
-        <p class="hint" id="merge-help">As fontes e anexos vão para o chamado atual. O cadastro duplicado fica arquivado.</p>
+        <label class="control">Outro chamado <select id="merge-target" disabled></select></label>
+        <fieldset class="merge-direction" id="merge-direction" aria-describedby="merge-help" hidden>
+          <legend>Qual chamado deve permanecer?</legend>
+          <label><input type="radio" name="merge-main" id="merge-keep-open" checked><span id="merge-main"></span></label>
+          <label><input type="radio" name="merge-main" id="merge-keep-target"><span id="merge-other"></span></label>
+          <p class="hint" id="merge-help">As fontes e os anexos vão para o principal. O outro cadastro fica arquivado.</p>
+        </fieldset>
       </div>
       <label class="control" id="date-field"><span id="date-label">Data real da atualização</span><input type="date" id="edit-day"></label>
       <label class="control"><span id="note-label">Descrição</span><textarea id="edit-note" rows="4" maxlength="2000"></textarea></label>

@@ -53,4 +53,4 @@ Cada aba operacional tem menu lateral contextual. Chamados mantém as frentes; H
 
 Em Configuração, o cartão Mensagens automáticas separa autorização de envio, atividade de análise, fila, totais e avisos. Os totais são do coletor, não da competência. A conclusão da última busca de retomada não significa que a fila foi esvaziada.
 
-Reunir duplicado lista chamados não arquivados da competência e de outros meses, sem incluir o chamado atual. A busca é local no painel, por título, local, frente ou código. O chamado aberto é o principal e a confirmação mostra os dois títulos.
+Reunir duplicado lista chamados não arquivados da competência e de outros meses, sem incluir o chamado atual. A busca é local no painel, por título, local, frente ou código. Após selecionar o outro chamado, o responsável escolhe qual permanece. A confirmação mostra os dois títulos e, ao concluir, o painel abre o histórico do principal.
