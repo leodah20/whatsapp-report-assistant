@@ -64,3 +64,5 @@ A demonstração independente usa o painel e o explorador em modo somente leitur
 A ponte descrita em [PAINEL-PRIVADO.md](PAINEL-PRIVADO.md) permite encaminhar apenas consultas e edições selecionadas a partir de Serve HTTPS e uma conta autorizada. A instalação respondeu pela rede privada em porta HTTPS separada.
 
 O proprietário confirmou a navegação do painel privado no Android. Na aba Contexto, telas de toque têm o botão **Usar sugestão**; Tab continua disponível no desktop. Nenhum atalho sobrescreve texto divergente ou salva o formulário.
+
+O painel privado oferece Chamados, Histórico sem chamado, Fechamento e Configuração. A configuração remota mostra o estado e o explorador; controles do WhatsApp permanecem locais. O TXT/ZIP é baixado pelo navegador, sem envio automático para IA.
