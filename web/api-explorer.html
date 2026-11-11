@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Explorador da API</title><link rel="stylesheet" href="/cases.css"><link rel="stylesheet" href="/api-explorer.css"><script defer src="/api-explorer.js"></script></head>
+<body class="api-explorer">
+<main>
+  <nav class="workspace-nav" aria-label="Navegação"><a href="/chamados">Chamados</a><a href="/">Configuração</a><a href="/api-explorer" aria-current="page">Explorador da API</a></nav>
+  <header class="page-head"><div><p class="eyebrow">FERRAMENTAS DO PAINEL</p><h1>Explorador da API</h1><p class="lead">Veja como o painel consulta o coletor. Nenhuma consulta é executada até você clicar.</p></div><span class="badge green">Local · somente leitura</span></header>
+  <section class="surface api-card" aria-labelledby="query-title">
+    <h2 id="query-title">Consultar rota</h2>
+    <form id="api-query">
+      <label class="control">Consulta <select id="api-route"><option value="runtime">Estado do coletor</option><option value="month">Lista de chamados do mês</option><option value="case">Detalhes de um chamado</option></select></label>
+      <label class="control" id="api-month-field" hidden>Competência <input type="month" id="api-month" disabled></label>
+      <label class="control" id="api-code-field" hidden>Código do chamado <input type="text" id="api-code" placeholder="R-1234ABCD" maxlength="10" pattern="[Rr]-[A-Fa-f0-9]{8}" autocomplete="off" disabled></label>
+      <p class="hint" id="api-description"></p>
+      <p class="api-path"><code id="api-path"></code></p>
+      <button class="button primary" id="api-run">Consultar</button>
+    </form>
+  </section>
+  <section class="surface api-card" aria-labelledby="response-title">
+    <h2 id="response-title">Resposta</h2>
+    <p class="hint" id="api-status" role="status">Aguardando consulta.</p>
+    <pre id="api-result" tabindex="0" aria-label="Resposta JSON" hidden></pre>
+    <p class="hint">A resposta pode conter informações internas. Não compartilhe sem revisar.</p>
+  </section>
+</main>
+</body></html>

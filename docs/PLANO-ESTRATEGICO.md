@@ -49,6 +49,8 @@
 - [x] Código completo sanitizado no repositório público original do produto; README de instalação e orientação de continuidade.
 - [x] Codex como ambiente principal; OpenCode/DeepSeek e Claude como alternativas opcionais no mesmo worktree e origin. O coletor local não depende dos créditos dessas ferramentas.
 - [x] Manter na raiz um glossário dos comandos utilitários solicitados, com acesso pelo README e instrução de atualização em AGENTS.md.
+- [x] Disponibilizar explorador local, somente leitura, para as rotas de estado e de chamados.
+- [ ] Definir servidor e público autorizado para acesso de rede. Validar autenticação e separação da configuração do coletor antes da publicação interna. Conferir navegação, edição e leitura em telas pequenas, sem depender de zoom ou rolagem horizontal.
 - [ ] Atualizar o diagrama/stepper e a documentação pública conforme entregas reais, sem trocar o foco por infraestrutura.
 
 **Pronto quando:** outro ambiente consegue retomar com Git e os arquivos de continuidade, sem acessar chats antigos ou dados privados para entender a arquitetura. Não depender de oferta gratuita permanente nem conectar modelo remoto ao arquivo sem autorização.

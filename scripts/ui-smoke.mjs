@@ -25,7 +25,7 @@ const initialClosingItems=()=>[
 ];
 const routes={
   '/':'setup.html','/ui.js':'setup.js','/style.css':'setup.css',
-  '/chamados':'cases.html','/historico':'history.html','/fechamento':'closing.html','/minuta':'draft.html'
+  '/chamados':'cases.html','/historico':'history.html','/fechamento':'closing.html','/minuta':'draft.html','/api-explorer':'api-explorer.html'
 };
 const types={html:'text/html',css:'text/css',js:'text/javascript'};
 const data={
@@ -79,7 +79,7 @@ const server=createServer(async(req,res)=>{
   const review=match&&data['/api/cases/closing'].items.find(x=>x.code===match[1]);
   if(review){res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({...detail,...review,sources:[]}));return;}
   if(path==='/api/cases/closing/cover'){res.writeHead(200,{'Content-Type':'image/png'}).end(png);return;}
-  const file=routes[path]||(/^\/(cases|history|closing|draft)\.(js|css)$/.test(path)?path.slice(1):null);
+  const file=routes[path]||(/^\/(cases|history|closing|draft|api-explorer)\.(js|css)$/.test(path)?path.slice(1):null);
   if(!file){res.writeHead(404).end();return;}
   try{
     const body=await readFile(new URL('../web/'+file,import.meta.url));
@@ -323,6 +323,18 @@ try{
     assert.equal(await page.$eval('#assistant-notices',x=>x.hidden),true);
     assert.equal(await page.$eval('#assistant-recovery-row',x=>x.hidden),true);
     assert.equal(await page.$eval('#assistant-confirmations-pending',x=>x.classList.contains('attention')),false);
+    await noOverflow();
+    await Promise.all([page.waitForNavigation(),page.click('.panel-sidebar a[href="/api-explorer"]')]);
+    await page.waitForFunction(()=>document.querySelector('#api-path').textContent==='GET /api/cases/runtime');
+    assert.equal(await page.$eval('#api-result',x=>x.hidden),true);
+    await page.click('#api-run');
+    await page.waitForSelector('#api-result',{visible:true});
+    assert.match(await page.$eval('#api-result',x=>x.textContent),/"connected": true/);
+    await page.select('#api-route','case');
+    await page.type('#api-code',code.toLowerCase());
+    await page.click('#api-run');
+    await page.waitForSelector('#api-result',{visible:true});
+    assert.match(await page.$eval('#api-result',x=>x.textContent),/Falha de leitura/);
     await noOverflow();
     console.log(`Interface validada a ${width}px: chamados, histórico, fechamento, minuta e configuração.`);
   }

@@ -1,0 +1,7 @@
+.api-explorer main{max-width:960px;margin:0 auto;padding:20px clamp(14px,3vw,36px)}
+.api-explorer .api-card{padding:16px 18px;margin-bottom:12px}
+.api-explorer form{display:grid;gap:10px;justify-items:start;margin-top:10px}
+.api-explorer form .control{width:min(100%,420px)}
+.api-explorer .api-path{color:var(--accent);overflow-wrap:anywhere;max-width:100%}
+.api-explorer #api-status{margin:8px 0}
+.api-explorer pre{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:52vh;background:#f1f5f6;padding:10px;border-radius:8px;font-size:.84rem}

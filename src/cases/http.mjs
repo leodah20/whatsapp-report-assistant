@@ -7,6 +7,9 @@ import {REPORT_GUIDE,suggestNarrative} from './report-assist.mjs';
 import {buildReportZip,contextFingerprint,extractionText} from './report-archive.mjs';
 
 const assets={'/chamados':['web/cases.html','text/html'],'/cases.js':['web/cases.js','text/javascript'],'/cases.css':['web/cases.css','text/css'],'/fechamento':['web/closing.html','text/html'],'/minuta':['web/draft.html','text/html'],'/historico':['web/history.html','text/html'],'/history.js':['web/history.js','text/javascript'],'/closing.js':['web/closing.js','text/javascript'],'/closing.css':['web/closing.css','text/css'],'/draft.js':['web/draft.js','text/javascript'],'/draft.css':['web/draft.css','text/css']};
+assets['/api-explorer']=['web/api-explorer.html','text/html'];
+assets['/api-explorer.js']=['web/api-explorer.js','text/javascript'];
+assets['/api-explorer.css']=['web/api-explorer.css','text/css'];
 const age=12*60*60;
 const json=(res,value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(value));};
 async function bytes(req,limit){
@@ -35,7 +38,7 @@ export function createCaseHandler({origin,root,board,readMedia,closing,historica
     const authorized=(sessions.get(token)||0)>Date.now();
     try{
       if(asset&&req.method==='GET'){
-        if(['/chamados','/fechamento','/minuta','/historico'].includes(url.pathname)&&!authorized){
+        if(['/chamados','/fechamento','/minuta','/historico','/api-explorer'].includes(url.pathname)&&!authorized){
           const newToken=randomBytes(32).toString('hex');sessions.set(newToken,Date.now()+age*1000);
           while(sessions.size>40)sessions.delete(sessions.keys().next().value);
           res.setHeader('Set-Cookie',`case_session=${newToken}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${age}`);

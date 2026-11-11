@@ -149,8 +149,13 @@ test('case HTTP requires local session and origin for writes',async t=>{
   handler=createCaseHandler({origin,root:fileURLToPath(new URL('../',import.meta.url)),board,readMedia:()=>Buffer.from([255,216,255,0])});
   const url=origin+'/api/cases/'+code;
   assert.equal((await fetch(url)).status,401);
-  const page=await fetch(origin+'/chamados'),cookie=page.headers.get('set-cookie').split(';')[0];
+  const page=await fetch(origin+'/api-explorer'),cookie=page.headers.get('set-cookie').split(';')[0];
   assert.equal(page.status,200);
+  assert.equal(page.headers.get('cache-control'),'no-store');
+  assert.match(await page.text(),/Explorador da API/);
+  assert.equal((await fetch(origin+'/api-explorer.js')).status,200);
+  assert.equal((await fetch(origin+'/api-explorer.css')).status,200);
+  assert.equal((await fetch(url)).status,401);
   assert.equal((await fetch(url+'/media/0',{headers:{cookie}})).headers.get('content-type'),'image/jpeg');
   assert.equal((await fetch(url+'/media/1',{headers:{cookie}})).status,404);
   const options={method:'POST',headers:{cookie,'content-type':'application/json',origin:'https://example.invalid'},body:JSON.stringify({kind:'note',version:0,text:'Exemplo sintético',occurredOn})};
