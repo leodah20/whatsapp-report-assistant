@@ -60,3 +60,5 @@ A janela de união permite escolher o principal sem reabrir o outro chamado. O p
 Resumo e extração distinguem procedimento ou resultado anteriores de atualizações vinculadas que sustentam etapa posterior. Passaram 89 testes sintéticos e Chrome a 1366 e 390 px. O coletor carregou a regra após reinício e o painel local retornou a atualização recente e os campos anteriores sem alteração manual dos registros. Próxima prioridade: acompanhar o fechamento real.
 
 Explorador da API testado com 89 testes automatizados e navegação a 1366 e 390 px com dados fictícios. O coletor continua restrito a 127.0.0.1. Antes de disponibilizar o painel em rede, confirmar destino e usuários, exigir autenticação, manter a configuração do WhatsApp fora da superfície remota e testar leitura e edição no celular.
+
+A demo independente passou em navegador a 1366, 390 e 320 px. Os 90 testes automatizados incluem rejeição de gravação, configuração do coletor e arquivos operacionais na demo. Publicação privada deve apontar só para o processo da demonstração, após verificar acesso dos destinatários; não publicar o coletor.

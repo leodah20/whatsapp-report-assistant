@@ -1,5 +1,6 @@
 'use strict';
 const $=id=>document.getElementById(id);
+const demo=document.body?.dataset.demo==='true';
 const labels={ALL:'Todas as frentes',CFTV:'CFTV',SDAI:'SDAI',SCA:'SCA',PABX:'PABX',MEDICAO:'Medição',BMS:'BMS',ZABBIX:'Zabbix',UNCLASSIFIED:'Sem classificação'};
 const fields={local:'Local',equipamento:'Equipamento',ocorrencia:'Ocorrência',procedimento:'Procedimento',resultado:'Resultado / pendência'};
 const kinds={source:'Registro do WhatsApp',answer:'Resposta do WhatsApp',question:'Pergunta do assistente',receipt:'Confirmação de registro',note:'Atualização local',task:'Pendência registrada',resolve:'Pendência concluída',profile:'Cadastro atualizado',context:'Respostas confirmadas',merge:'Chamados reunidos',archive:'Arquivado',restore:'Restaurado','manual-photo':'Foto adicionada pelo painel'};
@@ -38,6 +39,7 @@ function showCaseTab(id){
   contextDirty=false;tab=id;renderDetail();$('detail').querySelector('.tab[aria-pressed=true]')?.focus();
 }
 function caseActions(item){
+  if(demo)return badge('Somente leitura');
   const actions=node('div',undefined,'detail-actions');
   if(!item.profile.archived)actions.append(button('Registrar atualização',()=>edit('note'),'button primary'));
   const more=node('details',undefined,'action-disclosure');
@@ -112,6 +114,7 @@ function renderDetail(){
   if(i.profile.archived)head.append(node('p','Arquivado: '+i.profile.archived.reason,'hint'));
   const tabs=node('nav',undefined,'tabs');tabs.setAttribute('aria-label','Detalhes do chamado');
   for(const [id,label] of [['overview','Resumo'],['history','Histórico'],['sources','Evidências'],['context','Contexto']]){
+    if(demo&&id==='context')continue;
     const b=button(label,()=>showCaseTab(id),'tab');b.setAttribute('aria-pressed',String(tab===id));
     if(id==='sources')b.append(node('span',i.sourceCount,'tab-count'));
     if(id==='context'&&(i.missing.length||!i.serviceDay||i.status==='unconfirmed'||i.reportUpdates?.length))b.append(node('span','•','tab-alert'));
@@ -123,23 +126,23 @@ function renderDetail(){
     const row=node('div',undefined,'section-toolbar');
     row.append(pending.firstChild);
     pending.append(row);
-    if(i.stageQuestion)pending.append(node('p',i.stageQuestion,'hint'),button('Informar etapa',()=>showCaseTab('context'),'button outline compact'));
+    if(i.stageQuestion){pending.append(node('p',i.stageQuestion,'hint'));if(!demo)pending.append(button('Informar etapa',()=>showCaseTab('context'),'button outline compact'));}
     else if(i.stage?.origin!=='task'&&stageReason(i))pending.append(node('p',stageReason(i),'stage-evidence'));
     if(stageOrigin[i.stage?.origin])pending.append(node('p',stageOrigin[i.stage.origin],'hint'));
     for(const t of [...i.profile.tasks].sort((a,b)=>Number(!!a.resolvedAt)-Number(!!b.resolvedAt))){
       const card=node('div',undefined,'task'+(t.resolvedAt?' done':''));
       card.append(badge(t.resolvedAt?'Concluída':'Em aberto',t.resolvedAt?'green':'amber'),node('p',t.text),node('p',calendar(t.occurredOn),'hint'));
-      if(t.resolvedAt)card.append(node('p',calendar(t.resolvedOn)+' — '+t.resolution));else card.append(button('Concluir pendência',()=>edit('resolve',t)));
+      if(t.resolvedAt)card.append(node('p',calendar(t.resolvedOn)+' — '+t.resolution));else if(!demo)card.append(button('Concluir pendência',()=>edit('resolve',t)));
       pending.append(card);
     }
     const tasks=node('details',undefined,'optional-task');
-    tasks.append(node('summary','Adicionar pendência separada'),node('p','Use apenas se precisar acompanhar outra ação além do que já está no histórico.','hint'),button('Nova pendência',()=>edit('task'),'button outline compact'));pending.append(tasks);
+    if(!demo){tasks.append(node('summary','Adicionar pendência separada'),node('p','Use apenas se precisar acompanhar outra ação além do que já está no histórico.','hint'),button('Nova pendência',()=>edit('task'),'button outline compact'));pending.append(tasks);}
     const gaps=block(body,'Informações para o relatório');
     if(i.reportUpdates?.length){
       const updates=node('section',undefined,'report-updates');
       updates.append(node('h4','Atualizações mais recentes'));
       for(const update of i.reportUpdates)updates.append(node('p',update.text,'evidence'),node('p',(stageOrigin[update.origin]||'Registro do chamado')+' · '+date(new Date(update.at).toISOString()),'hint'));
-      updates.append(node('p','O contexto anterior foi preservado. Revise os campos de procedimento e resultado se necessário.','hint'),button('Revisar contexto',()=>showCaseTab('context'),'button outline compact'));
+      if(!demo)updates.append(node('p','O contexto anterior foi preservado. Revise os campos de procedimento e resultado se necessário.','hint'),button('Revisar contexto',()=>showCaseTab('context'),'button outline compact'));
       gaps.append(updates);
     }
     if(i.missing.length||!i.reportUpdates?.length)gaps.append(node('p',i.missing.length?'A confirmar nas fontes: '+i.missing.map(k=>fields[k]||k).join(', ')+'.':context(i)+'.','hint'));
@@ -155,7 +158,7 @@ function renderDetail(){
     if(!i.notices.some(n=>n.kind==='question')&&i.questionState==='sent')h.append(node('p','Pergunta enviada; texto não disponível no arquivo.','hint'));
   }
   if(tab==='sources'){
-    renderEvidenceTools(body,i);
+    if(!demo)renderEvidenceTools(body,i);
     const s=block(body,'Evidências arquivadas');
     i.sources.forEach((v,n)=>{
       const card=node('div',undefined,'record');card.append(node('h4',kinds[v.kind]),node('p',date(v.timestamp),'hint'),node('p',v.text||'Mensagem sem legenda.'));
