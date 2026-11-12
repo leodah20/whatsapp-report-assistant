@@ -73,9 +73,23 @@ body.rv-app{
 .rv-app .rv-queue-back{display:none}
 .rv-swipe-hint{display:none}
 
+.rv-app .rv-cases-signature{gap:9px;line-height:1;font-size:1.42rem;letter-spacing:-.045em}
+.rv-app .rv-cases-signature small{margin-top:5px;font-size:.52rem;letter-spacing:.035em}
+.rv-app .sidebar .rv-cases-signature{padding:0 0 17px;margin-bottom:9px;border-bottom:1px solid #382b48}
+.rv-app .rv-cases-signature .brand-icon{width:44px;height:44px}
+.rv-app .rv-cases-kicker{display:flex;align-items:center;gap:8px}
+.rv-app .rv-cases-kicker::before{content:"";width:12px;height:2px;background:var(--rv-lavender);flex:none}
+.cases-page.rv-app .page-head{background:linear-gradient(108deg,#101116 36%,#211536 100%)}
+.cases-page.rv-app .page-head::after{opacity:.47}
+
 @media(max-width:860px){
   .rv-app .workspace-bar{padding:12px 14px 4px}
   .rv-app .rv-top{display:flex;width:max-content;margin:0 0 8px}
+  .rv-app .rv-top.rv-cases-signature{
+    width:100%;padding:8px 12px;border-radius:10px;margin-bottom:8px;
+    color:var(--rv-paper);background:#101116 url('./circuit.svg') right center/116px auto no-repeat
+  }
+  .rv-app .rv-top.rv-cases-signature small{color:#d6c5f5}
   .rv-app .workspace-nav a{min-height:44px;padding:7px 9px}
   .rv-app .sidebar{padding:8px 14px 10px;border:0}
   .rv-app .sidebar .brand,.rv-app .sidebar-footer{display:none}
@@ -86,6 +100,7 @@ body.rv-app{
 }
 @media(max-width:640px){
   .rv-app .page-head::after{width:52%;opacity:.17}
+  .cases-page.rv-app .page-head::after{opacity:.25}
   .rv-app .page-head{align-items:start}
   .rv-app .head-actions{width:100%;align-items:end}
   .rv-app .head-actions>*{min-width:0}

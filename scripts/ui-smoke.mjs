@@ -99,6 +99,23 @@ try{
   page.on('pageerror',e=>errors.push(e.message));
   const open=async(path,ready)=>{await page.goto(origin+path+'?month='+month);await page.waitForSelector(ready,{visible:true});};
   const clickText=async(selector,label)=>{await page.waitForSelector(selector,{visible:true});assert.equal(await page.$eval(selector,x=>x.textContent.trim()),label);await page.click(selector);};
+  const verifyCasesSignature=async()=>{
+    await page.evaluate(()=>document.fonts.ready);
+    const signature=await page.evaluate(()=>{
+      const visible=[...document.querySelectorAll('.rv-cases-signature')].filter(node=>node.getClientRects().length);
+      const mark=visible[0]?.querySelector('.brand-icon');
+      const bounds=visible[0]?.getBoundingClientRect();
+      return {count:visible.length,text:visible[0]?.textContent,markWidth:mark?.offsetWidth,
+        fits:bounds?.right<=innerWidth && visible[0]?.scrollWidth<=visible[0]?.clientWidth,
+        asset:mark && getComputedStyle(mark).backgroundImage};
+    });
+    assert.equal(signature.count,1);
+    assert.match(signature.text,/RUNAVOLT.*CENTRAL DE CHAMADOS/);
+    assert.ok(signature.fits,'A assinatura não cabe na navegação');
+    assert.ok(signature.markWidth>=44);
+    assert.match(signature.asset,/\/brand\/runavolt\.svg/);
+    assert.equal(await page.evaluate(async()=> (await fetch('/brand/runavolt.svg')).status),200);
+  };
   const goFromCases=async(selector,path,ready,withMonth=true)=>{
     await Promise.all([page.waitForNavigation(),page.click('.workspace-bar '+selector)]);
     const url=new URL(page.url());
@@ -122,7 +139,7 @@ try{
       }));
       await noOverflow();
     };
-    await open('/chamados','.detail-actions');await noOverflow();
+    await open('/chamados','.detail-actions');await noOverflow();await verifyCasesSignature();
     assert.match(await page.$eval('.report-updates',x=>x.textContent),/Atualização técnica de teste/);
     assert.equal(await page.$eval('.facts dd',x=>x.textContent),source.text);
     assert.match(await page.$eval('.facts',x=>x.textContent),/dos registros recentes.*Operação normal no teste sintético/);
@@ -365,11 +382,12 @@ try{
     await noOverflow();
     console.log(`Fluxos validados a ${width}px: chamados, histórico, fechamento, minuta, configuração e API.`);
   }
-  for(const width of [320,768,1920]){
+  for(const width of [320,768,900,1920]){
     await page.setViewport({width,height:900,hasTouch:width<900});
     for(const route of ['/chamados','/historico','/fechamento','/','/configuracao','/api-explorer','/minuta']){
       await open(route,route==='/minuta'?'.toolbar':'.page-head');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Overflow externo: '+page.url()+' a '+width+'px');
+      if(route==='/chamados')await verifyCasesSignature();
     }
     console.log(`Limites da página conferidos a ${width}px.`);
   }
