@@ -2,6 +2,7 @@ import {createServer} from 'node:http';
 import {readFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {STATUSES,currentStage} from '../src/cases/stage.mjs';
+import {brandAssets} from '../src/brand-assets.mjs';
 
 const web=new URL('../web/',import.meta.url);
 const month=new Intl.DateTimeFormat('sv-SE',{year:'numeric',month:'2-digit',timeZone:'America/Sao_Paulo'}).format(new Date());
@@ -23,10 +24,11 @@ const cases=examples.map(([area,location,title,text],i)=>{
 });
 const assets=new Map(Object.entries({
   '/cases.css':['cases.css','text/css'], '/closing.css':['closing.css','text/css'], '/cases.js':['cases.js','text/javascript'],
-  '/api-explorer.css':['api-explorer.css','text/css'], '/api-explorer.js':['api-explorer.js','text/javascript']
+  '/api-explorer.css':['api-explorer.css','text/css'], '/api-explorer.js':['api-explorer.js','text/javascript'],
+  ...brandAssets
 }).map(([path,[file,type]])=>[path,[readFileSync(new URL(file,web)),type]]));
 const dashboard=readFileSync(new URL('cases.html',web),'utf8')
-  .replace('<body class="cases-page">','<body class="cases-page" data-demo="true">')
+  .replace('<body class="cases-page rv-app">','<body class="cases-page rv-app" data-demo="true">')
   .replace('href="/historico" id="history-link"','href="/historico" id="history-link" hidden')
   .replace('href="/fechamento" id="closing-link"','href="/fechamento" id="closing-link" hidden')
   .replace('<a href="/">Configuração</a>','<a href="/api-explorer">Explorador da API</a>')
@@ -36,7 +38,7 @@ const dashboard=readFileSync(new URL('cases.html',web),'utf8')
   .replace('<details class="runtime-disclosure">','<details class="runtime-disclosure" hidden>');
 const explorer=readFileSync(new URL('api-explorer.html',web),'utf8')
   .replace('<a href="/">Configuração</a>','')
-  .replace('Local · somente leitura','Demonstração · somente leitura')
+  .replace('Consultas GET · somente leitura','Demonstração · somente leitura')
   .replace('A resposta pode conter informações internas. Não compartilhe sem revisar.','Esta demonstração responde apenas com dados fictícios.');
 const runtime={connected:false,selected:false,supervised:false,analysisPending:0,demo:true};
 const list=search=>({month:search.get('month')||month,statuses:STATUSES,unlinkedCount:0,items:

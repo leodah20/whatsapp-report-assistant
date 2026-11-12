@@ -106,6 +106,9 @@ function timeline(i){
 function renderDetail(){
   if(!detail)return;
   const i=detail,head=node('header',undefined,'detail-head'),flags=node('div',undefined,'badges');
+  head.append(button('← Voltar à fila',()=>{
+    $('fila').scrollIntoView({block:'start'});$('queue-title').focus({preventScroll:true});
+  },'button outline rv-queue-back'));
   flags.append(stageBadge(i),badge(labels[i.area]+(i.areaSuggested&&i.area!=='UNCLASSIFIED'?' · sugerida':'')));
   const top=node('div',undefined,'detail-top');
   top.append(node('p',i.code,'case-code'),caseActions(i));

@@ -54,7 +54,11 @@
 - [x] Preparar uma ponte local de leitura e edição para uma conta via Tailscale Serve HTTPS, sem expor a administração do coletor.
 - [x] Abrir as quatro abas operacionais no acesso privado, com triagem, revisão e extração TXT/ZIP sem envio automático para IA.
 - [ ] Definir servidor e público autorizado para acesso de rede. Validar autenticação e separação da configuração do coletor antes da publicação interna. Conferir navegação, edição e leitura em telas pequenas, sem depender de zoom ou rolagem horizontal.
-- [x] Documentar o sistema no painel com mapa interativo por fluxo, protocolos, limites de acesso, diagnóstico e referências ao código. Manter a documentação alinhada às próximas mudanças.
+- [x] Documentar o sistema em página HTML separada, com mapa interativo por fluxo, protocolos, limites de acesso e referências ao código. Manter o painel operacional focado nos chamados e no Explorador da API.
+- [x] Aplicar o sistema visual Runavolt ao protótipo, sem alterar o PDF aprovado nem as permissões da implantação.
+- [ ] Consolidar a configuração por cliente e validar implantação em LAN, segmentação e operação local conforme escopo contratado.
+- [ ] Integrar tickets de suporte por e-mail em leitura restrita, com vínculo por identificador e atualizações idempotentes.
+- [ ] Avaliar cliente móvel após validar API e autenticação, mantendo dados e inferência atrás do servidor local.
 
 **Pronto quando:** outro ambiente consegue retomar com Git e os arquivos de continuidade, sem acessar chats antigos ou dados privados para entender a arquitetura. Não depender de oferta gratuita permanente nem conectar modelo remoto ao arquivo sem autorização.
 

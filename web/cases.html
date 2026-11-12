@@ -3,24 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Central de chamados</title>
+  <title>Central de chamados · Runavolt</title>
   <link rel="stylesheet" href="/cases.css">
   <link rel="stylesheet" href="/closing.css">
-  <script src="/cases.js" defer></script>
+  <link rel="icon" type="image/svg+xml" href="/brand/runavolt.svg"><link rel="stylesheet" href="/brand/runavolt.css"><script src="/cases.js" defer></script>
 </head>
-<body class="cases-page">
+<body class="cases-page rv-app">
   <div class="workspace-bar">
-    <nav class="workspace-nav" aria-label="Área de trabalho">
+    <a class="rv-top" href="/chamados"><span class="brand-icon" aria-hidden="true"></span><span>RUNAVOLT<small>GESTÃO DE CHAMADOS</small></span></a>
+<nav class="workspace-nav" aria-label="Área de trabalho">
       <a href="/chamados" aria-current="page">Chamados</a>
       <a href="/historico" id="history-link">Histórico sem chamado<span class="history-dot" id="history-dot" aria-hidden="true" hidden></span></a>
       <a href="/fechamento" id="closing-link">Fechamento mensal</a>
       <a href="/">Configuração</a>
-      <a href="/api-explorer#arquitetura">Arquitetura</a>
+
     </nav>
   </div>
   <aside class="sidebar" aria-label="Navegação do painel">
-    <a class="brand" href="/chamados"><span class="brand-icon" aria-hidden="true">▤</span><span>Central de chamados<small>ACOMPANHAMENTO LOCAL</small></span></a>
-    <p class="nav-label">FRENTES DE SERVIÇO</p>
+    <a class="brand" href="/chamados"><span class="brand-icon" aria-hidden="true"></span><span>RUNAVOLT<small>ACOMPANHAMENTO LOCAL</small></span></a>
+    <p class="nav-label">FRENTES DE SERVIÇO <span class="rv-swipe-hint" aria-hidden="true">Deslize →</span></p>
     <nav id="areas" aria-label="Frentes de serviço"></nav>
     <div class="sidebar-footer"><span class="local-dot" aria-hidden="true"></span>Dados neste computador</div>
   </aside>
@@ -45,8 +46,8 @@
     </details>
     <section class="stats" aria-label="Resumo do período" id="stats"></section>
     <div class="workbench">
-      <section class="queue surface" aria-labelledby="queue-title">
-        <header class="section-head"><div><p class="eyebrow">LISTA DE CHAMADOS</p><h2 id="queue-title">Todas as frentes</h2></div><span class="count" id="queue-count">0</span></header>
+      <section id="fila" class="queue surface" aria-labelledby="queue-title">
+        <header class="section-head"><div><p class="eyebrow">LISTA DE CHAMADOS</p><h2 id="queue-title" tabindex="-1">Todas as frentes</h2></div><span class="count" id="queue-count">0</span></header>
         <div class="filters">
           <label class="sr-only" for="search">Buscar por código, equipamento, local ou ocorrência</label>
           <input type="search" id="search" maxlength="120" placeholder="Buscar chamado…" autocomplete="off">

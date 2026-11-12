@@ -40,6 +40,8 @@ test('private panel allows only owner over HTTPS and scoped, same-origin edits',
   assert.equal((await call(path,{...write({kind:'note'}),headers:{...headers,Cookie:''}})).status,403);
   assert.equal((await call(path,write({kind:'send'}))).status,403);
   assert.equal(seen.length,1);
+  assert.equal((await call('/brand/fonts/Manrope.ttf')).status,200);
+  assert.equal((await call('/brand/fonts/OFL.txt')).status,404);
   const edit={kind:'note',version:1,text:'Atualização fictícia',occurredOn:'2026-01-01'};
   assert.equal((await call(path,write(edit))).status,200);
   assert.equal(seen.at(-1).options.headers.origin,'http://127.0.0.1:8767');

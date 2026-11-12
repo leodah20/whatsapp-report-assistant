@@ -179,7 +179,7 @@ test('rejects unsupported image content and invalid dates',t=>{
 test('case HTTP requires local session and origin for writes',async t=>{
   const {board}=fixture(t);
   let handler,origin;
-  const server=createServer((req,res)=>void handler(req,res,new URL(req.url,origin)));
+  const server=createServer(async(req,res)=>{if(!await handler(req,res,new URL(req.url,origin)))res.writeHead(404).end();});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   t.after(()=>new Promise(resolve=>server.close(resolve)));
   origin='http://127.0.0.1:'+server.address().port;
@@ -191,7 +191,13 @@ test('case HTTP requires local session and origin for writes',async t=>{
   assert.equal(page.headers.get('cache-control'),'no-store');
   const explorer=await page.text();
   assert.match(explorer,/Explorador da API/);
-  assert.match(explorer,/id="arquitetura"/);
+  assert.doesNotMatch(explorer,/id="arquitetura"/);
+  assert.match(explorer,/Runavolt/);
+  const brand=await fetch(origin+'/brand/fonts/Manrope.ttf');
+  assert.equal(brand.status,200);
+  assert.match(brand.headers.get('content-type'),/^font\/ttf/);
+  assert.ok((await brand.arrayBuffer()).byteLength>0);
+  assert.equal((await fetch(origin+'/brand/fonts/OFL.txt')).status,404);
   assert.match(page.headers.get('content-security-policy'),/script-src 'self'/);
   assert.equal((await fetch(origin+'/api-explorer.js')).status,200);
   assert.equal((await fetch(origin+'/api-explorer.css')).status,200);

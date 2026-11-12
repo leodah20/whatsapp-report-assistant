@@ -6,6 +6,7 @@ import {readFile} from 'node:fs/promises';
 import puppeteer from 'puppeteer';
 import {CONFIG} from '../src/config.mjs';
 import {STATUSES,currentStage} from '../src/cases/stage.mjs';
+import {brandAssets} from '../src/brand-assets.mjs';
 
 const month='2026-10', code='R-00000001', timestamp=1791890000;
 const duplicateCode='R-00000030';
@@ -25,7 +26,8 @@ const initialClosingItems=()=>[
 ];
 const routes={
   '/':'setup.html','/ui.js':'setup.js','/style.css':'setup.css',
-  '/chamados':'cases.html','/historico':'history.html','/fechamento':'closing.html','/minuta':'draft.html','/api-explorer':'api-explorer.html'
+  '/chamados':'cases.html','/historico':'history.html','/fechamento':'closing.html','/minuta':'draft.html','/api-explorer':'api-explorer.html',
+  '/configuracao':'private-settings.html','/private-settings.js':'private-settings.js'
 };
 const types={html:'text/html',css:'text/css',js:'text/javascript'};
 const data={
@@ -79,11 +81,12 @@ const server=createServer(async(req,res)=>{
   const review=match&&data['/api/cases/closing'].items.find(x=>x.code===match[1]);
   if(review){res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({...detail,...review,sources:[]}));return;}
   if(path==='/api/cases/closing/cover'){res.writeHead(200,{'Content-Type':'image/png'}).end(png);return;}
-  const file=routes[path]||(/^\/(cases|history|closing|draft|api-explorer)\.(js|css)$/.test(path)?path.slice(1):null);
+  const brand=Object.hasOwn(brandAssets,path)?brandAssets[path]:null;
+  const file=brand?.[0]||routes[path]||(/^\/(cases|history|closing|draft|api-explorer)\.(js|css)$/.test(path)?path.slice(1):null);
   if(!file){res.writeHead(404).end();return;}
   try{
     const body=await readFile(new URL('../web/'+file,import.meta.url));
-    res.writeHead(200,{'Content-Type':types[file.split('.').pop()]+'; charset=utf-8','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:"}).end(body);
+    res.writeHead(200,{'Content-Type':brand?.[1]||types[file.split('.').pop()]+'; charset=utf-8','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:"}).end(body);
   }catch{res.writeHead(500).end();}
 });
 assert.ok(CONFIG.chrome,'Chrome/Chromium não encontrado. Configure REPORT_CHROME_PATH.');
@@ -127,7 +130,12 @@ try{
     assert.match(await page.$eval('.previous-context[open]',x=>x.textContent),/Registro anterior de teste/);
     await page.waitForSelector('#history-dot:not([hidden])');
     assert.match(await page.$eval('#history-link',x=>x.title),/3 registros/);
-    assert.deepEqual(await page.$$eval('.workspace-bar nav a',links=>links.map(a=>a.textContent.trim())),['Chamados','Histórico sem chamado','Fechamento mensal','Configuração','Arquitetura']);
+    assert.deepEqual(await page.$$eval('.workspace-bar nav a',links=>links.map(a=>a.textContent.trim())),['Chamados','Histórico sem chamado','Fechamento mensal','Configuração']);
+    assert.ok(await page.evaluate(async()=>{await document.fonts.ready;return document.fonts.check('600 15px Manrope')&&document.fonts.check('700 30px "Space Grotesk"')&&getComputedStyle(document.body).backgroundColor==='rgb(244, 241, 234)';}));
+    if(width===390){
+      await page.click('.rv-queue-back');
+      assert.equal(await page.evaluate(()=>document.activeElement.id),'queue-title');
+    }
     assert.ok(await page.$eval('.workspace-bar',bar=>bar.getBoundingClientRect().bottom<document.querySelector('.page-head').getBoundingClientRect().top));
     assert.equal(await page.$eval('#month',x=>x.value),month);
     assert.equal(await page.$$eval('.stat strong',nodes=>Number(nodes[0].textContent)-nodes.slice(1).reduce((n,x)=>n+Number(x.textContent),0)),0);
@@ -335,20 +343,10 @@ try{
     await noOverflow();
     const apiRequests=[];
     const trackApi=req=>{if(new URL(req.url()).pathname.startsWith('/api/cases'))apiRequests.push(req.method());};
-    await Promise.all([page.waitForNavigation(),page.click('.panel-sidebar a[href="/api-explorer#arquitetura"]')]);
+    await Promise.all([page.waitForNavigation(),page.click('.panel-sidebar a[href="/api-explorer#api"]')]);
     page.on('request',trackApi);
-    assert.equal(new URL(page.url()).hash,'#arquitetura');
-    await page.waitForSelector('#arch-tabs button:nth-child(8)');
-    const titles=['WhatsApp Web','Interface no notebook','Navegador no celular','Interface no notebook','SQLite e cofre local','Supervisão Windows','Cliente MCP autorizado','Git e ambiente de desenvolvimento'];
-    for(const [index,title] of titles.entries()){
-      await page.click('#arch-tabs button:nth-child('+(index+1)+')');
-      assert.equal(await page.$eval('#arch-node-title',el=>el.textContent),title);
-    }
-    await clickText('#arch-tabs button:nth-child(3)','HTTPS pelo celular');
-    await page.click('#arch-steps li:nth-child(3) button');
-    assert.equal(await page.$eval('#arch-node-title',el=>el.textContent),'Ponte privada Node');
-    assert.match(await page.$eval('#arch-interface',el=>el.textContent),/Origin.*HttpOnly/);
-    if(width===390)assert.ok(await page.$eval('#arch-inspect',el=>el.getBoundingClientRect().top<innerHeight));
+    assert.equal(new URL(page.url()).hash,'#api');
+    assert.equal(await page.$('#arquitetura'),null);
     assert.deepEqual(apiRequests,[]);
     await noOverflow();
     await page.click('.workspace-nav a[href="#api"]');
@@ -365,7 +363,15 @@ try{
     assert.deepEqual(apiRequests,['GET','GET']);
     page.off('request',trackApi);
     await noOverflow();
-    console.log(`Interface validada a ${width}px: chamados, histórico, fechamento, minuta, configuração, arquitetura e API.`);
+    console.log(`Fluxos validados a ${width}px: chamados, histórico, fechamento, minuta, configuração e API.`);
+  }
+  for(const width of [320,768,1920]){
+    await page.setViewport({width,height:900,hasTouch:width<900});
+    for(const route of ['/chamados','/historico','/fechamento','/','/configuracao','/api-explorer','/minuta']){
+      await open(route,route==='/minuta'?'.toolbar':'.page-head');
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Overflow externo: '+page.url()+' a '+width+'px');
+    }
+    console.log(`Limites da página conferidos a ${width}px.`);
   }
   assert.deepEqual(errors,[]);
 }finally{

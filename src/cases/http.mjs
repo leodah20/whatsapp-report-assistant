@@ -5,11 +5,13 @@ import {CaseError,imageType} from './board.mjs';
 import {sendHistoryMedia} from './history-media.mjs';
 import {REPORT_GUIDE,suggestNarrative} from './report-assist.mjs';
 import {buildReportZip,contextFingerprint,extractionText} from './report-archive.mjs';
+import {brandAssets} from '../brand-assets.mjs';
 
 const assets={'/chamados':['web/cases.html','text/html'],'/cases.js':['web/cases.js','text/javascript'],'/cases.css':['web/cases.css','text/css'],'/fechamento':['web/closing.html','text/html'],'/minuta':['web/draft.html','text/html'],'/historico':['web/history.html','text/html'],'/history.js':['web/history.js','text/javascript'],'/closing.js':['web/closing.js','text/javascript'],'/closing.css':['web/closing.css','text/css'],'/draft.js':['web/draft.js','text/javascript'],'/draft.css':['web/draft.css','text/css']};
 assets['/api-explorer']=['web/api-explorer.html','text/html'];
 assets['/api-explorer.js']=['web/api-explorer.js','text/javascript'];
 assets['/api-explorer.css']=['web/api-explorer.css','text/css'];
+for(const [route,[file,type]] of Object.entries(brandAssets))assets[route]=['web/'+file,type];
 const age=12*60*60;
 const json=(res,value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(value));};
 async function bytes(req,limit){

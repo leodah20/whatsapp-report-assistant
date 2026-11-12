@@ -3,9 +3,10 @@ import {readFile} from 'node:fs/promises';
 import {Readable} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
 import {pathToFileURL} from 'node:url';
+import {brandAssets} from '../src/brand-assets.mjs';
 
 const pages=new Set(['/chamados','/historico','/fechamento','/minuta','/api-explorer']);
-const staticRoutes=new Set(['/cases.js','/cases.css','/history.js','/closing.js','/closing.css','/draft.js','/draft.css','/api-explorer.js','/api-explorer.css']);
+const staticRoutes=new Set(['/cases.js','/cases.css','/history.js','/closing.js','/closing.css','/draft.js','/draft.css','/api-explorer.js','/api-explorer.css',...Object.keys(brandAssets)]);
 const readApis=new Set(['/api/cases','/api/cases/runtime','/api/cases/history','/api/cases/history/media','/api/cases/closing','/api/cases/closing/draft','/api/cases/closing/cover']);
 const writes=new Map([
   ['/api/cases/history',new Set(['assign','ignore','restore','prepare','recheck'])],

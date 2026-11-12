@@ -1,54 +1,10 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Arquitetura e Explorador da API</title><link rel="stylesheet" href="/cases.css"><link rel="stylesheet" href="/api-explorer.css"><script defer src="/api-explorer.js"></script></head>
-<body class="api-explorer">
+<title>Explorador da API · Runavolt</title><link rel="stylesheet" href="/cases.css"><link rel="stylesheet" href="/api-explorer.css"><link rel="icon" href="/brand/runavolt.svg" type="image/svg+xml"><link rel="stylesheet" href="/brand/runavolt.css"><script defer src="/api-explorer.js"></script></head>
+<body class="api-explorer rv-app">
 <main>
-  <nav class="workspace-nav" aria-label="Navegação"><a href="/chamados">Chamados</a><a href="/">Configuração</a><a href="#arquitetura">Arquitetura</a><a href="#api">Explorador da API</a></nav>
-  <section class="architecture" id="arquitetura" aria-labelledby="arch-title">
-    <header class="arch-intro">
-      <p class="eyebrow">CENTRAL DE CHAMADOS / MAPA TÉCNICO</p>
-      <h1 id="arch-title">Arquitetura do assistente</h1>
-      <p>Do registro em campo ao relatório mensal. Escolha um fluxo e toque nas camadas para inspecionar protocolos, controles e módulos responsáveis.</p>
-      <ul class="arch-legend" aria-label="Legenda das fronteiras">
-        <li class="arch-external">Rede / serviços externos</li><li class="arch-local">Notebook / loopback</li><li class="arch-human">Operação / revisão humana</li>
-      </ul>
-    </header>
-    <div class="surface arch-map">
-      <h2 id="arch-flow-title">Traçar um fluxo</h2>
-      <div class="arch-tabs" id="arch-tabs" role="group" aria-labelledby="arch-flow-title"></div>
-      <p id="arch-flow-summary" class="arch-flow-summary"></p>
-      <div class="arch-workspace">
-        <ol class="arch-steps" id="arch-steps" aria-label="Percurso em ordem"></ol>
-        <section class="arch-inspect" id="arch-inspect" aria-labelledby="arch-node-title" aria-live="polite" aria-atomic="true">
-          <p class="eyebrow" id="arch-zone"></p><h3 id="arch-node-title"></h3>
-          <p id="arch-purpose"></p>
-          <dl><dt>Interface</dt><dd id="arch-interface"></dd><dt>Controle ou limite</dt><dd id="arch-control"></dd><dt>Onde inspecionar no código</dt><dd><code id="arch-code"></code></dd></dl>
-          <a class="arch-back" href="#arch-steps">Voltar às camadas</a>
-        </section>
-      </div>
-      <noscript><p>Ative JavaScript para percorrer os fluxos e inspecionar cada camada.</p></noscript>
-    </div>
-    <div class="arch-reference">
-      <section class="surface api-card" aria-labelledby="arch-tools">
-        <h2 id="arch-tools">Ferramentas do operador</h2>
-        <dl class="arch-index">
-          <dt>Chamados</dt><dd>Frentes CFTV, SDAI, SCA, PABX, Medição, BMS e Zabbix; histórico, etapa, contexto, pendências, evidências, união e arquivo reversível. As frentes classificam chamados: não são conexões diretas com os sistemas prediais.</dd>
-          <dt>Histórico sem chamado</dt><dd>Prévia de mídias arquivadas, vínculo a um chamado, criação explícita e ignorar/restaurar. Mensagem próxima sugere contexto, mas não comprova vínculo.</dd>
-          <dt>Fechamento mensal</dt><dd>Conferência de fontes, anexos e preventivas; TXT/ZIP para revisão ou redação externa; sugestão textual local; minuta imprimível em um fluxo separado.</dd>
-          <dt>Configuração e diagnóstico</dt><dd>Estado, filas e supervisão. Administração do vínculo, do grupo e dos envios no notebook. <a href="#api">Consultar a API (GET)</a>.</dd>
-        </dl>
-      </section>
-      <section class="surface api-card" aria-labelledby="arch-debug">
-        <h2 id="arch-debug">Diagnóstico por camada</h2>
-        <dl class="arch-index">
-          <dt>Abre no notebook, mas não no celular</dt><dd>Verifique separadamente resolução do nome, conectividade Tailscale, TLS/Serve e autorização da conta. Uma resposta 403 da ponte indica bloqueio de acesso, não queda do WhatsApp.</dd>
-          <dt>Abre a página, mas a consulta falha</dt><dd>401 da API pede reabrir o painel para renovar a sessão; 502 da ponte aponta falha na comunicação com o coletor. A aba Rede do navegador mostra método, status e tempo.</dd>
-          <dt>Mensagem recebida, mas sem chamado</dt><dd>Confira fila de análise, competência e Histórico sem chamado. Reconexão não garante que toda a conversa antiga foi disponibilizada nem que todos os registros já viraram chamados.</dd>
-          <dt>Conferência antiga ficou desatualizada</dt><dd>Revise as fontes alteradas. O ZIP verifica a versão da extração: se o contexto mudar, é necessário preparar outra antes de baixar.</dd>
-        </dl>
-      </section>
-    </div>
-  </section>
+  <a class="rv-top rv-top-always" href="/chamados"><span class="brand-icon" aria-hidden="true"></span><span>RUNAVOLT<small>GESTÃO DE CHAMADOS</small></span></a>
+  <nav class="workspace-nav" aria-label="Navegação"><a href="/chamados">Chamados</a><a href="/">Configuração</a><a href="#api" aria-current="page">Explorador da API</a></nav>
   <section id="api" aria-labelledby="api-title">
   <header class="page-head"><div><p class="eyebrow">DIAGNÓSTICO SOB DEMANDA</p><h2 id="api-title">Explorador da API</h2><p class="lead">Veja como o painel consulta o coletor. Nenhuma consulta é executada até você clicar.</p></div><span class="badge green">Consultas GET · somente leitura</span></header>
   <section class="surface api-card" aria-labelledby="query-title">

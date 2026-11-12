@@ -1,6 +1,6 @@
 # Arquitetura e operação de rede
 
-Abra **Chamados → Arquitetura** para seguir os fluxos por componente. O mapa documenta a instalação de referência sem mostrar topologia do cliente, credenciais ou dados operacionais. Ele é estático: não faz chamadas de diagnóstico nem certifica que os serviços estão online. O **Explorador da API**, na mesma página, só consulta dados quando o operador clicar.
+A página HTML de apresentação e estudo é separada da operação. O mapa documenta a instalação de referência sem mostrar topologia do cliente, credenciais ou dados operacionais. Ele é estático: não faz chamadas de diagnóstico nem certifica que os serviços estão online. No painel operacional, o **Explorador da API** só consulta dados quando o operador clicar.
 
 ## Planos e fronteiras
 
