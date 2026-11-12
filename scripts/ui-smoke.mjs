@@ -126,7 +126,7 @@ try{
     assert.match(await page.$eval('.previous-context[open]',x=>x.textContent),/Registro anterior de teste/);
     await page.waitForSelector('#history-dot:not([hidden])');
     assert.match(await page.$eval('#history-link',x=>x.title),/3 registros/);
-    assert.deepEqual(await page.$$eval('.workspace-bar nav a',links=>links.map(a=>a.textContent.trim())),['Chamados','Histórico sem chamado','Fechamento mensal','Configuração']);
+    assert.deepEqual(await page.$$eval('.workspace-bar nav a',links=>links.map(a=>a.textContent.trim())),['Chamados','Histórico sem chamado','Fechamento mensal','Configuração','Arquitetura']);
     assert.ok(await page.$eval('.workspace-bar',bar=>bar.getBoundingClientRect().bottom<document.querySelector('.page-head').getBoundingClientRect().top));
     assert.equal(await page.$eval('#month',x=>x.value),month);
     assert.equal(await page.$$eval('.stat strong',nodes=>Number(nodes[0].textContent)-nodes.slice(1).reduce((n,x)=>n+Number(x.textContent),0)),0);
@@ -332,7 +332,25 @@ try{
     assert.equal(await page.$eval('#assistant-recovery-row',x=>x.hidden),true);
     assert.equal(await page.$eval('#assistant-confirmations-pending',x=>x.classList.contains('attention')),false);
     await noOverflow();
-    await Promise.all([page.waitForNavigation(),page.click('.panel-sidebar a[href="/api-explorer"]')]);
+    const apiRequests=[];
+    const trackApi=req=>{if(new URL(req.url()).pathname.startsWith('/api/cases'))apiRequests.push(req.method());};
+    await Promise.all([page.waitForNavigation(),page.click('.panel-sidebar a[href="/api-explorer#arquitetura"]')]);
+    page.on('request',trackApi);
+    assert.equal(new URL(page.url()).hash,'#arquitetura');
+    await page.waitForSelector('#arch-tabs button:nth-child(8)');
+    const titles=['WhatsApp Web','Interface no notebook','Navegador no celular','Interface no notebook','SQLite e cofre local','Supervisão Windows','Cliente MCP autorizado','Git e ambiente de desenvolvimento'];
+    for(const [index,title] of titles.entries()){
+      await page.click('#arch-tabs button:nth-child('+(index+1)+')');
+      assert.equal(await page.$eval('#arch-node-title',el=>el.textContent),title);
+    }
+    await clickText('#arch-tabs button:nth-child(3)','HTTPS pelo celular');
+    await page.click('#arch-steps li:nth-child(3) button');
+    assert.equal(await page.$eval('#arch-node-title',el=>el.textContent),'Ponte privada Node');
+    assert.match(await page.$eval('#arch-interface',el=>el.textContent),/Origin.*HttpOnly/);
+    if(width===390)assert.ok(await page.$eval('#arch-inspect',el=>el.getBoundingClientRect().top<innerHeight));
+    assert.deepEqual(apiRequests,[]);
+    await noOverflow();
+    await page.click('.workspace-nav a[href="#api"]');
     await page.waitForFunction(()=>document.querySelector('#api-path').textContent==='GET /api/cases/runtime');
     assert.equal(await page.$eval('#api-result',x=>x.hidden),true);
     await page.click('#api-run');
@@ -343,8 +361,10 @@ try{
     await page.click('#api-run');
     await page.waitForSelector('#api-result',{visible:true});
     assert.match(await page.$eval('#api-result',x=>x.textContent),/Falha de leitura/);
+    assert.deepEqual(apiRequests,['GET','GET']);
+    page.off('request',trackApi);
     await noOverflow();
-    console.log(`Interface validada a ${width}px: chamados, histórico, fechamento, minuta e configuração.`);
+    console.log(`Interface validada a ${width}px: chamados, histórico, fechamento, minuta, configuração, arquitetura e API.`);
   }
   assert.deepEqual(errors,[]);
 }finally{

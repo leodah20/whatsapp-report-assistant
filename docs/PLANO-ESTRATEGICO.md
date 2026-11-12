@@ -54,7 +54,7 @@
 - [x] Preparar uma ponte local de leitura e edição para uma conta via Tailscale Serve HTTPS, sem expor a administração do coletor.
 - [x] Abrir as quatro abas operacionais no acesso privado, com triagem, revisão e extração TXT/ZIP sem envio automático para IA.
 - [ ] Definir servidor e público autorizado para acesso de rede. Validar autenticação e separação da configuração do coletor antes da publicação interna. Conferir navegação, edição e leitura em telas pequenas, sem depender de zoom ou rolagem horizontal.
-- [ ] Atualizar o diagrama/stepper e a documentação pública conforme entregas reais, sem trocar o foco por infraestrutura.
+- [x] Documentar o sistema no painel com mapa interativo por fluxo, protocolos, limites de acesso, diagnóstico e referências ao código. Manter a documentação alinhada às próximas mudanças.
 
 **Pronto quando:** outro ambiente consegue retomar com Git e os arquivos de continuidade, sem acessar chats antigos ou dados privados para entender a arquitetura. Não depender de oferta gratuita permanente nem conectar modelo remoto ao arquivo sem autorização.
 

@@ -152,7 +152,10 @@ test('case HTTP requires local session and origin for writes',async t=>{
   const page=await fetch(origin+'/api-explorer'),cookie=page.headers.get('set-cookie').split(';')[0];
   assert.equal(page.status,200);
   assert.equal(page.headers.get('cache-control'),'no-store');
-  assert.match(await page.text(),/Explorador da API/);
+  const explorer=await page.text();
+  assert.match(explorer,/Explorador da API/);
+  assert.match(explorer,/id="arquitetura"/);
+  assert.match(page.headers.get('content-security-policy'),/script-src 'self'/);
   assert.equal((await fetch(origin+'/api-explorer.js')).status,200);
   assert.equal((await fetch(origin+'/api-explorer.css')).status,200);
   assert.equal((await fetch(url)).status,401);

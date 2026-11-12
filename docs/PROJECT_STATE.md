@@ -66,3 +66,5 @@ A ponte descrita em [PAINEL-PRIVADO.md](PAINEL-PRIVADO.md) permite encaminhar ap
 O proprietário confirmou a navegação do painel privado no Android. Na aba Contexto, telas de toque têm o botão **Usar sugestão**; Tab continua disponível no desktop. Nenhum atalho sobrescreve texto divergente ou salva o formulário.
 
 O painel privado oferece Chamados, Histórico sem chamado, Fechamento e Configuração. A configuração remota mostra o estado e o explorador; controles do WhatsApp permanecem locais. O TXT/ZIP é baixado pelo navegador, sem envio automático para IA.
+
+Chamados e Configuração dão acesso ao [mapa interativo de arquitetura](ARQUITETURA.md), com oito percursos, inspeção de protocolos/controles/módulos, catálogo de ferramentas e diagnóstico por camada. A página documenta a topologia de referência, não mede a saúde em tempo real e não abre novas rotas de API.
