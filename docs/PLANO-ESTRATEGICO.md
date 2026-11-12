@@ -97,4 +97,4 @@
 2. Continue o primeiro item prioritário ainda aberto. Se houver incidente que impede a coleta, diagnostique antes de ampliar funcionalidades.
 3. Antes do commit, rode os testes e revise o conteúdo publicado. Atualize este plano, o estado e o handoff quando um critério de aceite for realmente atendido.
 
-**Ponto atual:** P0 e P1 disponíveis localmente. A recuperação de uma sessão travada foi observada sem novo vínculo. A documentação pública de arquitetura e estudos está preparada para GitHub Pages, mas não substitui a prioridade de produto: a próxima entrega é a conciliação e a revisão mensal (P2); ainda não há geração automática do relatório final.
+**Ponto atual:** P0 e P1 disponíveis localmente. A recuperação de uma sessão travada foi observada sem novo vínculo. A documentação pública de arquitetura e estudos está publicada no GitHub Pages, mas não substitui a prioridade de produto: a próxima entrega é a conciliação e a revisão mensal (P2); ainda não há geração automática do relatório final.

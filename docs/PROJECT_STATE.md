@@ -39,7 +39,7 @@ O Histórico permite prévia da mídia arquivada sob demanda, seleção de chama
 
 No fechamento, **A revisar** e **Conferidos** têm listas e contagens próprias, com busca. A lista rola separadamente no desktop; abrir um chamado revela o início do conteúdo também no celular. Fontes alteradas voltam a **A revisar**.
 
-Em 12/11/2026, o mapa de arquitetura e a trilha de estudos passaram a ter uma edição pública estática preparada para GitHub Pages, com link destacado no README. O build `npm run site` gera 11 páginas a partir de `site-src/`, `estudos/*.md` e ativos locais; o workflow `.github/workflows/pages.yml` publica apenas conteúdo sanitizado, sem coletor, sessão, chaves, mensagens ou logs. Validação: 98 testes sintéticos aprovados, build de 8 capítulos e 11 páginas, smoke local em Chrome a 1366 e 390 px com 8 links internos e revisão visual. O site é documentação: não comprova disponibilidade do coletor e não substitui o acompanhamento do primeiro fechamento real.
+Em 12/11/2026, o mapa de arquitetura e a trilha de estudos passaram a ter uma edição pública estática no GitHub Pages, com link destacado no README. O build `npm run site` gera 11 páginas a partir de `site-src/`, `estudos/*.md` e ativos locais; o workflow `.github/workflows/pages.yml` publica apenas conteúdo sanitizado, sem coletor, sessão, chaves, mensagens ou logs. Validação: 98 testes sintéticos aprovados, build de 8 capítulos e 11 páginas, smoke local em Chrome a 1366 e 390 px com 8 links internos e revisão visual. Na publicação, raiz, blog, capítulo, CSS, sitemap e robots responderam 200; a rota inexistente devolveu o 404 personalizado. O site é documentação: não comprova disponibilidade do coletor e não substitui o acompanhamento do primeiro fechamento real.
 
 ## Limites
 
