@@ -23,6 +23,8 @@
 !/tests/**
 !/docs/
 !/docs/**
+!/estudos/
+!/estudos/*.md
 !/.github/
 !/.github/**
 .env.local
