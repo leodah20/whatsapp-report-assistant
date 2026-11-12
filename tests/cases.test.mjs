@@ -39,12 +39,49 @@ test('a later linked closure preserves old answers as historical in detail and e
   assert.equal(detail.status,'completed');
   assert.deepEqual(detail.profile.answers,answers);
   assert.deepEqual(detail.facts.filter(f=>f.prior).map(f=>f.field),['procedimento','resultado']);
+  assert.deepEqual(detail.facts.filter(f=>f.automatic).map(f=>[f.field,f.quote]),[
+    ['resultado','a câmera voltou a comunicar com o gravador'],['procedimento','a troca']
+  ]);
   assert.deepEqual(detail.reportUpdates.map(x=>x.text),latest.map(x=>x.text).reverse());
   assert.equal(detail.facts.find(f=>f.field==='local').prior,undefined);
   const closing=new MonthlyClosing({db,key:dependencies.key,board,template:()=>null});
   const exported=closing.contextPackage(item.month,[code]).cases[0];
-  assert.ok(exported.facts.find(f=>f.field==='resultado').prior);
+  assert.ok(exported.facts.some(f=>f.field==='resultado'&&f.prior));
+  assert.equal(exported.facts.find(f=>f.field==='resultado'&&f.automatic).origin,'source');
   assert.ok(exported.sources.some(s=>s.text===latest[0].text));
+});
+test('technical outcome fills the effective fields without rewriting an earlier confirmed abort',t=>{
+  const {board,item}=fixture(t);
+  const answers={procedimento:'Aguardando acesso ao equipamento.',resultado:'Status: abortado.'};
+  const old=board.change(code,{version:0,kind:'context',location:'Oficina de teste',answers});
+  const ts=Math.ceil(Date.parse(old.profile.events[0].registeredAt)/1000)+1;
+  const later=[
+    {id:'tech',timestamp:ts,text:'Após limpeza e ajuste do sensor, o dispositivo se comunicou com o painel normalmente e o alarme cessou.'},
+    {id:'done',timestamp:ts+1,text:'Chamado concluído.'}
+  ];
+  const read=board.readSource;board.readSource=id=>later.find(x=>x.id===id)||read(id);
+  item.sourceIds.push('tech','done');
+  let d=board.detail(code);
+  assert.equal(d.facts.find(f=>f.field==='resultado'&&!f.prior).quote,'o dispositivo se comunicou com o painel normalmente e o alarme cessou');
+  assert.equal(d.facts.find(f=>f.field==='procedimento'&&!f.prior).quote,'limpeza e ajuste do sensor');
+  assert.deepEqual(d.profile.answers,answers);
+  later.push({id:'reopened',timestamp:ts+2,text:'O dispositivo voltou a falhar.'});
+  item.sourceIds.push('reopened');
+  d=board.detail(code);
+  assert.equal(d.status,'unconfirmed');
+  assert.equal(d.facts.some(f=>f.automatic),false);
+});
+test('bare closure and speculative outcome do not invent technical fields',t=>{
+  const {board,item}=fixture(t);
+  const later=[
+    {id:'speculation',timestamp:Date.now()/1000-30,text:'Se voltou a funcionar, não será necessário trocar.'},
+    {id:'generic',timestamp:Date.now()/1000,text:'Chamado concluído.'}
+  ];
+  const read=board.readSource;board.readSource=id=>later.find(x=>x.id===id)||read(id);
+  item.sourceIds.push('speculation','generic');
+  const d=board.detail(code);
+  assert.equal(d.status,'completed');
+  assert.equal(d.facts.some(f=>f.automatic),false);
 });
 test('monthly draft requires manual dates, evidence review and preventive confirmation',t=>{
   const {board,db,source,dependencies}=fixture(t);

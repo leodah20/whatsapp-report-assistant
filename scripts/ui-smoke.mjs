@@ -14,7 +14,7 @@ const source={kind:'source',timestamp,text:'Foi relatada uma falha.',hasMedia:tr
 const blocker='Aguardando a chegada da peça.';
 const row={code,version:3,title:'Falha de leitura',area:'SCA',status:'pending',stage:currentStage({},[{timestamp,text:blocker}]),contextState:'missing',location:'Setor de testes',locationConfirmed:true,sourceCount:1,referenceAt:timestamp,missing:['resultado'],openTasks:0};
 const profile={title:'Falha de leitura',location:row.location,events:[],tasks:[]};
-const detail={...row,profile,sources:[source],notices:[],facts:[{field:'ocorrencia',quote:source.text},{field:'resultado',quote:'Registro anterior de teste',confirmed:true,prior:true}],reportUpdates:[{origin:'source',at:timestamp*1000,text:'Atualização técnica de teste.'}]};
+const detail={...row,profile,sources:[source],notices:[],facts:[{field:'ocorrencia',quote:source.text},{field:'resultado',quote:'Registro anterior de teste',confirmed:true,prior:true},{field:'resultado',quote:'Operação normal no teste sintético.',automatic:true,origin:'source',recordedAt:new Date(timestamp*1000).toISOString()}],reportUpdates:[{origin:'source',at:timestamp*1000,text:'Atualização técnica de teste.'}]};
 const otherDetail={...detail,code:duplicateCode,version:7,title:'Verificação do leitor',location:'Recepção do prédio'};
 const groups=[{name:'Controle de acesso',rows:[[1,'Verificação de teste','Operacional']]}];
 const settings={issued:'2026-10-20',statuses:['done']};
@@ -122,6 +122,7 @@ try{
     await open('/chamados','.detail-actions');await noOverflow();
     assert.match(await page.$eval('.report-updates',x=>x.textContent),/Atualização técnica de teste/);
     assert.equal(await page.$eval('.facts dd',x=>x.textContent),source.text);
+    assert.match(await page.$eval('.facts',x=>x.textContent),/dos registros recentes.*Operação normal no teste sintético/);
     await clickText('.previous-context summary','Ver contexto anterior');
     assert.match(await page.$eval('.previous-context[open]',x=>x.textContent),/Registro anterior de teste/);
     await page.waitForSelector('#history-dot:not([hidden])');

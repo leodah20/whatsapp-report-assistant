@@ -57,6 +57,8 @@ Reunir duplicado lista chamados não arquivados da competência e de outros mese
 
 Uma etapa explícita mais recente, em fonte vinculada ou atualização local, sinaliza procedimento e resultado confirmados antes dela como contexto anterior. O Resumo destaca os trechos recentes; o contexto salvo e o histórico continuam disponíveis. A extração marca os campos anteriores com `prior`. Isso não reescreve respostas, não atribui causa e não interpreta mídias.
 
+Na conclusão sustentada por texto técnico mais recente, o Resumo e a extração usam automaticamente os trechos literais de procedimento e resultado, com origem e data do registro. Não é necessário copiar a atualização para Contexto. O formulário preserva respostas anteriores ao salvar outros campos. Um status genérico sozinho não informa o resultado técnico; hipótese, bloqueio e reabertura não reaproveitam conclusões anteriores como atuais.
+
 O Explorador da API, em Configuração, mostra rota e resposta JSON de três consultas locais: estado do coletor, lista mensal e detalhe de chamado. Usa a sessão local existente e não executa consultas antes do clique. Não há acesso do navegador de outro dispositivo nem alteração das permissões de rede.
 
 A demonstração independente usa o painel e o explorador em modo somente leitura, com cinco chamados fictícios. É servida em loopback, em porta separada, sem encaminhar consultas para o coletor. Instruções em [DEMO.md](DEMO.md).

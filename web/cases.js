@@ -116,7 +116,7 @@ function renderDetail(){
     if(demo&&id==='context')continue;
     const b=button(label,()=>showCaseTab(id),'tab');b.setAttribute('aria-pressed',String(tab===id));
     if(id==='sources')b.append(node('span',i.sourceCount,'tab-count'));
-    if(id==='context'&&(i.missing.length||!i.serviceDay||i.status==='unconfirmed'||i.reportUpdates?.length))b.append(node('span','•','tab-alert'));
+    if(id==='context'&&(i.missing.length||!i.serviceDay||i.status==='unconfirmed'))b.append(node('span','•','tab-alert'));
     tabs.append(b);
   }
   const body=node('div',undefined,'tab-body');
@@ -137,17 +137,19 @@ function renderDetail(){
     const tasks=node('details',undefined,'optional-task');
     if(!demo){tasks.append(node('summary','Adicionar pendência separada'),node('p','Use apenas se precisar acompanhar outra ação além do que já está no histórico.','hint'),button('Nova pendência',()=>edit('task'),'button outline compact'));pending.append(tasks);}
     const gaps=block(body,'Informações para o relatório');
+    const hasAutomatic=i.facts.some(f=>f.automatic);
     if(i.reportUpdates?.length){
       const updates=node('section',undefined,'report-updates');
       updates.append(node('h4','Atualizações mais recentes'));
       for(const update of i.reportUpdates)updates.append(node('p',update.text,'evidence'),node('p',(stageOrigin[update.origin]||'Registro do chamado')+' · '+date(new Date(update.at).toISOString()),'hint'));
-      if(!demo)updates.append(node('p','O contexto anterior foi preservado. Revise os campos de procedimento e resultado se necessário.','hint'),button('Revisar contexto',()=>showCaseTab('context'),'button outline compact'));
+      if(hasAutomatic)updates.append(node('p','Os campos sustentados pelos registros já foram atualizados abaixo. O contexto anterior fica no histórico.','hint'));
+      else if(!demo)updates.append(node('p','O contexto anterior foi preservado. Revise os campos de procedimento e resultado se necessário.','hint'),button('Revisar contexto',()=>showCaseTab('context'),'button outline compact'));
       gaps.append(updates);
     }
     if(i.missing.length||!i.reportUpdates?.length)gaps.append(node('p',i.missing.length?'A confirmar nas fontes: '+i.missing.map(k=>fields[k]||k).join(', ')+'.':context(i)+'.','hint'));
     const facts=node('dl',undefined,'facts');
     const earlier=node('dl',undefined,'facts');
-    for(const f of i.facts){const row=node('div');row.append(node('dt',(fields[f.field]||f.field)+(f.prior?' · contexto anterior':f.confirmed?' · confirmado':' · extraído')),node('dd',f.quote));(f.prior?earlier:facts).append(row);}
+    for(const f of i.facts){const row=node('div');row.append(node('dt',(fields[f.field]||f.field)+(f.prior?' · contexto anterior':f.automatic?' · dos registros recentes':f.confirmed?' · confirmado':' · extraído')),node('dd',f.quote));if(f.automatic)row.append(node('dd',(stageOrigin[f.origin]||'Registro do chamado')+' · '+date(f.recordedAt),'hint'));(f.prior?earlier:facts).append(row);}
     gaps.append(facts);
     if(earlier.children.length){const previous=node('details',undefined,'previous-context');previous.append(node('summary','Ver contexto anterior'),earlier);gaps.append(previous);}
   }
@@ -230,10 +232,13 @@ function renderContext(parent,item){
   if(!item.locationConfirmed)offerSuggestion(place,item.location,hint.id,'Local do atendimento');
   const when=label('Data do atendimento',node('input'),meta);when.type='date';when.max=day.format(new Date());when.value=item.serviceDay||'';
   const controls={};
+  const automaticFields=new Set();
   for(const [k,q] of Object.entries(questions)){
-    const t=label(q,node('textarea'));t.rows=2;t.maxLength=1000;t.value=item.profile.answers?.[k]||'';
-    if(item.facts.some(f=>f.field===k&&f.prior))t.parentElement.append(node('small','Contexto anterior: confira as atualizações do histórico antes de usar este texto.','hint'));
-    const evidence=item.facts.filter(f=>f.field===k&&!f.confirmed).map(f=>f.quote).join(' · ');
+    const automatic=item.facts.find(f=>f.field===k&&f.automatic);
+    const t=label(q,node('textarea'));t.rows=2;t.maxLength=1000;t.value=automatic?'':item.profile.answers?.[k]||'';
+    if(automatic){automaticFields.add(k);t.parentElement.append(node('small','Valor atual dos registros: '+automatic.quote+' — escreva apenas se quiser corrigir.','hint'));}
+    else if(item.facts.some(f=>f.field===k&&f.prior))t.parentElement.append(node('small','Contexto anterior: confira as atualizações do histórico antes de usar este texto.','hint'));
+    const evidence=item.facts.filter(f=>f.field===k&&!f.confirmed&&!f.prior).map(f=>f.quote).join(' · ');
     offerSuggestion(t,evidence,hint.id,q);
     controls[k]=t;
   }
@@ -242,7 +247,7 @@ function renderContext(parent,item){
   form.onsubmit=async e=>{
     e.preventDefault();save.disabled=true;
     const stageUpdate=stageChanged()?{stage:{status:stage.value,reason:stage.value==='unconfirmed'?'':reason.value,scheduledFor:stage.value==='rescheduled'?scheduled.value:''}}:{};
-    try{const saved=await api('/'+item.code,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'context',version:item.version,location:place.value,serviceDay:when.value,answers:Object.fromEntries(Object.entries(controls).map(([k,v])=>[k,v.value])),...stageUpdate})});contextDirty=false;if(selected===item.code){detail=saved;renderDetail();}await refresh();notify('Contexto salvo, sem mensagem no WhatsApp.');}
+    try{const saved=await api('/'+item.code,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'context',version:item.version,location:place.value,serviceDay:when.value,answers:Object.fromEntries(Object.entries(controls).map(([k,v])=>[k,automaticFields.has(k)&&!v.value.trim()?(item.profile.answers?.[k]||''):v.value])),...stageUpdate})});contextDirty=false;if(selected===item.code){detail=saved;renderDetail();}await refresh();notify('Contexto salvo, sem mensagem no WhatsApp.');}
     catch(err){notify(err.message);}
     finally{save.disabled=false;}
   };

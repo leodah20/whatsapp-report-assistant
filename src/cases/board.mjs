@@ -1,6 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {seal,open} from '../core.mjs';
-import {currentStage,isTerminal,reportFieldConfirmedAt,stageQuestion,STATUSES} from './stage.mjs';
+import {classifyStage,currentStage,isTerminal,reportFieldConfirmedAt,stageQuestion,STATUSES} from './stage.mjs';
 export {STATUSES} from './stage.mjs';
 
 export const AREAS=['CFTV','SDAI','SCA','PABX','MEDICAO','BMS','ZABBIX'];
@@ -37,19 +37,52 @@ function day(value,allowFuture=false){
   if(typeof value!=='string'||!/^20\d\d-\d{2}-\d{2}$/.test(value)||!Number.isFinite(Date.parse(value+'T12:00:00Z'))||new Date(value+'T12:00:00Z').toISOString().slice(0,10)!==value||(!allowFuture&&value>localDay()))throw new CaseError(allowFuture?'Informe uma data de remarcação válida.':'Informe uma data válida, não futura.');
   return value;
 }
+const positiveOutcome=/\b(?:voltou a (?:operar|funcionar|comunicar|responder)|retomou a operacao|(?:funcionando|operando|comunicou(?:-se)?(?: com [^.!?]{1,60})?) normalmente|normalizou|(?:disparo|alarme) (?:cessou|cessad[oa])|(?:operacao|funcionamento|acesso|sistema) restabelecid[oa])\b/;
+const ambiguousOutcome=/\b(?:nao|nem|sem confirmacao|parcial\w*|temporari\w*|intermit\w*|falh(?:ou|ando)|persist\w*|se|talvez|possivelmente|deve|pode|vai|sera|a confirmar|aguard\w*|pendente)\b/;
+function completedFields(text){
+  // Only lift literal clauses. "Concluído" alone says nothing about the technical result.
+  const fields={};
+  for(const raw of text.split(/\r?\n|[!?;]+|\.(?:\s|$)/u)){
+    const line=raw.trim();
+    const after=line.match(/^ap[oó]s\s+([^,]{3,180}),\s*(.+)$/iu);
+    const outcome=(after?.[2]||line).trim();
+    const normalized=normalize(outcome);
+    if(!fields.resultado&&positiveOutcome.test(normalized)&&!ambiguousOutcome.test(normalized.replace(/\bse comunicou\b/g,'comunicou'))){
+      fields.resultado=outcome.slice(0,450);
+      if(after&&!ambiguousOutcome.test(normalize(after[1]))&&/\b(?:limpeza|desarme|troca|substituicao|reparo|ajuste|reinicializacao|reconexao|reinstalacao|regularizacao|configuracao|instalacao)\b/.test(normalize(after[1])))fields.procedimento=after[1].trim();
+    }
+    if(!fields.procedimento&&/^(?:(?:foi|foram) (?:realizad[oa]s?|efetuad[oa]s?|executad[oa]s?)|(?:realizamos|efetuamos|executamos|substituimos|trocamos|reiniciamos|limpamos|reconectamos))\b/.test(normalize(line))&&!ambiguousOutcome.test(normalize(line)))fields.procedimento=line.slice(0,450);
+  }
+  return fields;
+}
 function reportProgress(profile,sources,stage){
   const evidence=stage.origin==='manual'?currentStage({...profile,status:'unconfirmed'},sources):stage;
-  if(!['source','note'].includes(evidence.origin)||!evidence.at||evidence.status==='unconfirmed')return {fields:[],updates:[]};
+  if(!['source','note'].includes(evidence.origin)||!evidence.at||evidence.status==='unconfirmed')return {fields:[],updates:[],current:[]};
   const times=['procedimento','resultado'].filter(field=>profile.answers?.[field]).map(field=>[field,reportFieldConfirmedAt(profile,field)]);
   const stale=times.filter(([,at])=>at>0&&at<evidence.at);
-  if(!stale.length)return {fields:[],updates:[]};
-  const since=Math.min(...stale.map(([,at])=>at));
-  const updates=[
+  const records=[
     ...sources.filter(s=>!s.manualPhoto&&Number.isFinite(s.timestamp)&&s.text?.trim()).map(s=>({at:s.timestamp*1000,text:s.text,origin:'source'})),
     ...profile.events.filter(e=>e.kind==='note'&&e.text).map(e=>({at:Date.parse(e.registeredAt),text:e.text,origin:'note'}))
-  ].filter(e=>e.at>since&&e.at<=evidence.at).sort((a,b)=>b.at-a.at).slice(0,3)
+  ].filter(e=>e.at<=evidence.at).sort((a,b)=>b.at-a.at);
+  const current=[];
+  if(stage.status==='completed'&&evidence.status==='completed'){
+    for(const record of records){
+      if(evidence.at-record.at>7*86400000)break;
+      const previous=classifyStage(record.text)?.status;
+      if(previous&&previous!=='completed'||/\b(?:abortad[oa]|voltou a falhar|falhou novamente|parou (?:de novo|novamente)|problema retornou|continua inoperante)\b/.test(normalize(record.text)))break;
+      for(const [field,quote] of Object.entries(completedFields(record.text))){
+        if(current.some(f=>f.field===field))continue;
+        const confirmedAt=times.find(([key])=>key===field)?.[1];
+        if(confirmedAt!==undefined&&(!confirmedAt||record.at<=confirmedAt))continue;
+        current.push({field,quote,origin:record.origin,recordedAt:new Date(record.at).toISOString(),automatic:true});
+      }
+      if(current.length===2)break;
+    }
+  }
+  const since=Math.min(...stale.map(([,at])=>at));
+  const updates=records.filter(e=>e.at>since).slice(0,3)
     .map(e=>({...e,text:e.text.trim().slice(0,1000)}));
-  return {fields:stale.map(([field])=>field),updates};
+  return {fields:stale.map(([field])=>field),updates,current};
 }
 export class CaseBoard{
   constructor({db,key,assistant,readSource}){Object.assign(this,{db,key,assistant,readSource});db.exec('CREATE TABLE IF NOT EXISTS case_profiles (case_id TEXT PRIMARY KEY, version INTEGER NOT NULL, payload BLOB NOT NULL)');}
@@ -65,8 +98,9 @@ export class CaseBoard{
     const location=profile.location||(literalLocations.length===1?literalLocations[0]:'');
     const referenceAt=timestamps[0]??(Number.isFinite(Date.parse(item.createdAt))?Date.parse(item.createdAt)/1000:null);
     const confirmed=profile.answers||{};
-    const missing=[...new Set([...(item.missing||[]),...(profile.location?[]:['local'])])].filter(f=>f==='local'?!profile.location:!confirmed[f]);
     const stage=currentStage(profile,sources);
+    const progress=reportProgress(profile,sources,stage);
+    const missing=[...new Set([...(item.missing||[]),...(profile.location?[]:['local'])])].filter(f=>f==='local'?!profile.location:!confirmed[f]&&!progress.current.some(x=>x.field===f));
     return {code:item.code,title:title.slice(0,180),location,locationConfirmed:!!profile.location,serviceDay:profile.serviceDay||null,referenceAt,referenceKind:timestamps.length?'source':'created',summary:confirmed.ocorrencia||item.facts?.find(f=>f.field==='ocorrencia')?.quote||'',area:profile.area||suggestion.area,areaSuggested:!profile.area,candidates:suggestion.candidates,status:stage.status,stage,version:profile.version,contextState:missing.length?(item.review==='clarification-received'?'analysis-pending':'needs-context'):'complete',missing,openTasks:profile.tasks.filter(t=>!t.resolvedAt).length,sourceCount:sources.length,answerCount:item.answerIds?.length||0,originMonth:item.month,activityMonths,firstSourceAt:timestamps[0]||null,lastSourceAt:timestamps.at(-1)||null,updatedAt:[profile.events.at(-1)?.registeredAt,item.updatedAt,item.createdAt].filter(Boolean).sort().at(-1)};
   }
   summaries(includeArchived=false){
@@ -87,7 +121,7 @@ export class CaseBoard{
     const confirmed={...(profile.answers||{}),...(profile.location?{local:profile.location}:{})};
     const summary=this.summary(item,profile,sources);
     const progress=reportProgress(profile,sources,summary.stage);
-    const facts=[...Object.entries(confirmed).map(([field,quote])=>({field,quote,confirmed:true,...(progress.fields.includes(field)?{prior:true}:{})})),...(item.facts||[]).filter(f=>!confirmed[f.field])];
+    const facts=[...progress.current,...Object.entries(confirmed).map(([field,quote])=>({field,quote,confirmed:true,...(progress.fields.includes(field)?{prior:true}:{})})),...(item.facts||[]).filter(f=>!confirmed[f.field]).map(f=>progress.current.some(x=>x.field===f.field)?{...f,prior:true}:f)];
     return {untrusted:true,...summary,profile,stageQuestion:summary.status==='unconfirmed'?stageQuestion:null,facts,reportUpdates:progress.updates,questionState:item.questionState,sources:sources.map(s=>({...s,kind:s.manualPhoto?'manual-photo':(item.answerIds||[]).includes(s.id)?'answer':'source'})),notices,confirmations};
   }
   change(code,input){

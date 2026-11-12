@@ -72,6 +72,7 @@
 - [x] Reunir duplicados confirmados com trilha de auditoria. Respeitar código/resposta citada e identificação inequívoca de equipamento em atualizações posteriores; mostrar sugestões quando houver ambiguidade.
 - [x] Selecionar outro chamado na lista, inclusive de outras competências, e escolher na mesma janela qual permanece como principal antes de confirmar.
 - [x] Destacar atualizações vinculadas mais recentes que o procedimento ou resultado já salvo; preservar o contexto anterior e distingui-lo na extração.
+- [x] Preencher automaticamente o procedimento e o resultado atuais quando uma conclusão é sustentada por registro técnico posterior, mantendo o texto anterior no histórico e levando a fonte e o horário do registro para a extração.
 - [ ] Acompanhar reclassificações e novas atualizações reais. Refinar identificação de ativos e locais conforme confirmações, sem criar regra genérica a partir de um único caso.
 
 ## Regras de trabalho que não mudam

@@ -128,7 +128,7 @@ export class MonthlyClosing{
         serviceDate:review?.historical?null:(review?.start||d.serviceDay||null),endDate:review?.end||null,historical:!!review?.historical,
         fromEarlierMonth:row.carryover,stage:{label:row.stageLabel,origin:d.stage?.origin,reason:d.stage?.reason||'',scheduledFor:d.stage?.scheduledFor||null},
         sourceReviewState:row.sourceReviewState,reviewState:row.state,reviewedText:review?.narrative||null,question:row.state==='defer'?row.review.reason:null,
-        stageQuestion:d.stageQuestion||null,missing:d.missing,facts:d.facts.map(f=>({field:f.field,text:f.quote,confirmed:!!f.confirmed,...(f.prior?{prior:true}:{})})),
+        stageQuestion:d.stageQuestion||null,missing:d.missing,facts:d.facts.map(f=>({field:f.field,text:f.quote,confirmed:!!f.confirmed,...(f.prior?{prior:true}:{}),...(f.automatic?{automatic:true,origin:f.origin,recordedAt:f.recordedAt}:{})})),
         tasks:d.profile.tasks.filter(t=>!t.resolvedAt).map(t=>t.text),
         updates:d.profile.events.filter(e=>['note','profile','context','task','resolve'].includes(e.kind)&&e.text).map(e=>({kind:e.kind,serviceDate:e.occurredOn||null,registeredAt:e.registeredAt,text:e.text})),
         sources};
