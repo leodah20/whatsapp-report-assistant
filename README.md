@@ -1,8 +1,8 @@
 # WhatsApp Report Assistant
 
-Assistente local de registros de manutenção. Acompanha **um grupo autorizado**, guarda fontes criptografadas, organiza chamados e pergunta quando faltam informações. Roda no computador, **não dentro do Codex**.
-
 **Documentação pública:** [painel de arquitetura](https://leodah20.github.io/whatsapp-report-assistant/) · [blog de estudos](https://leodah20.github.io/whatsapp-report-assistant/estudos/) — mapa interativo, protocolos e limites de acesso, com uma trilha didática em oito capítulos sobre o código público. O site é estático, renderiza os diagramas Mermaid no navegador com uma cópia local e não acessa dados operacionais.
+
+Assistente local de registros de manutenção. Acompanha **um grupo autorizado**, guarda fontes criptografadas, organiza chamados e pergunta quando faltam informações. Roda no computador, **não dentro do Codex**.
 
 Repositório completo: https://github.com/leodah20/whatsapp-report-assistant
 
