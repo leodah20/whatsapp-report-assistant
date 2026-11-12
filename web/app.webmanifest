@@ -1,0 +1,16 @@
+{
+  "id": "/chamados",
+  "name": "Runavolt · Central de chamados",
+  "short_name": "Runavolt",
+  "description": "Acompanhe chamados e pendências na rede privada.",
+  "lang": "pt-BR",
+  "start_url": "/chamados",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#101116",
+  "background_color": "#f4f1ea",
+  "icons": [
+    {"src": "/brand/app-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/brand/app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}

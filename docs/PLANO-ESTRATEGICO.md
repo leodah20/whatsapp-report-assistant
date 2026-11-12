@@ -59,7 +59,9 @@
 - [ ] Consolidar a configuração por cliente e validar implantação em LAN, segmentação e operação local conforme escopo contratado.
 - [x] Integrar notificações recebidas de tickets de suporte por e-mail, em leitura restrita e com vínculo e deduplicação por identificadores.
 - [ ] Acompanhar formatos de notificação não reconhecidos e avaliar cobertura de respostas enviadas que não retornam na notificação do suporte.
-- [ ] Avaliar cliente móvel após validar API e autenticação, mantendo dados e inferência atrás do servidor local.
+- [x] Oferecer instalação do painel privado pelo navegador no celular e perfis de leitura/edição geridos pelo administrador; manter dados e inferência atrás do servidor local.
+- [ ] Validar instalação no celular físico e o primeiro colaborador em rede restrita à porta do painel. Planejar autoria individual no histórico antes de ampliar o piloto.
+- [ ] Validar implantação independente por cliente: configuração de marca/áreas, permissões por frente quando necessárias, recuperação de backup e operação do núcleo sem integrações externas obrigatórias.
 
 **Pronto quando:** outro ambiente consegue retomar com Git e os arquivos de continuidade, sem acessar chats antigos ou dados privados para entender a arquitetura. Não depender de oferta gratuita permanente nem conectar modelo remoto ao arquivo sem autorização.
 

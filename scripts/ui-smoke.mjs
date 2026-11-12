@@ -11,6 +11,7 @@ import {brandAssets} from '../src/brand-assets.mjs';
 const month='2026-10', code='R-00000001', timestamp=1791890000;
 const duplicateCode='R-00000030';
 let mergeRequest;
+const fixtureUsers=new Map();
 const source={kind:'source',timestamp,text:'Foi relatada uma falha.',hasMedia:true,mediaState:'saved',mime:'image/png'};
 const blocker='Aguardando a chegada da peça.';
 const row={code,version:3,title:'Falha de leitura',area:'SCA',status:'pending',stage:currentStage({},[{timestamp,text:blocker}]),contextState:'missing',location:'Setor de testes',locationConfirmed:true,sourceCount:1,referenceAt:timestamp,missing:['resultado'],openTasks:0};
@@ -47,6 +48,14 @@ const assistantStatus=()=>({
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aDncAAAAASUVORK5CYII=','base64');
 const server=createServer(async(req,res)=>{
   const url=new URL(req.url,'http://127.0.0.1'),path=url.pathname;
+  if(path==='/api/panel/access'){
+    if(req.method==='POST'){
+      const chunks=[];for await(const chunk of req)chunks.push(chunk);
+      const {login,role}=JSON.parse(Buffer.concat(chunks).toString());
+      if(role)fixtureUsers.set(login,role);else fixtureUsers.delete(login);
+    }
+    res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify([...fixtureUsers].map(([login,role])=>({login,role}))));return;
+  }
   if(req.method==='POST'&&['/api/cases/'+code,'/api/cases/'+duplicateCode].includes(path)){
     const chunks=[];for await(const chunk of req)chunks.push(chunk);
     mergeRequest={path,...JSON.parse(Buffer.concat(chunks).toString())};
@@ -85,7 +94,10 @@ const server=createServer(async(req,res)=>{
   const file=brand?.[0]||routes[path]||(/^\/(cases|history|closing|draft|api-explorer)\.(js|css)$/.test(path)?path.slice(1):null);
   if(!file){res.writeHead(404).end();return;}
   try{
-    const body=await readFile(new URL('../web/'+file,import.meta.url));
+    let body=await readFile(new URL('../web/'+file,import.meta.url));
+    const role=url.searchParams.get('testRole');
+    if(path==='/chamados'&&['viewer','editor'].includes(role))
+      body=body.toString().replace('<body ','<body data-access-role="'+role+'" ');
     res.writeHead(200,{'Content-Type':brand?.[1]||types[file.split('.').pop()]+'; charset=utf-8','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:"}).end(body);
   }catch{res.writeHead(500).end();}
 });
@@ -391,6 +403,29 @@ try{
     }
     console.log(`Limites da página conferidos a ${width}px.`);
   }
+  await page.setViewport({width:390,height:850,hasTouch:true});
+  for(const role of ['viewer','editor']){
+    await page.goto(origin+'/chamados?month='+month+'&testRole='+role);
+    await page.waitForSelector('.detail .stage-evidence',{visible:true});
+    assert.equal(await page.$$eval('.workspace-nav a',links=>links.filter(a=>a.getClientRects().length).length),1);
+    assert.equal(await page.$eval('#export',el=>el.hidden),true);
+    assert.equal(await page.$$eval('.detail .tab',tabs=>tabs.some(t=>t.textContent.includes('Evidências'))),false);
+    assert.equal(!!(await page.$('.detail-actions')),role==='editor');
+    if(role==='editor'){
+      await page.click('.detail-actions summary');
+      assert.match(await page.$eval('.detail-actions',el=>el.textContent),/Editar chamado/);
+      assert.doesNotMatch(await page.$eval('.detail-actions',el=>el.textContent),/Reunir duplicado|Arquivar chamado/);
+    }
+  }
+  await open('/configuracao','#access-form');
+  await page.waitForSelector('#access-save:enabled');
+  await page.type('#access-login','pessoa@example.invalid');await page.click('#access-save');
+  await page.waitForFunction(()=>document.getElementById('access-list').textContent.includes('Somente leitura'));
+  await page.click('#access-list button:first-of-type');await page.select('#access-role','editor');await page.click('#access-save');
+  await page.waitForFunction(()=>document.getElementById('access-list').textContent.includes('Pode editar chamados'));
+  page.once('dialog',dialog=>void dialog.accept());
+  await page.click('#access-list button:last-of-type');await page.waitForFunction(()=>document.getElementById('access-list').childElementCount===0);
+  console.log('Perfis de colaborador e gestão de permissões validados no celular simulado.');
   assert.deepEqual(errors,[]);
 }finally{
   await browser?.close();

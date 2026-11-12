@@ -71,6 +71,8 @@ O painel privado oferece Chamados, Histórico sem chamado, Fechamento e Configur
 
 O [mapa interativo de arquitetura](ARQUITETURA.md) é documentação separada, com nove percursos e inspeção de protocolos, controles e módulos. O painel operacional não incorpora o mapa. O Explorador da API continua em Configuração.
 
-O [Protótipo Runavolt 01](RUNAVOLT.md) aplica identidade, fontes locais e navegação responsiva a Chamados, Histórico, Fechamento, Configuração e diagnóstico. Na minuta, somente a barra em tela muda; o PDF não muda. O [e-mail de suporte](EMAIL-DE-SUPORTE.md) entra em um chamado por ticket e não altera a etapa técnica por status do fornecedor. Instalações por cliente e aplicativo móvel são frentes futuras.
+O [Protótipo Runavolt 01](RUNAVOLT.md) aplica identidade, fontes locais e navegação responsiva a Chamados, Histórico, Fechamento, Configuração e diagnóstico. Na minuta, somente a barra em tela muda; o PDF não muda. O [e-mail de suporte](EMAIL-DE-SUPORTE.md) entra em um chamado por ticket e não altera a etapa técnica por status do fornecedor. A instalação independente por cliente ainda precisa ser validada.
 
 Na Central de chamados, a assinatura Runavolt combina o R de circuito com o nome e o descritor. No desktop fica na lateral; no celular, na faixa superior. O símbolo atualizado também é o ícone da aba. A mudança não afeta a fila nem a impressão.
+
+O painel privado é instalável pelo navegador e tem administrador, colaborador de leitura e colaborador de edição. O administrador gerencia a lista no painel privado; colaboradores acessam o chamado e suas pendências, sem mídia, exportação, coletor ou fontes brutas. A produção atende somente ao administrador até cadastro e autorização de rede. Sem modo offline ou app de loja. Consulte [PAINEL-PRIVADO.md](PAINEL-PRIVADO.md).

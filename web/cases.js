@@ -1,6 +1,9 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const demo=document.body?.dataset.demo==='true';
+const accessRole=document.body?.dataset.accessRole;
+const collaborator=accessRole==='viewer'||accessRole==='editor';
+const canEdit=!demo&&accessRole!=='viewer';
 const labels={ALL:'Todas as frentes',CFTV:'CFTV',SDAI:'SDAI',SCA:'SCA',PABX:'PABX',MEDICAO:'Medição',BMS:'BMS',ZABBIX:'Zabbix',UNCLASSIFIED:'Sem classificação'};
 const fields={local:'Local',equipamento:'Equipamento',ocorrencia:'Ocorrência',procedimento:'Procedimento',resultado:'Resultado / pendência'};
 const kinds={source:'Registro do WhatsApp',answer:'Resposta do WhatsApp',question:'Pergunta do assistente',receipt:'Confirmação de registro',note:'Atualização local',task:'Pendência registrada',resolve:'Pendência concluída',profile:'Cadastro atualizado',context:'Respostas confirmadas',merge:'Chamados reunidos',archive:'Arquivado',restore:'Restaurado','manual-photo':'Foto adicionada pelo painel','support-email':'E-mail do suporte · Invenzi'};
@@ -31,7 +34,7 @@ function stageReason(i){return i.stage?.scheduledFor?'Nova data: '+calendar(i.st
 function notify(value){$('notice').textContent=value;$('notice').hidden=!value;}
 async function api(path,options){
   const r=await fetch('/api/cases'+path,{signal:AbortSignal.timeout(12000),...options});
-  const data=await r.json();if(!r.ok)throw Error(data.error||'Consulta indisponível.');return data;
+  const data=await r.json();if(!r.ok)throw Object.assign(Error(data.error||'Consulta indisponível.'),{status:r.status});return data;
 }
 function block(parent,title){const b=node('section',undefined,'block');b.append(node('h3',title));parent.append(b);return b;}
 function showCaseTab(id){
@@ -40,7 +43,7 @@ function showCaseTab(id){
   contextDirty=false;tab=id;renderDetail();$('detail').querySelector('.tab[aria-pressed=true]')?.focus();
 }
 function caseActions(item){
-  if(demo)return badge('Somente leitura');
+  if(!canEdit)return badge('Somente leitura');
   const actions=node('div',undefined,'detail-actions');
   if(!item.profile.archived)actions.append(button('Registrar atualização',()=>edit('note'),'button primary'));
   const more=node('details',undefined,'action-disclosure');
@@ -48,10 +51,10 @@ function caseActions(item){
   const list=node('div',undefined,'action-options');
   const add=(label,kind,cls='')=>list.append(button(label,()=>{toggle.focus();more.open=false;edit(kind);},'action-option '+cls));
   add('Editar chamado','profile');
-  if(item.profile.archived)add('Restaurar chamado','restore');
+  if(item.profile.archived){if(!collaborator)add('Restaurar chamado','restore');}
   else{
     if(!['completed','cancelled'].includes(item.status))add('Marcar como concluído','complete');
-    add('Reunir duplicado','merge');add('Arquivar chamado','archive','action-danger');
+    if(!collaborator){add('Reunir duplicado','merge');add('Arquivar chamado','archive','action-danger');}
   }
   more.append(toggle,list);actions.append(more);
   more.addEventListener('focusout',e=>{if(!more.contains(e.relatedTarget))more.open=false;});
@@ -118,7 +121,7 @@ function renderDetail(){
   if(i.profile.archived)head.append(node('p','Arquivado: '+i.profile.archived.reason,'hint'));
   const tabs=node('nav',undefined,'tabs');tabs.setAttribute('aria-label','Detalhes do chamado');
   for(const [id,label] of [['overview','Resumo'],['history','Histórico'],['sources','Evidências'],['context','Contexto']]){
-    if(demo&&id==='context')continue;
+    if((!canEdit&&id==='context')||(collaborator&&id==='sources'))continue;
     const b=button(label,()=>showCaseTab(id),'tab');b.setAttribute('aria-pressed',String(tab===id));
     if(id==='sources')b.append(node('span',i.sourceCount,'tab-count'));
     if(id==='context'&&(i.missing.length||!i.serviceDay||i.status==='unconfirmed'))b.append(node('span','•','tab-alert'));
@@ -130,17 +133,17 @@ function renderDetail(){
     const row=node('div',undefined,'section-toolbar');
     row.append(pending.firstChild);
     pending.append(row);
-    if(i.stageQuestion){pending.append(node('p',i.stageQuestion,'hint'));if(!demo)pending.append(button('Informar etapa',()=>showCaseTab('context'),'button outline compact'));}
+    if(i.stageQuestion){pending.append(node('p',i.stageQuestion,'hint'));if(canEdit)pending.append(button('Informar etapa',()=>showCaseTab('context'),'button outline compact'));}
     else if(i.stage?.origin!=='task'&&stageReason(i))pending.append(node('p',stageReason(i),'stage-evidence'));
     if(stageOrigin[i.stage?.origin])pending.append(node('p',stageOrigin[i.stage.origin],'hint'));
     for(const t of [...i.profile.tasks].sort((a,b)=>Number(!!a.resolvedAt)-Number(!!b.resolvedAt))){
       const card=node('div',undefined,'task'+(t.resolvedAt?' done':''));
       card.append(badge(t.resolvedAt?'Concluída':'Em aberto',t.resolvedAt?'green':'amber'),node('p',t.text),node('p',calendar(t.occurredOn),'hint'));
-      if(t.resolvedAt)card.append(node('p',calendar(t.resolvedOn)+' — '+t.resolution));else if(!demo)card.append(button('Concluir pendência',()=>edit('resolve',t)));
+      if(t.resolvedAt)card.append(node('p',calendar(t.resolvedOn)+' — '+t.resolution));else if(canEdit)card.append(button('Concluir pendência',()=>edit('resolve',t)));
       pending.append(card);
     }
     const tasks=node('details',undefined,'optional-task');
-    if(!demo){tasks.append(node('summary','Adicionar pendência separada'),node('p','Use apenas se precisar acompanhar outra ação além do que já está no histórico.','hint'),button('Nova pendência',()=>edit('task'),'button outline compact'));pending.append(tasks);}
+    if(canEdit){tasks.append(node('summary','Adicionar pendência separada'),node('p','Use apenas se precisar acompanhar outra ação além do que já está no histórico.','hint'),button('Nova pendência',()=>edit('task'),'button outline compact'));pending.append(tasks);}
     const gaps=block(body,'Informações para o relatório');
     const hasAutomatic=i.facts.some(f=>f.automatic);
     if(i.reportUpdates?.length){
@@ -148,7 +151,7 @@ function renderDetail(){
       updates.append(node('h4','Atualizações mais recentes'));
       for(const update of i.reportUpdates)updates.append(node('p',update.text,'evidence'),node('p',(stageOrigin[update.origin]||'Registro do chamado')+' · '+date(new Date(update.at).toISOString()),'hint'));
       if(hasAutomatic)updates.append(node('p','Os campos sustentados pelos registros já foram atualizados abaixo. O contexto anterior fica no histórico.','hint'));
-      else if(!demo)updates.append(node('p','O contexto anterior foi preservado. Revise os campos de procedimento e resultado se necessário.','hint'),button('Revisar contexto',()=>showCaseTab('context'),'button outline compact'));
+      else if(canEdit)updates.append(node('p','O contexto anterior foi preservado. Revise os campos de procedimento e resultado se necessário.','hint'),button('Revisar contexto',()=>showCaseTab('context'),'button outline compact'));
       gaps.append(updates);
     }
     if(i.missing.length||!i.reportUpdates?.length)gaps.append(node('p',i.missing.length?'A confirmar nas fontes: '+i.missing.map(k=>fields[k]||k).join(', ')+'.':context(i)+'.','hint'));
@@ -164,7 +167,7 @@ function renderDetail(){
     if(!i.notices.some(n=>n.kind==='question')&&i.questionState==='sent')h.append(node('p','Pergunta enviada; texto não disponível no arquivo.','hint'));
   }
   if(tab==='sources'){
-    if(!demo)renderEvidenceTools(body,i);
+    if(canEdit&&!collaborator)renderEvidenceTools(body,i);
     const s=block(body,'Evidências arquivadas');
     i.sources.forEach((v,n)=>{
       const card=node('div',undefined,'record');card.append(node('h4',kinds[v.kind]),node('p',date(v.timestamp),'hint'),node('p',v.text||'Mensagem sem legenda.'));
@@ -289,14 +292,25 @@ async function refresh(manual=false){
   try{
     const next=await api('?month='+encodeURIComponent($('month').value)+'&carry='+Number($('carry').checked)+'&archived='+Number($('archived').checked));
     if(request!==listRequest)return;
+    if(collaborator&&next.accessRole&&next.accessRole!==accessRole){location.reload();return;}
     model=next;renderHistoryDot(next.unlinkedCount||0);const visible=renderList();
     const chosen=selected||visible[0]?.code;
     const row=next.items.find(i=>i.code===chosen);
     if(chosen&&!editing&&!contextDirty&&(!detail||manual||(row&&(row.updatedAt!==detail.updatedAt||row.version!==detail.version||row.contextState!==detail.contextState||row.sourceCount!==detail.sourceCount))))await openCase(chosen);
     if(manual)notify('Lista atualizada.');
-  }catch(e){if(request===listRequest)notify(e.message);}
+  }catch(e){
+    if(request!==listRequest)return;
+    if(collaborator&&e.status===403){
+      listRequest++;detailRequest++;detail=null;selected=null;
+      if($('edit-dialog').open)$('edit-dialog').close();
+      $('stats').replaceChildren();$('case-list').replaceChildren();$('areas').replaceChildren();
+      $('detail').replaceChildren(node('p','Reabra o painel com uma conta autorizada.','empty'));
+    }
+    notify(e.message);
+  }
 }
 async function pulse(){
+  if(collaborator)return;
   try{
     const s=await api('/runtime');
     const label=s.requiresLink?'Novo vínculo necessário':s.paused?'Coleta pausada':s.connected?'WhatsApp conectado':s.selected?'Aguardando conexão com o WhatsApp':'Grupo ainda não autorizado';
@@ -448,3 +462,19 @@ $('refresh').onclick=()=>{void refresh(true);void pulse();};
 window.addEventListener('hashchange',()=>{const code=codeFromHash();if(code&&!editing)void openCase(code);});
 window.addEventListener('pageshow',e=>{if(e.persisted)void refresh();});
 void refresh();void pulse();setInterval(()=>{if(!document.hidden){void refresh();void pulse();}},15000);
+
+if(accessRole){
+  $('access-profile').textContent={admin:'Administrador',editor:'Colaborador · edição',viewer:'Colaborador · somente leitura'}[accessRole];
+  $('access-profile').hidden=false;
+  let prompt;
+  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();prompt=event;$('install-app').hidden=false;});
+  $('install-app').onclick=async()=>{const offer=prompt;prompt=null;$('install-app').hidden=true;await offer?.prompt();};
+  window.addEventListener('appinstalled',()=>{prompt=null;$('install-app').hidden=true;});
+}
+if(collaborator){
+  const nav=document.querySelector('.workspace-nav');
+  nav.classList.add('rv-collaborator-nav');
+  for(const link of nav.querySelectorAll('a:not([aria-current])'))link.hidden=true;
+  $('export').hidden=true;
+  $('runtime').parentElement.hidden=true;
+}

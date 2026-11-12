@@ -81,6 +81,14 @@ body.rv-app{
 .rv-app .rv-cases-kicker::before{content:"";width:12px;height:2px;background:var(--rv-lavender);flex:none}
 .cases-page.rv-app .page-head{background:linear-gradient(108deg,#101116 36%,#211536 100%)}
 .cases-page.rv-app .page-head::after{opacity:.47}
+.rv-app .rv-access-profile{color:#e8daff;font-size:.76rem;margin-top:9px}
+.rv-app .workspace-nav a[hidden],.rv-app .action-option[hidden]{display:none}
+.rv-app .workspace-nav.rv-collaborator-nav{grid-template-columns:1fr}
+.rv-app .rv-access-controls{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:14px 0}
+.rv-app .rv-access-controls label:first-child{flex:1 1 220px}
+.rv-app .rv-access-list{list-style:none;padding:0;margin-top:10px}
+.rv-app .rv-access-list li{border-top:1px solid var(--line);padding:10px 0;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.rv-app .rv-access-list li span{flex:1 1 180px;min-width:0;overflow-wrap:anywhere}
 
 @media(max-width:860px){
   .rv-app .workspace-bar{padding:12px 14px 4px}

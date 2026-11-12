@@ -24,4 +24,5 @@ Uma instalação por cliente, com base, chaves e credenciais próprias. A LAN/VL
 
 1. Validar o piloto com dados sintéticos e depois com o responsável autorizado. Transformar variações de frentes, modelos e regras em configuração por instalação antes de replicar o piloto.
 2. Evoluir a [entrada de tickets por e-mail](EMAIL-DE-SUPORTE.md). O conector atual já arquiva as notificações recebidas por ticket e deduplica por mensagem. Outros fornecedores, formatos e a pasta de enviados exigem validação e escopo próprios.
-3. Definir contrato e autenticação para uso móvel. Validar a web responsiva e avaliar instalação via PWA antes de decidir se há necessidade de aplicativo nativo. O cliente móvel deve chamar a API autenticada, nunca abrir o SQLite ou expor a porta da LLM.
+3. Validar o app web instalável e os perfis de colaboração no primeiro celular autorizado. O app usa a ponte privada autenticada; não abre o SQLite nem expõe a porta do modelo. Aplicativo de loja é outra etapa.
+4. Preparar a primeira instalação independente: configuração de marca e áreas, servidor dimensionado para o modelo, testes de backup e restauração e segmentação aprovada. O núcleo local é a proposta; fontes externas usadas no piloto não são requisitos de cada cliente. O modelo de linguagem roda no local, sem implicar treinamento próprio.

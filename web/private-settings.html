@@ -13,10 +13,22 @@
   </nav></div>
   <aside class="sidebar panel-sidebar">
     <a class="brand" href="/chamados"><span class="brand-icon" aria-hidden="true"></span><span>RUNAVOLT<small>ACESSO PRIVADO</small></span></a>
-    <nav aria-label="Atalhos da configuração"><a class="area" href="#coletor">Estado do coletor</a><a class="area" href="#arquivo">Arquivo mensal</a><a class="area" href="/api-explorer#api">Explorador da API</a></nav>
+    <nav aria-label="Atalhos da configuração"><a class="area" href="#acessos">Usuários e permissões</a><a class="area" href="#coletor">Estado do coletor</a><a class="area" href="#arquivo">Arquivo mensal</a><a class="area" href="/api-explorer#api">Explorador da API</a></nav>
   </aside>
   <main>
     <header class="page-head"><div><h1>Configuração</h1><p class="lead">Acompanhe o coletor e acesse as ferramentas do painel.</p></div></header>
+    <section class="surface closing-settings" id="acessos" aria-labelledby="acessos-titulo">
+      <h2 id="acessos-titulo">Usuários e permissões</h2>
+      <p>Você é o administrador. Libere acesso apenas para contas autorizadas a ver os chamados. O cadastro não envia convite nem altera a rede Tailscale.</p>
+      <form class="rv-access-controls" id="access-form">
+        <label class="control">Login exato no Tailscale <input id="access-login" type="text" inputmode="email" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="254" placeholder="pessoa@exemplo.com" required></label>
+        <label class="control">Permissão <select id="access-role"><option value="viewer">Somente leitura</option><option value="editor">Pode editar chamados</option></select></label>
+        <button class="button primary" id="access-save" disabled>Salvar acesso</button>
+      </form>
+      <p class="hint">Colaboradores não acessam configuração, exportações, mídia ou mensagens brutas. Para instalar no celular, abra Chamados e use o menu do navegador para adicionar à tela inicial.</p>
+      <p id="access-status" class="hint" role="status"></p>
+      <ul class="rv-access-list" id="access-list" aria-label="Colaboradores autorizados"></ul>
+    </section>
     <section class="surface closing-settings" id="coletor" aria-labelledby="coletor-titulo">
       <h2 id="coletor-titulo">Estado do coletor</h2>
       <p id="private-status" class="notice" role="status">Verificando a conexão…</p>
