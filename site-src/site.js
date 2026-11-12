@@ -4,7 +4,7 @@ const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
 
 function enhanceCodeBlocks() {
   for (const pre of document.querySelectorAll('.prose pre')) {
-    const block = pre.closest('.code-block, .diagram');
+    const block = pre.closest('.code-block');
     if (!block || block.querySelector('.copy-button')) continue;
     const button = document.createElement('button');
     button.type = 'button';

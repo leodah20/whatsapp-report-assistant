@@ -55,7 +55,7 @@
 - [x] Abrir as quatro abas operacionais no acesso privado, com triagem, revisão e extração TXT/ZIP sem envio automático para IA.
 - [ ] Definir servidor e público autorizado para acesso de rede. Validar autenticação e separação da configuração do coletor antes da publicação interna. Conferir navegação, edição e leitura em telas pequenas, sem depender de zoom ou rolagem horizontal.
 - [x] Documentar o sistema em página HTML separada, com mapa interativo por fluxo, protocolos, limites de acesso e referências ao código. Manter o painel operacional focado nos chamados e no Explorador da API.
-- [x] Publicar a documentação sanitizada em GitHub Pages, com o painel e o blog de estudos ligados no topo do README, build estático e workflow de publicação sem dados operacionais.
+- [x] Publicar a documentação sanitizada em GitHub Pages, com o painel e o blog de estudos ligados no topo do README, build estático, diagramas Mermaid locais e workflow de publicação sem dados operacionais.
 - [x] Aplicar o sistema visual Runavolt ao protótipo, sem alterar o PDF aprovado nem as permissões da implantação.
 - [ ] Consolidar a configuração por cliente e validar implantação em LAN, segmentação e operação local conforme escopo contratado.
 - [x] Integrar notificações recebidas de tickets de suporte por e-mail, em leitura restrita e com vínculo e deduplicação por identificadores.

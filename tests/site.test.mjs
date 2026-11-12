@@ -68,11 +68,28 @@ test('gera o site público de arquitetura e estudos sem dados operacionais', asy
     assert.match(httpChapter, /blob\/main\/src\/app\.mjs/);
     assert.match(httpChapter, /language-mermaid/);
     assert.match(httpChapter, /Origem → destino/);
+    assert.match(httpChapter, /assets\/vendor\/mermaid\/mermaid\.min\.js/);
+    assert.match(httpChapter, /assets\/mermaid-init\.js/);
+
+    const architectureChapter = readFileSync(path.join(outDir, 'estudos', '01-negocio-e-arquitetura.html'), 'utf8');
+    assert.match(architectureChapter, /class="diagram"/);
+    assert.match(architectureChapter, /class="diagram-source"/);
+    assert.doesNotMatch(architectureChapter, /Diagrama Mermaid · acompanhe pela leitura textual/);
+
+    const chapterWithoutDiagram = readFileSync(path.join(outDir, 'estudos', '02-linguagens-e-principios.html'), 'utf8');
+    assert.doesNotMatch(chapterWithoutDiagram, /mermaid\.min\.js/);
+
+    assert.ok(existsSync(path.join(outDir, 'assets', 'vendor', 'mermaid', 'mermaid.min.js')));
+    assert.ok(existsSync(path.join(outDir, 'assets', 'vendor', 'mermaid', 'LICENSE')));
+    assert.ok(existsSync(path.join(outDir, 'assets', 'mermaid-init.js')));
 
     const architectureScript = readFileSync(path.join(outDir, 'assets', 'architecture.js'), 'utf8');
     const siteScript = readFileSync(path.join(outDir, 'assets', 'site.js'), 'utf8');
+    const mermaidInit = readFileSync(path.join(outDir, 'assets', 'mermaid-init.js'), 'utf8');
     assert.doesNotMatch(architectureScript, /\bfetch\s*\(|XMLHttpRequest/);
     assert.doesNotMatch(siteScript, /\bfetch\s*\(|XMLHttpRequest/);
+    assert.doesNotMatch(mermaidInit, /\bfetch\s*\(|XMLHttpRequest/);
+    assert.doesNotMatch(mermaidInit, /https?:\/\//);
 
     const sitemap = readFileSync(path.join(outDir, 'sitemap.xml'), 'utf8');
     assert.equal((sitemap.match(/<url>/g) || []).length, 10);

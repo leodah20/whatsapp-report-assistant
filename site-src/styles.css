@@ -250,7 +250,19 @@ button,input{font:inherit}
 .code-block .copy-button:hover{opacity:1;background:rgba(255,255,255,.18)}
 .diagram{position:relative;background:#fbfaf6;border:1px solid var(--line);border-radius:12px;padding:16px}
 .diagram figcaption{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px}
-.diagram pre{background:#fff;color:var(--ink);border:1px solid var(--line);font-size:.78rem}
+.diagram-canvas{overflow-x:auto;text-align:center}
+.diagram-loading{margin:0;padding:28px 12px;color:var(--ink-soft);font-size:.86rem;text-align:center}
+.diagram .mermaid{display:flex;justify-content:center;min-height:120px;align-items:center}
+.diagram .mermaid svg{max-width:100%;height:auto}
+.diagram-error-note{margin:0;padding:18px;border:1px solid #e2b4b4;background:#fff4f4;color:#7a2f2f;border-radius:8px;font-size:.86rem;text-align:left}
+.diagram-fallback{margin:0;padding:12px 0 0;color:var(--ink-soft);font-size:.86rem}
+.diagram-hint{display:none}
+@media(max-width:760px){
+  .diagram-canvas .mermaid svg{min-width:560px}
+}
+@media(max-width:580px){
+  .diagram-hint{display:block;margin:8px 0 0;color:var(--ink-soft);font-size:.78rem}
+}
 .prose blockquote{border-left:4px solid var(--violet);background:#f4f0ff;padding:12px 16px;border-radius:0 8px 8px 0;color:var(--ink-soft)}
 .prose blockquote p:last-child{margin-bottom:0}
 .prose hr{border:0;border-top:1px solid var(--line);margin:2em 0}

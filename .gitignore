@@ -1,6 +1,7 @@
 # Public source allowlist. Runtime data, credentials and local bridges stay out.
 *
 !/.gitignore
+!/.gitattributes
 !/.env.example
 !/README.md
 !/COMANDOS.md

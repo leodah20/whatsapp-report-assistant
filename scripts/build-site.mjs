@@ -173,8 +173,13 @@ function renderCodeBlock(code, language) {
   if (lang === 'mermaid') {
     return [
       '<figure class="diagram">',
-      '<figcaption>Diagrama Mermaid · acompanhe pela leitura textual</figcaption>',
-      `<pre><code class="language-mermaid">${escaped}</code></pre>`,
+      '<figcaption>Diagrama Mermaid</figcaption>',
+      '<div class="diagram-canvas">',
+      '<p class="diagram-loading">Carregando diagrama…</p>',
+      `<template class="diagram-source"><pre><code class="language-mermaid">${escaped}</code></pre></template>`,
+      '</div>',
+      '<p class="diagram-hint">Em telas estreitas, deslize para o lado para ver o diagrama completo.</p>',
+      '<noscript><p class="diagram-fallback">Ative o JavaScript para visualizar este diagrama.</p></noscript>',
       '</figure>'
     ].join('');
   }
@@ -335,6 +340,7 @@ async function readChapters() {
       summary: meta.summary,
       tags: meta.tags,
       minutes: Math.max(1, Math.ceil(words / 180)),
+      hasMermaid: /^```mermaid\s*$/m.test(body),
       body
     };
   }));
@@ -413,11 +419,16 @@ function renderArticle(chapter, chapters) {
 
 async function copyAssets(outDir) {
   const assets = path.join(outDir, 'assets');
+  const mermaid = path.join(assets, 'vendor', 'mermaid');
   await mkdir(path.join(assets, 'fonts'), { recursive: true });
   await mkdir(path.join(assets, 'brand'), { recursive: true });
+  await mkdir(mermaid, { recursive: true });
   await cp(path.join(SITE_SRC, 'styles.css'), path.join(assets, 'styles.css'));
   await cp(path.join(SITE_SRC, 'site.js'), path.join(assets, 'site.js'));
+  await cp(path.join(SITE_SRC, 'mermaid-init.js'), path.join(assets, 'mermaid-init.js'));
   await cp(path.join(SITE_SRC, 'architecture.js'), path.join(assets, 'architecture.js'));
+  await cp(path.join(SITE_SRC, 'vendor', 'mermaid', 'mermaid.min.js'), path.join(mermaid, 'mermaid.min.js'));
+  await cp(path.join(SITE_SRC, 'vendor', 'mermaid', 'LICENSE'), path.join(mermaid, 'LICENSE'));
   await cp(path.join(ROOT, 'web', 'brand', 'fonts'), path.join(assets, 'fonts'), { recursive: true });
   await cp(path.join(ROOT, 'web', 'brand', 'runavolt.svg'), path.join(assets, 'brand', 'runavolt.svg'));
   await cp(path.join(ROOT, 'web', 'brand', 'app-512.png'), path.join(assets, 'brand', 'app-512.png'));
@@ -465,6 +476,9 @@ export async function buildSite({ outDir = DEFAULT_OUT } = {}) {
       base: '../',
       bodyClass: 'page-article',
       content: renderArticle(chapter, chapters),
+      extraHead: chapter.hasMermaid
+        ? '<script defer src="../assets/vendor/mermaid/mermaid.min.js"></script>\n<script defer src="../assets/mermaid-init.js"></script>'
+        : '',
       studiesCurrent: ' aria-current="page"'
     });
     await writeFile(path.join(outDir, 'estudos', `${chapter.slug}.html`), page, 'utf8');
