@@ -2,6 +2,8 @@
 
 Assistente local de registros de manutenção. Acompanha **um grupo autorizado**, guarda fontes criptografadas, organiza chamados e pergunta quando faltam informações. Roda no computador, **não dentro do Codex**.
 
+**Documentação pública:** [painel de arquitetura](https://leodah20.github.io/whatsapp-report-assistant/) · [blog de estudos](https://leodah20.github.io/whatsapp-report-assistant/estudos/) — mapa interativo, protocolos e limites de acesso, com uma trilha didática em oito capítulos sobre o código público. O site é estático e não acessa dados operacionais.
+
 Repositório completo: https://github.com/leodah20/whatsapp-report-assistant
 
 [Glossário de comandos](COMANDOS.md) · [Trilha de estudos do código](estudos/README.md) · [Plano estratégico](docs/PLANO-ESTRATEGICO.md) · [Estado do projeto](docs/PROJECT_STATE.md) · [Continuidade](docs/HANDOFF.md) · [Próxima etapa: Android](docs/HANDOFF-ANDROID.md)
@@ -145,7 +147,7 @@ Cada novo chamado gera só uma mensagem: confirmação ou pergunta com o código
 
 ### Não implementado / limites
 
-Interpretação de fotos/áudios, explorador técnico interativo e geração do relatório final completo ainda não implementados. Sem garantia de envio exatamente uma vez em falha externa. Recuperação limitada ao histórico disponibilizado pelo WhatsApp. Windows-first: armazenamento de credenciais Linux/macOS não implementado.
+Interpretação de fotos/áudios e geração do relatório final completo ainda não implementadas. Sem garantia de envio exatamente uma vez em falha externa. Recuperação limitada ao histórico disponibilizado pelo WhatsApp. Windows-first: armazenamento de credenciais Linux/macOS não implementado.
 
 ## Verificação e continuidade
 
@@ -160,12 +162,13 @@ O modelo privado fica em `data/report-template.json` com `name`, `footer` e seis
 ```powershell
 npm run doctor  # não lê chaves/mensagens, não conecta WhatsApp
 npm test        # fontes sintéticas, sem envios reais
+npm run site    # gera o site público em site/ a partir de site-src/ e estudos/
 # Somente com servidor iniciado e autorização de consulta:
 .\.venv\Scripts\python.exe scripts/probe.py
 git diff --check
 git status --short
 ```
 
-Antes de publicar, revise `git diff --cached` e `git ls-files`. Sem dados operacionais ou identificação de clientes. Atualize AGENTS.md, docs/PROJECT_STATE.md e docs/HANDOFF.md ao trocar de agente. Veja também [arquitetura pública](https://leodah20.github.io/docs/whatsapp-report-assistant/).
+Antes de publicar, revise `git diff --cached` e `git ls-files`. Sem dados operacionais ou identificação de clientes. Atualize AGENTS.md, docs/PROJECT_STATE.md e docs/HANDOFF.md ao trocar de agente. Veja também a [documentação pública de arquitetura e estudos](https://leodah20.github.io/whatsapp-report-assistant/).
 
 Licença Apache-2.0; dependências mantêm suas licenças. Sem afiliação ao WhatsApp/Meta, OpenAI, Anthropic ou OpenCode.

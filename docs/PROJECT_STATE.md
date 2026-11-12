@@ -1,4 +1,4 @@
-# Estado — 2026-11-10
+# Estado — 2026-11-12
 
 ## Objetivo principal
 
@@ -31,13 +31,15 @@ A Central exibe Chamados, Histórico sem chamado, Fechamento mensal e Configura�
 
 O glossário de comandos fica em [COMANDOS.md](../COMANDOS.md), na raiz, e é atualizado quando o usuário pede um comando do projeto.
 
-Em 11/11/2026 foi adicionada a [trilha didática em estudos/](../estudos/README.md), com oito capítulos sobre negócio, estrutura do código, linguagens, persistência, HTTP/redes, interface, IA/MCP/custos, scripts e exercícios. O material usa fontes versionadas e exemplos fictícios; não é um explorador técnico interativo nem altera o fluxo operacional. Verificação desta entrega documental: `npm test` passou com 88 testes sintéticos. Não foram consultados dados operacionais ou credenciais para produzir os capítulos.
+Em 11/11/2026 foi adicionada a [trilha didática em estudos/](../estudos/README.md), com oito capítulos sobre negócio, estrutura do código, linguagens, persistência, HTTP/redes, interface, IA/MCP/custos, scripts e exercícios. O material usa fontes versionadas e exemplos fictícios; é textual e não substitui o Explorador da API nem altera o fluxo operacional. Verificação desta entrega documental: `npm test` passou com 88 testes sintéticos. Não foram consultados dados operacionais ou credenciais para produzir os capítulos.
 
 O destino padrão da extração é **Exportar para outra IA**. O painel não detecta qual agente ou conversa o usuário tem aberto.
 
 O Histórico permite prévia da mídia arquivada sob demanda, seleção de chamado existente por título/local/frente, criação explícita de chamado e ignorar/restaurar sem apagar a fonte. Tipos sem prévia compatível ficam disponíveis para baixar; anexos não arquivados não podem ser abertos.
 
 No fechamento, **A revisar** e **Conferidos** têm listas e contagens próprias, com busca. A lista rola separadamente no desktop; abrir um chamado revela o início do conteúdo também no celular. Fontes alteradas voltam a **A revisar**.
+
+Em 12/11/2026, o mapa de arquitetura e a trilha de estudos passaram a ter uma edição pública estática preparada para GitHub Pages, com link destacado no README. O build `npm run site` gera 11 páginas a partir de `site-src/`, `estudos/*.md` e ativos locais; o workflow `.github/workflows/pages.yml` publica apenas conteúdo sanitizado, sem coletor, sessão, chaves, mensagens ou logs. Validação: 98 testes sintéticos aprovados, build de 8 capítulos e 11 páginas, smoke local em Chrome a 1366 e 390 px com 8 links internos e revisão visual. O site é documentação: não comprova disponibilidade do coletor e não substitui o acompanhamento do primeiro fechamento real.
 
 ## Limites
 

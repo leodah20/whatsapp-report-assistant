@@ -1,0 +1,93 @@
+<section class="page-hero">
+  <div class="container">
+    <ul class="breadcrumb">
+      <li><a href="{{BASE}}">Arquitetura</a></li>
+      <li>Blog de estudos</li>
+    </ul>
+    <p class="eyebrow">Série de estudos</p>
+    <h1>Por dentro de uma aplicação real</h1>
+    <p class="lead">Oito capítulos que usam o assistente de chamados como caso de estudo: entenda o negócio, localize responsabilidades no código, siga dados entre processos e relacione decisões de engenharia aos fundamentos das linguagens.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="{{BASE}}estudos/01-negocio-e-arquitetura.html">Começar pelo capítulo 1</a>
+      <a class="btn btn-line" href="{{BASE}}">Voltar à arquitetura</a>
+    </div>
+    <ul class="article-meta" aria-label="Sobre o material">
+      <li>Base do código: 11/11/2026</li>
+      <li>Exemplos fictícios</li>
+      <li>Leitura independente do coletor</li>
+      <li>Apache-2.0</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="chapters-title">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Trilha de leitura</p>
+        <h2 id="chapters-title">Oito capítulos, uma aplicação real</h2>
+      </div>
+      <p>Leia na ordem ou use a busca para encontrar um tema. Cada capítulo aponta para os arquivos e símbolos que sustentam a explicação.</p>
+    </div>
+    <div class="post-toolbar">
+      <div class="post-search">
+        <label for="post-search">Buscar</label>
+        <input id="post-search" type="search" placeholder="Título, tema ou arquivo" data-post-search autocomplete="off">
+      </div>
+      <p class="post-count" data-post-count role="status" aria-live="polite">{{POST_COUNT}} capítulos</p>
+    </div>
+    <ol class="post-grid">
+{{POSTS}}
+    </ol>
+    <p class="post-empty" data-post-empty>Nenhum capítulo corresponde à busca. Tente outro termo, como “API”, “SQLite” ou “testes”.</p>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="method-title">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Método</p>
+        <h2 id="method-title">Como estudar cada capítulo</h2>
+      </div>
+      <p>Não é preciso decorar sintaxe. A meta é conseguir explicar por que cada etapa existe e onde alterar um comportamento.</p>
+    </div>
+    <ol class="steps-list">
+      <li><div><strong>Leia e abra o código</strong><p>Use os links do capítulo para confrontar a explicação com os arquivos versionados.</p></div></li>
+      <li><div><strong>Escolha uma função</strong><p>Anote o caminho: entrada → validação → transformação → efeito → saída.</p></div></li>
+      <li><div><strong>Procure o teste</strong><p>Explique qual comportamento o teste protege e qual defeito faria a verificação falhar.</p></div></li>
+      <li><div><strong>Desenhe com dados fictícios</strong><p>Siga uma informação inventada sem consultar banco, sessão, chaves ou mensagens reais.</p></div></li>
+    </ol>
+    <h3 style="margin-top:34px;font-family:var(--font-display);letter-spacing:-.02em">Roteiro sugerido em quatro semanas</h3>
+    <ol class="study-guide">
+      <li><strong>Capítulos 1 e 2</strong><p>Reconhecer arquivos e explicar <code>inScope</code>, <code>recordOf</code> e <code>monthOf</code>.</p></li>
+      <li><strong>Capítulos 3 e 4</strong><p>Desenhar um request e o armazenamento de uma fonte.</p></li>
+      <li><strong>Capítulos 5 e 6</strong><p>Seguir uma atualização da tela ao banco e distinguir extração de aprovação.</p></li>
+      <li><strong>Capítulos 7 e 8</strong><p>Compreender testes, simular conflitos no papel e propor uma pequena melhoria com critérios de aceite.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="scope-title">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Escopo</p>
+        <h2 id="scope-title">Material público, dados privados</h2>
+      </div>
+      <p>Os capítulos explicam o código público e usam fontes versionadas. A instalação real permanece separada.</p>
+    </div>
+    <div class="callout callout-teal">
+      <div>
+        <h3>O que fica fora do material</h3>
+        <p>Conversas, imagens, configurações, sessão, chaves e modelos privados não são material de estudo compartilhável. O padrão de relatório de um cliente continua no contexto privado daquele projeto. Para acompanhar o produto, leia o <a href="https://github.com/leodah20/whatsapp-report-assistant#readme">README</a>, o <a href="https://github.com/leodah20/whatsapp-report-assistant/blob/main/COMANDOS.md">glossário de comandos</a> e o <a href="https://github.com/leodah20/whatsapp-report-assistant/blob/main/docs/PLANO-ESTRATEGICO.md">plano estratégico</a>.</p>
+      </div>
+    </div>
+    <div class="callout">
+      <div>
+        <h3>Encontrou uma imprecisão?</h3>
+        <p>Abra uma <a href="https://github.com/leodah20/whatsapp-report-assistant/issues">issue no repositório</a> com o capítulo, o arquivo e o símbolo. Não inclua dados operacionais, credenciais ou conteúdo de clientes na issue.</p>
+      </div>
+    </div>
+  </div>
+</section>

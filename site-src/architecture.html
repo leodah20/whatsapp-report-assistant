@@ -1,0 +1,247 @@
+<section class="hero">
+  <div class="container">
+    <div>
+      <p class="eyebrow">Documentação pública · Runavolt</p>
+      <h1>Arquitetura do assistente de chamados</h1>
+      <p class="lead">Do registro em campo ao relatório mensal. Percorra oito fluxos, inspecione protocolos, controles e módulos responsáveis e entenda onde cada fronteira de acesso começa e termina.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#mapa">Explorar os fluxos</a>
+        <a class="btn btn-ghost" href="{{BASE}}estudos/">Ler o blog de estudos</a>
+      </div>
+      <ul class="chip-row" aria-label="Características do site">
+        <li class="chip">Site estático</li>
+        <li class="chip">Oito percursos</li>
+        <li class="chip">Exemplos fictícios</li>
+        <li class="chip">Apache-2.0</li>
+      </ul>
+    </div>
+    <aside class="hero-panel" aria-label="Como ler este mapa">
+      <h2>Como ler este mapa</h2>
+      <ol>
+        <li><span class="step-index">01</span><span><strong>Escolha um percurso</strong>O mapa ordena as camadas de um fluxo real do produto.</span></li>
+        <li><span class="step-index">02</span><span><strong>Abra uma camada</strong>Veja propósito, interface, controle e onde inspecionar no código.</span></li>
+        <li><span class="step-index">03</span><span><strong>Compare os limites</strong>Percursos diferentes atravessam fronteiras diferentes.</span></li>
+      </ol>
+      <p class="hero-note">Nenhuma seleção consulta o coletor, o WhatsApp ou o banco local.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="section map-section" id="mapa" aria-labelledby="map-title">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Mapa interativo</p>
+        <h2 id="map-title">Escolha um fluxo e inspecione as camadas</h2>
+      </div>
+      <p>Os botões trocam a trilha e abrem os detalhes de cada componente. A página não executa consultas e não acessa dados operacionais.</p>
+    </div>
+    <div class="arch-map">
+      <h3 class="visually-hidden" id="arch-flow-title">Fluxos disponíveis</h3>
+      <div class="arch-tabs" id="arch-tabs" role="group" aria-labelledby="arch-flow-title"></div>
+      <p class="arch-flow-summary" id="arch-flow-summary"></p>
+      <div class="arch-workspace">
+        <ol class="arch-steps" id="arch-steps" aria-label="Percurso em ordem"></ol>
+        <section class="arch-inspect" id="arch-inspect" aria-labelledby="arch-node-title" aria-live="polite" aria-atomic="true">
+          <p class="eyebrow" id="arch-zone"></p>
+          <h3 id="arch-node-title"></h3>
+          <p id="arch-purpose"></p>
+          <dl>
+            <div><dt>Interface</dt><dd id="arch-interface"></dd></div>
+            <div><dt>Controle ou limite</dt><dd id="arch-control"></dd></div>
+            <div><dt>Onde inspecionar no código</dt><dd><code id="arch-code"></code></dd></div>
+          </dl>
+          <a class="arch-back" href="#arch-steps">Voltar às camadas</a>
+        </section>
+      </div>
+      <noscript><p class="muted small">Ative JavaScript para percorrer os fluxos interativos. As seções abaixo continuam disponíveis sem script.</p></noscript>
+      <ul class="arch-legend" aria-label="Legenda das fronteiras">
+        <li class="arch-external">Rede / serviços externos</li>
+        <li class="arch-local">Notebook / loopback</li>
+        <li class="arch-human">Operação / revisão humana</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="planes-title">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Fronteiras</p>
+        <h2 id="planes-title">Sete planos, responsabilidades separadas</h2>
+      </div>
+      <p>O mapa documenta a instalação de referência. Ele não mostra topologia de cliente, credenciais ou dados operacionais.</p>
+    </div>
+    <div class="grid-2">
+      <article class="card plan-card">
+        <span class="tag-line">Captura</span>
+        <h3>WhatsApp Web até o coletor Node</h3>
+        <p>Chrome/Chromium controlado por Puppeteer e whatsapp-web.js entrega eventos ao coletor.</p>
+        <ul><li>Sem API Business e sem coleta de outros grupos.</li><li>Sem garantia de histórico integral.</li></ul>
+      </article>
+      <article class="card plan-card">
+        <span class="tag-line">Operação local</span>
+        <h3>Navegador, HTTP e SQLite</h3>
+        <p>O navegador fala com o servidor local; o servidor chama o domínio e o SQLite. Não há conexão direta do navegador com o banco.</p>
+        <ul><li>HTTP em loopback, sem framework de front-end.</li><li>Interface servida pelo próprio coletor.</li></ul>
+      </article>
+      <article class="card plan-card">
+        <span class="tag-line">Operação remota</span>
+        <h3>HTTPS na tailnet até a ponte</h3>
+        <p>O Tailscale Serve termina o TLS e encaminha apenas rotas selecionadas à ponte local.</p>
+        <ul><li>Sem Funnel, QR, vínculo ou controle de envios pelo remoto.</li><li>Porta da ponte não é um proxy genérico.</li></ul>
+      </article>
+      <article class="card plan-card">
+        <span class="tag-line">Inferência</span>
+        <h3>Ollama em loopback</h3>
+        <p>Extração literal e sugestões textuais usam o modelo configurado no coletor, sem depender dos créditos do agente que edita o código.</p>
+        <ul><li>Não interpreta anexos neste fluxo.</li><li>Saída do modelo é dado não confiável.</li></ul>
+      </article>
+      <article class="card plan-card">
+        <span class="tag-line">Consulta MCP</span>
+        <h3>Cliente autorizado por stdio</h3>
+        <p>Ferramentas de leitura abrem o SQLite em modo somente leitura, fora do caminho do painel web.</p>
+        <ul><li>Não publica porta HTTP.</li><li>Não envia mensagens.</li></ul>
+      </article>
+      <article class="card plan-card">
+        <span class="tag-line">Tickets de suporte</span>
+        <h3>IMAP/TLS somente leitura</h3>
+        <p>Notificações de suporte são arquivadas e vinculadas por identificadores do ticket.</p>
+        <ul><li>Sem SMTP e sem anexos.</li><li>Sem encaminhamento automático ao WhatsApp.</li></ul>
+      </article>
+      <article class="card plan-card">
+        <span class="tag-line">Desenvolvimento</span>
+        <h3>Git e agentes de programação</h3>
+        <p>O repositório público transporta código, testes e decisões sanitizadas.</p>
+        <ul><li>Sessão, dados, chave e configurações privadas ficam fora do Git.</li><li>O coletor não depende do agente estar aberto.</li></ul>
+      </article>
+      <article class="card plan-card">
+        <span class="tag-line">Supervisão</span>
+        <h3>Runtime Windows</h3>
+        <p>O supervisor observa processo, heartbeat e transporte, respeitando pausa e necessidade de novo vínculo.</p>
+        <ul><li>PC desligado ou suspenso não coleta.</li><li>Não apaga a sessão para “corrigir” falha.</li></ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="https-title">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Requisição privada</p>
+        <h2 id="https-title">O caminho de uma consulta pelo celular</h2>
+      </div>
+      <p>Quatro verificações separam o navegador remoto da operação local. Cada camada tem uma responsabilidade diferente.</p>
+    </div>
+    <ol class="steps-list">
+      <li><div><strong>Nome e transporte</strong><p>O celular resolve o hostname na tailnet, estabelece HTTPS e valida o certificado. A porta externa é independente da porta interna do coletor.</p></div></li>
+      <li><div><strong>Serve e ponte</strong><p>Serve termina o TLS e encaminha à ponte por HTTP local. A ponte confere autoridade, origem do encaminhamento, identidade permitida e protocolo HTTPS encaminhado.</p></div></li>
+      <li><div><strong>Sessão e escrita</strong><p>Uma página da Central pode receber cookie de sessão do coletor. Em escrita, a ponte também valida origem, tipo e tamanho do corpo antes de encaminhar.</p></div></li>
+      <li><div><strong>Coletor e resposta</strong><p>O coletor valida Host, sessão e origem de escrita, chama o domínio e devolve a resposta. Não há TLS entre os processos em loopback.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="tools-title">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Operação</p>
+        <h2 id="tools-title">Ferramentas do responsável</h2>
+      </div>
+      <p>O painel é organizado pelo fluxo de chamados. Infraestrutura e diagnóstico apoiam esse trabalho, não o substituem.</p>
+    </div>
+    <div class="grid-4">
+      <article class="card tool-card">
+        <span class="tool-label">Central</span>
+        <h3>Chamados</h3>
+        <p>Frentes CFTV, SDAI, SCA, PABX, Medição, BMS e Zabbix; histórico, etapa, contexto, pendências, evidências, união e arquivo reversível. As frentes classificam chamados: não são conexões diretas com os sistemas prediais.</p>
+      </article>
+      <article class="card tool-card">
+        <span class="tool-label">Triagem</span>
+        <h3>Histórico sem chamado</h3>
+        <p>Prévia de mídias arquivadas, vínculo a um chamado, criação explícita e ignorar/restaurar. Mensagem próxima sugere contexto, mas não comprova vínculo.</p>
+      </article>
+      <article class="card tool-card">
+        <span class="tool-label">Fechamento</span>
+        <h3>Revisão mensal</h3>
+        <p>Conferência de fontes, anexos e preventivas; TXT/ZIP para revisão ou redação externa; sugestão textual local; minuta imprimível em um fluxo separado.</p>
+      </article>
+      <article class="card tool-card">
+        <span class="tool-label">Diagnóstico</span>
+        <h3>Configuração e API</h3>
+        <p>Estado, filas e supervisão. Administração do vínculo, do grupo e dos envios no notebook. O explorador local consulta apenas três rotas GET sob demanda.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="diag-title">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Diagnóstico</p>
+        <h2 id="diag-title">Sem misturar camadas</h2>
+      </div>
+      <p>Um sintoma visível pode nascer em uma camada diferente. Separe resolução de nome, transporte, sessão, fila e dados antes de repetir uma ação.</p>
+    </div>
+    <div class="grid-2">
+      <article class="card diag-card">
+        <h3>Abre no notebook, mas não no celular</h3>
+        <p>Verifique separadamente resolução do nome, conectividade Tailscale, TLS/Serve e autorização da conta. Uma resposta 403 da ponte indica bloqueio de acesso, não queda do WhatsApp.</p>
+      </article>
+      <article class="card diag-card">
+        <h3>Abre a página, mas a consulta falha</h3>
+        <p>401 da API pede reabrir o painel para renovar a sessão; 502 da ponte aponta falha na comunicação com o coletor. A aba Rede mostra método, status e tempo.</p>
+      </article>
+      <article class="card diag-card">
+        <h3>Mensagem recebida, mas sem chamado</h3>
+        <p>Confira fila de análise, competência e Histórico sem chamado. Reconexão não garante que toda a conversa antiga foi disponibilizada nem que todos os registros já viraram chamados.</p>
+      </article>
+      <article class="card diag-card">
+        <h3>Conferência antiga ficou desatualizada</h3>
+        <p>Revise as fontes alteradas. O ZIP verifica a versão da extração: se o contexto mudar, é necessário preparar outra antes de baixar.</p>
+      </article>
+    </div>
+    <div class="callout callout-teal" style="margin-top:18px">
+      <div>
+        <h3>O que este site não é</h3>
+        <p>Esta página é documentação estática. Ela não é o painel operacional, não abre sessão do WhatsApp, não lê o banco local e não recebe dados de clientes. O Explorador da API existe apenas na instalação privada, em loopback.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="study-title">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Estudos</p>
+        <h2 id="study-title">Use esta aplicação como material de estudo</h2>
+      </div>
+      <p>O blog transforma o código real em uma trilha didática: negócio, linguagens, dados, HTTP, interface, IA, testes e exercícios.</p>
+    </div>
+    <div class="grid-3">
+      <article class="card tool-card">
+        <span class="tool-label">Capítulo 01</span>
+        <h3><a href="{{BASE}}estudos/01-negocio-e-arquitetura.html">Negócio e arquitetura</a></h3>
+        <p>Entenda o problema, as camadas e o mapa do repositório antes de ler os símbolos.</p>
+      </article>
+      <article class="card tool-card">
+        <span class="tool-label">Capítulo 03</span>
+        <h3><a href="{{BASE}}estudos/03-fluxo-de-dados.html">Fluxo dos dados</a></h3>
+        <p>Siga uma mensagem até o chamado, passando por filas, transações e recuperação.</p>
+      </article>
+      <article class="card tool-card">
+        <span class="tool-label">Capítulo 04</span>
+        <h3><a href="{{BASE}}estudos/04-http-apis-e-redes.html">HTTP, APIs e redes</a></h3>
+        <p>Leia requests, respostas, catálogo de rotas e as proteções do painel local.</p>
+      </article>
+    </div>
+    <div class="hero-actions">
+      <a class="btn btn-line" href="{{BASE}}estudos/">Ver os oito capítulos</a>
+    </div>
+  </div>
+</section>

@@ -2,6 +2,10 @@
 
 A página HTML de apresentação e estudo é separada da operação. O mapa documenta a instalação de referência sem mostrar topologia do cliente, credenciais ou dados operacionais. Ele é estático: não faz chamadas de diagnóstico nem certifica que os serviços estão online. No painel operacional, o **Explorador da API** só consulta dados quando o operador clicar.
 
+## Publicação pública
+
+A versão pública fica em https://leodah20.github.io/whatsapp-report-assistant/ e reúne o mapa interativo e o blog de estudos em oito capítulos. O build `npm run site` lê `site-src/`, `estudos/*.md` e os ativos locais de `web/brand/`, grava `site/` (ignorado pelo Git) e não consulta o coletor. O workflow `.github/workflows/pages.yml` publica esse resultado no GitHub Pages a cada push na `main` que altere essas fontes. Nenhuma sessão, chave, QR, mensagem, banco ou log entra no build; o conteúdo é documentação sanitizada e não substitui o Explorador da API nem comprova disponibilidade dos serviços.
+
 ## Planos e fronteiras
 
 | Plano | Caminho | O que fica fora |

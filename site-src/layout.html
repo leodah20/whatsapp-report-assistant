@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<meta name="theme-color" content="#101820">
+<link rel="canonical" href="{{CANONICAL}}">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:url" content="{{CANONICAL}}">
+<meta property="og:image" content="https://leodah20.github.io/whatsapp-report-assistant/assets/brand/app-512.png">
+<link rel="icon" href="{{BASE}}assets/brand/runavolt.svg" type="image/svg+xml">
+<link rel="stylesheet" href="{{BASE}}assets/styles.css">
+<script defer src="{{BASE}}assets/site.js"></script>
+{{EXTRA_HEAD}}
+</head>
+<body class="{{BODY_CLASS}}">
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="{{BASE}}" aria-label="Runavolt — arquitetura pública">
+      <img class="brand-mark" src="{{BASE}}assets/brand/runavolt.svg" width="34" height="34" alt="">
+      <span class="brand-text"><strong>RUNAVOLT</strong><small>arquitetura pública</small></span>
+    </a>
+    <nav class="site-nav" aria-label="Navegação principal">
+      <a href="{{BASE}}"{{ARCH_CURRENT}}>Arquitetura</a>
+      <a href="{{BASE}}estudos/"{{STUDIES_CURRENT}}>Blog de estudos</a>
+      <a href="https://github.com/leodah20/whatsapp-report-assistant" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main id="conteudo">
+{{CONTENT}}
+</main>
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-about">
+      <p class="footer-brand">RUNAVOLT <span>· assistente de chamados</span></p>
+      <p>Documentação pública de arquitetura e trilha de estudos construída a partir de um projeto real de acompanhamento de chamados.</p>
+    </div>
+    <nav class="footer-links" aria-label="Links do projeto">
+      <a href="{{BASE}}">Arquitetura</a>
+      <a href="{{BASE}}estudos/">Estudos</a>
+      <a href="https://github.com/leodah20/whatsapp-report-assistant">Código-fonte</a>
+      <a href="https://github.com/leodah20/whatsapp-report-assistant/blob/main/LICENSE">Licença</a>
+    </nav>
+    <div class="footer-note">
+      <p>Site estático. Não acessa WhatsApp, banco local, chaves, sessão ou dados operacionais.</p>
+      <p>Conteúdo sanitizado, com exemplos fictícios. Apache-2.0.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

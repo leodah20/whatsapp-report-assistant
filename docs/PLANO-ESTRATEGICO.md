@@ -2,7 +2,7 @@
 
 **Objetivo:** acompanhar chamados durante o mês, preservar histórico, evidências, atualizações e pendências, e fechar um relatório revisado no padrão do responsável. O painel, a IA e o Git servem a esse fluxo.
 
-**Última revisão:** 11/11/2026. Este documento é a ordem de execução compartilhada. [PROJECT_STATE.md](PROJECT_STATE.md) descreve o que existe; [HANDOFF.md](HANDOFF.md) registra a validação e o próximo passo concreto.
+**Última revisão:** 12/11/2026. Este documento é a ordem de execução compartilhada. [PROJECT_STATE.md](PROJECT_STATE.md) descreve o que existe; [HANDOFF.md](HANDOFF.md) registra a validação e o próximo passo concreto.
 
 ## Ordem de execução
 
@@ -55,6 +55,7 @@
 - [x] Abrir as quatro abas operacionais no acesso privado, com triagem, revisão e extração TXT/ZIP sem envio automático para IA.
 - [ ] Definir servidor e público autorizado para acesso de rede. Validar autenticação e separação da configuração do coletor antes da publicação interna. Conferir navegação, edição e leitura em telas pequenas, sem depender de zoom ou rolagem horizontal.
 - [x] Documentar o sistema em página HTML separada, com mapa interativo por fluxo, protocolos, limites de acesso e referências ao código. Manter o painel operacional focado nos chamados e no Explorador da API.
+- [x] Publicar a documentação sanitizada em GitHub Pages, com o painel e o blog de estudos ligados no topo do README, build estático e workflow de publicação sem dados operacionais.
 - [x] Aplicar o sistema visual Runavolt ao protótipo, sem alterar o PDF aprovado nem as permissões da implantação.
 - [ ] Consolidar a configuração por cliente e validar implantação em LAN, segmentação e operação local conforme escopo contratado.
 - [x] Integrar notificações recebidas de tickets de suporte por e-mail, em leitura restrita e com vínculo e deduplicação por identificadores.
@@ -96,4 +97,4 @@
 2. Continue o primeiro item prioritário ainda aberto. Se houver incidente que impede a coleta, diagnostique antes de ampliar funcionalidades.
 3. Antes do commit, rode os testes e revise o conteúdo publicado. Atualize este plano, o estado e o handoff quando um critério de aceite for realmente atendido.
 
-**Ponto atual:** P0 e P1 disponíveis localmente. A recuperação de uma sessão travada foi observada sem novo vínculo. A próxima entrega é a conciliação e a revisão mensal (P2); ainda não há geração automática do relatório final.
+**Ponto atual:** P0 e P1 disponíveis localmente. A recuperação de uma sessão travada foi observada sem novo vínculo. A documentação pública de arquitetura e estudos está preparada para GitHub Pages, mas não substitui a prioridade de produto: a próxima entrega é a conciliação e a revisão mensal (P2); ainda não há geração automática do relatório final.

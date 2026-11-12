@@ -2,7 +2,7 @@
 
 Use o **PowerShell**, de preferência no terminal integrado do VS Code. Os comandos abaixo partem da raiz deste repositório, a pasta que contém o `package.json`. Execute apenas o comando da tarefa que você quer fazer.
 
-[VS Code e OpenCode](#vs-code-e-opencode) · [Painel e coletor](#painel-e-coletor) · [Diagnóstico e testes](#diagnóstico-e-testes) · [Git](#git)
+[VS Code e OpenCode](#vs-code-e-opencode) · [Painel e coletor](#painel-e-coletor) · [Documentação pública](#documentação-pública) · [Diagnóstico e testes](#diagnóstico-e-testes) · [Git](#git)
 
 ## VS Code e OpenCode
 
@@ -40,6 +40,14 @@ Se o coletor já estiver rodando, basta abrir a [Central de chamados](http://127
 | Reiniciar o coletor se travar, preservando a sessão | `.\scripts\windows\restart.ps1` |
 
 Para uma instalação do zero, siga o [passo a passo do README](README.md#instalação-local--windows--powershell).
+
+## Documentação pública
+
+| O que você quer fazer | Comando no PowerShell |
+| --- | --- |
+| Gerar o site estático de arquitetura e estudos | `npm run site` |
+
+O comando grava apenas `site/`, que não é versionado, e não consulta banco, sessão, QR, mensagens ou logs. A publicação em https://leodah20.github.io/whatsapp-report-assistant/ é feita pelo workflow `.github/workflows/pages.yml` após push na `main`. O site é documentação estática: não é o painel do coletor e não deve receber dados operacionais.
 
 ## Diagnóstico e testes
 
