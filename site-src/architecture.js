@@ -87,6 +87,14 @@ const components = {
     'node:test para cenários unitários e HTTP; Puppeteer/Chrome para navegação em larguras de desktop e celular.',
     'Usa dados fictícios. Passar nos testes não valida a cobertura de histórico real nem o fechamento de um cliente.',
     'tests/ · scripts/ui-smoke.mjs · scripts/doctor.mjs'],
+  mailbox: ['external', 'E-mail de suporte', 'Recebe notificações de tickets de um remetente autorizado.',
+    'IMAP sobre TLS, em somente leitura.',
+    'Não envia e-mail, não abre anexos e não consulta a pasta de enviados.',
+    'integrations/mcp/support_mail.py'],
+  support: ['local', 'Importação de tickets', 'Vincula cada notificação ao chamado pelo número do ticket, sem duplicar mensagens.',
+    'O adaptador Python entrega lotes ao coletor Node para gravação local.',
+    'O status informado pelo fornecedor não confirma a conclusão técnica. As fontes não entram no arquivo do WhatsApp.',
+    'src/cases/support-mail.mjs · integrations/mcp/support_mail.py'],
   demo: ['local', 'Demonstração independente', 'Apresenta o painel e o explorador com exemplos fictícios para estudo.',
     'Servidor Node próprio, restrito a GET e sem encaminhamento ao coletor.',
     'Não tem sessão do WhatsApp, edição, configuração de coleta ou banco operacional. É uma demonstração, não um espelho do painel real.',
@@ -109,7 +117,9 @@ const flows = [
   ['Acesso MCP', 'Caminho separado para ferramentas de leitura. Não passa pela API do navegador.', [
     ['client', 'MCP · stdio'], ['mcp', 'SQLite · somente leitura'], ['archive']]],
   ['Desenvolvimento e demo', 'O código pode ser estudado e testado sem conectar a sessão do WhatsApp ou copiar dados reais.', [
-    ['repo', 'Código sanitizado'], ['tests', 'Dados fictícios'], ['demo']]]
+    ['repo', 'Código sanitizado'], ['tests', 'Dados fictícios'], ['demo']]],
+  ['Tickets por e-mail', 'A notificação de suporte atualiza o chamado correspondente. O fluxo é separado do WhatsApp e não envia respostas.', [
+    ['mailbox', 'Notificação · IMAP/TLS'], ['support', 'Vínculo por número do ticket'], ['archive', 'Leitura pela API'], ['board', 'Exibição no painel'], ['desktop']]]
 ];
 
 const zones = { external: 'Rede / serviços externos', local: 'Notebook / loopback', human: 'Operação / revisão humana' };
