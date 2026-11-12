@@ -23,5 +23,5 @@ Uma instalação por cliente, com base, chaves e credenciais próprias. A LAN/VL
 ## Próximas entregas
 
 1. Validar o piloto com dados sintéticos e depois com o responsável autorizado. Transformar variações de frentes, modelos e regras em configuração por instalação antes de replicar o piloto.
-2. Adicionar a entrada de tickets por e-mail com leitura restrita: identidade do fornecedor e do ticket, resposta no mesmo histórico, deduplicação por mensagem e sem envios pelo coletor. A captura deve permanecer desligada até conferir pasta, escopo e ponto de início.
+2. Evoluir a [entrada de tickets por e-mail](EMAIL-DE-SUPORTE.md). O conector atual já arquiva as notificações recebidas por ticket e deduplica por mensagem. Outros fornecedores, formatos e a pasta de enviados exigem validação e escopo próprios.
 3. Definir contrato e autenticação para uso móvel. Validar a web responsiva e avaliar instalação via PWA antes de decidir se há necessidade de aplicativo nativo. O cliente móvel deve chamar a API autenticada, nunca abrir o SQLite ou expor a porta da LLM.

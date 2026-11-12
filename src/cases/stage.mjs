@@ -46,7 +46,7 @@ export function currentStage(profile={},sources=[]){
     return {status:profile.status,reason:profile.stageReason||event?.text||'',scheduledFor:profile.scheduledFor||null,origin:'manual'};
   }
   const dependency=profile.tasks?.findLast(t=>!t.resolvedAt);
-  const records=sources.filter(s=>Number.isFinite(s.timestamp)&&s.text?.trim()&&!s.manualPhoto).map(s=>({at:s.timestamp*1000,text:s.text,origin:'source'}));
+  const records=sources.filter(s=>Number.isFinite(s.timestamp)&&s.text?.trim()&&!s.manualPhoto&&s.channel!=='support-email').map(s=>({at:s.timestamp*1000,text:s.text,origin:'source'}));
   for(const event of profile.events||[])if(event.kind==='note'&&event.text)records.push({at:Date.parse(event.registeredAt),text:event.text,origin:'note'});
   if(profile.answers?.resultado){
     const result=profile.answers.resultado,procedure=profile.answers.procedimento;

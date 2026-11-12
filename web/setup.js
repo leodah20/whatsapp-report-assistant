@@ -48,6 +48,11 @@ async function refresh(){
     if(r.status===401){location.reload();return;}
     if(!r.ok)throw Error('Estado indisponível');
     const data=await r.json(),job=data.importJob;
+    const support=data.supportMail;
+    el('support-status').hidden=!support;
+    if(support)el('support-status').textContent='E-mail da Invenzi (somente leitura) · '+({ready:'monitorando',syncing:'sincronizando',backlog:'importando o histórico',error:'consulta temporariamente indisponível'}[support.state]||'aguardando')+
+      (support.lastRun?' · última consulta '+new Date(support.lastRun).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'')+
+      (support.needsReview?' · mensagens fora do formato nesta sessão: '+support.needsReview:'');
     const checked=data.lastTransportCheck?' · conexão verificada às '+new Date(data.lastTransportCheck).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo'}):'';
     el('status').textContent='Estado: '+data.state+(data.error?' — '+data.error:'')+checked;
     el('scope').textContent=data.groupName?'Grupo: '+data.groupName+' · '+(data.paused?'captura pausada':'captura ativa'):'Nenhum grupo autorizado ainda.';

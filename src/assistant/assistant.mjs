@@ -44,12 +44,12 @@ export class ReportAssistant{
     this.isArchived=isArchived;
     Object.assign(this,{db,key,readSource,send,isActive,needsStage,enabled,analyze,debounceMs});
     this.busy=false;this.lastError=null;this.timer=null;this.handling=Promise.resolve();
-    db.exec('CREATE TABLE IF NOT EXISTS assistant_items (id TEXT PRIMARY KEY, month TEXT NOT NULL, payload BLOB NOT NULL); CREATE TABLE IF NOT EXISTS assistant_inbox (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, state TEXT NOT NULL); CREATE TABLE IF NOT EXISTS assistant_links (message_id TEXT PRIMARY KEY, item_id TEXT NOT NULL);');
+    db.exec('CREATE TABLE IF NOT EXISTS assistant_items (id TEXT PRIMARY KEY, month TEXT NOT NULL, payload BLOB NOT NULL); CREATE TABLE IF NOT EXISTS support_mail_items (id TEXT PRIMARY KEY, month TEXT NOT NULL, payload BLOB NOT NULL); CREATE TABLE IF NOT EXISTS assistant_inbox (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, state TEXT NOT NULL); CREATE TABLE IF NOT EXISTS assistant_links (message_id TEXT PRIMARY KEY, item_id TEXT NOT NULL);');
     this.receipts=new ReceiptNotifier({db,key,send,isActive:()=>this.enabled&&this.isActive()});
   }
-  save(item){this.db.prepare('INSERT INTO assistant_items VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').run(item.id,item.month,seal(this.key,Buffer.from(JSON.stringify(item)),item.id));}
-  all(){return this.db.prepare('SELECT id,payload FROM assistant_items').all().map(r=>JSON.parse(open(this.key,r.payload,r.id)));}
-  status(){const items=this.all();return {enabled:this.enabled,busy:this.busy,pending:this.db.prepare("SELECT COUNT(*) AS n FROM assistant_inbox WHERE state='pending'").get().n,items:items.length,questionsSent:items.filter(i=>i.questionState==='sent').length,newCallsConfirmed:items.filter(i=>i.intakeState==='sent').length,...this.receipts.status(),error:this.lastError};}
+  save(item){const table=item.id.startsWith('support-ticket:')?'support_mail_items':'assistant_items';this.db.prepare('INSERT INTO '+table+' VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload').run(item.id,item.month,seal(this.key,Buffer.from(JSON.stringify(item)),item.id));}
+  all(includeSupport=true){return this.db.prepare(includeSupport?'SELECT id,payload FROM assistant_items UNION ALL SELECT id,payload FROM support_mail_items':'SELECT id,payload FROM assistant_items').all().map(r=>JSON.parse(open(this.key,r.payload,r.id)));}
+  status(){const items=this.all(false);return {enabled:this.enabled,busy:this.busy,pending:this.db.prepare("SELECT COUNT(*) AS n FROM assistant_inbox WHERE state='pending'").get().n,items:items.length,questionsSent:items.filter(i=>i.questionState==='sent').length,newCallsConfirmed:items.filter(i=>i.intakeState==='sent').length,...this.receipts.status(),error:this.lastError};}
   askForStage(item){return !!(item.stageIntake&&!item.historical&&!item.intakeAttemptAt&&this.needsStage?.(item));}
   async confirmNew(item){
     if(this.isArchived(item.id))return;
@@ -89,10 +89,11 @@ export class ReportAssistant{
   }
   schedule(){if(this.timer)clearTimeout(this.timer);this.timer=setTimeout(()=>void this.flush(),this.debounceMs);this.timer.unref();}
   followup(record){
-    return followupMatch(record.text,this.all().filter(i=>!i.mergedInto&&!this.isArchived(i.id)).map(i=>({id:i.id,code:i.code,text:i.sourceIds.map(id=>this.readSource(id)?.text||'').join('\n')})));
+    return followupMatch(record.text,this.all(false).filter(i=>!i.mergedInto&&!this.isArchived(i.id)).map(i=>({id:i.id,code:i.code,text:i.sourceIds.map(id=>this.readSource(id)?.text||'').join('\n')})));
   }
   accept(record){const result=this.handling.then(()=>this.acceptOne(record));this.handling=result.catch(()=>{});return result;}
   async acceptOne(record){
+    if(record.channel==='support-email')return;
     if(ownAssistant(record)){
       if(isIntakeText(record.text)){
         const code=record.text.match(/\bR-[A-F0-9]{8}\b/)?.[0];const item=this.all().find(i=>i.code===code);
@@ -109,7 +110,7 @@ export class ReportAssistant{
     if(this.db.prepare("SELECT 1 FROM assistant_inbox WHERE id=? AND state='ignored'").get(record.id))return;
     let itemId=record.quotedId?this.db.prepare('SELECT item_id FROM assistant_links WHERE message_id=?').get(record.quotedId)?.item_id:null;
     const code=record.text.match(/\bR-[A-F0-9]{8}\b/i)?.[0]?.toUpperCase();
-    if(!itemId&&code)itemId=this.all().find(i=>i.code===code)?.id;
+    if(!itemId&&code)itemId=this.all(false).find(i=>i.code===code)?.id;
     if(!itemId)itemId=this.all().find(i=>i.answerIds?.includes(record.id))?.id;
     if(!itemId&&isUncaptionedMedia(record))return;
     if(!itemId){
@@ -118,7 +119,7 @@ export class ReportAssistant{
       else if(hint.review)return;
     }
     if(itemId){
-      const all=this.all();
+      const all=this.all(false);
       let item=all.find(i=>i.id===itemId);const visited=new Set();
       while(item?.mergedInto){if(visited.has(item.id))return;visited.add(item.id);item=all.find(i=>i.id===item.mergedInto);}
       if(!item)return;

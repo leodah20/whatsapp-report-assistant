@@ -20,6 +20,7 @@ import { CaseBoard } from './cases/board.mjs';
 import { createCaseHandler } from './cases/http.mjs';
 import { MonthlyClosing } from './cases/closing.mjs';
 import { HistoricalCases } from './cases/history.mjs';
+import { createSupportMail } from './cases/support-mail.mjs';
 const {Client,LocalAuth,Message}=pkg;
 const ROOT=CONFIG.root;
 const PY=CONFIG.python;
@@ -27,7 +28,7 @@ const PORT=CONFIG.port, ORIGIN=`http://127.0.0.1:${PORT}`;
 const KEY=Buffer.from(execFileSync(PY,[join(ROOT,'integrations/mcp/vault.py'),'--init'],{windowsHide:true,encoding:'utf8'}).trim(),'base64');
 const DATA=CONFIG.dataDir; mkdirSync(DATA,{recursive:true});
 const db=new DatabaseSync(join(DATA,'archive.sqlite'));
-db.exec('PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, month TEXT NOT NULL, ts INTEGER NOT NULL, payload BLOB NOT NULL, media BLOB); CREATE INDEX IF NOT EXISTS month_ts ON messages(month,ts);');
+db.exec('PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, month TEXT NOT NULL, ts INTEGER NOT NULL, payload BLOB NOT NULL, media BLOB); CREATE INDEX IF NOT EXISTS month_ts ON messages(month,ts); CREATE TABLE IF NOT EXISTS support_mail_messages (id TEXT PRIMARY KEY,month TEXT NOT NULL,ts INTEGER NOT NULL,payload BLOB NOT NULL);');
 const CFG=join(DATA,'scope.enc');
 let scope={groupId:null,groupName:null,paused:true};
 if(existsSync(CFG)) scope=JSON.parse(open(KEY,readFileSync(CFG),'scope'));
@@ -37,7 +38,7 @@ let startedAt=new Date().toISOString();
 const sessions=new Set(); let choices=[];
 function persist(){writeFileSync(CFG,seal(KEY,Buffer.from(JSON.stringify(scope)),'scope'));}
 function requireLink(){reauthRequired=true;if(scope.groupId&&!scope.linkRequired){scope.linkRequired=true;persist();}}
-function readSource(id){const row=db.prepare('SELECT payload FROM messages WHERE id=?').get(id);return row?JSON.parse(open(KEY,row.payload,id)):null;}
+function readSource(id){const table=id.startsWith('mail:')?'support_mail_messages':'messages';const row=db.prepare('SELECT payload FROM '+table+' WHERE id=?').get(id);return row?JSON.parse(open(KEY,row.payload,id)):null;}
 const assistant=new ReportAssistant({db,key:KEY,readSource,isArchived:id=>!!caseBoard.profile(id).archived,needsStage:item=>caseBoard.summary(item).status==='unconfirmed',isActive:()=>!stopping&&state==='conectado'&&!scope.paused&&!!scope.groupId&&!!scope.questionsEnabled,enabled:!!scope.questionsEnabled,send:async(text,quotedMessageId,options={})=>{
   if(stopping||state!=='conectado'||scope.paused||!scope.questionsEnabled||!scope.groupId?.endsWith('@g.us')||text.length>1200)throw Error('Mensagem fora do escopo autorizado');
   if(options.kind==='intake'){
@@ -51,6 +52,20 @@ const assistant=new ReportAssistant({db,key:KEY,readSource,isArchived:id=>!!case
   const id=result?.id?._serialized||result?.id?.['$1'];if(!id)throw Error('Envio sem identificador confirmado');return id;
 }});
 const caseBoard=new CaseBoard({db,key:KEY,assistant,readSource});
+const supportMail=(()=>{
+  try{
+    const file=join(ROOT,'.support-mail.local.json');
+    if(!existsSync(file)||statSync(file).size>512)return null;
+    const options=JSON.parse(readFileSync(file,'utf8'));
+    return options.enabled===true?createSupportMail({db,key:KEY,assistant,since:options.since,python:PY,root:ROOT,enabled:()=>!stopping}):null;
+  }catch{return null;}
+})();
+async function syncSupportMail(){
+  if(stopping||!supportMail)return;
+  await supportMail.sync();
+  if(!stopping)setTimeout(syncSupportMail,supportMail.status().state==='backlog'?20000:180000).unref();
+}
+if(supportMail)setTimeout(syncSupportMail,2000).unref();
 const historical=new HistoricalCases({db,board:caseBoard,assistant,readSource});
 const coverPath=join(DATA,'report-cover.png');
 const closing=new MonthlyClosing({db,key:KEY,board:caseBoard,unlinkedCount:month=>historical.unlinked(month).length,template(){
@@ -65,6 +80,7 @@ const closing=new MonthlyClosing({db,key:KEY,board:caseBoard,unlinkedCount:month
 },archive(month){
   const hash=createHash('sha256');let count=0;
   for(const row of db.prepare("SELECT id,payload FROM messages WHERE month=? AND id NOT LIKE 'manual-photo:%' ORDER BY id").iterate(month)){hash.update(row.id);hash.update(row.payload);count++;}
+  for(const row of db.prepare('SELECT id,payload FROM support_mail_messages WHERE month=? ORDER BY id').iterate(month)){hash.update(row.id);hash.update(row.payload);count++;}
   return {count,revision:hash.digest('hex')};
 }});
 const serveCases=createCaseHandler({origin:ORIGIN,root:ROOT,board:caseBoard,closing,historical,readCover:()=>readFileSync(coverPath),getRuntime:runtimePulse,readMedia(id,max=8*1024*1024){
@@ -79,11 +95,11 @@ if(process.argv.includes('--enable-authorized-questions'))persist();
 function runtimePulse(){
   let supervised=false;
   try{supervised=Date.now()-statSync(join(DATA,'watchdog.json')).mtimeMs<90000;}catch{}
-  return {state,connected:state==='conectado'&&!!lastTransportCheck&&Date.now()-Date.parse(lastTransportCheck)<120000,paused:scope.paused,selected:!!scope.groupId,requiresLink:reauthRequired||!!qr,lastTransportCheck,lastSyncAt:recovery.status().lastSyncAt,recovering,supervised,analysisPending:assistant.status().pending,error:error||recovery.lastError||assistant.lastError};
+  return {state,connected:state==='conectado'&&!!lastTransportCheck&&Date.now()-Date.parse(lastTransportCheck)<120000,paused:scope.paused,selected:!!scope.groupId,requiresLink:reauthRequired||!!qr,lastTransportCheck,lastSyncAt:recovery.status().lastSyncAt,recovering,supervised,analysisPending:assistant.status().pending,supportMail:supportMail?.status()||null,error:error||recovery.lastError||assistant.lastError};
 }
-function health(){return {state,lastTransportCheck,groupName:scope.groupName,selected:!!scope.groupId,paused:scope.paused,requiresLink:reauthRequired||!!qr,count:db.prepare('SELECT COUNT(*) AS n FROM messages').get().n,storedThisSession:stored,error,diagnostic,importJob,assistant:assistant.status(),recovery:recovery.status(),startedAt,hasQr:!!qr};}
+function health(){return {state,lastTransportCheck,groupName:scope.groupName,selected:!!scope.groupId,paused:scope.paused,requiresLink:reauthRequired||!!qr,count:db.prepare('SELECT COUNT(*) AS n FROM messages').get().n,storedThisSession:stored,error,diagnostic,importJob,assistant:assistant.status(),recovery:recovery.status(),supportMail:supportMail?.status()||null,startedAt,hasQr:!!qr};}
 function errorSummary(e){return {name:String(e?.name||'Error').slice(0,80),message:String(e?.message||'Falha desconhecida').replace(/https?:\/\/\S+/g,'[URL]').replace(/\b\d{10,}\b/g,'[identificador]').replace(/[a-f0-9]{32,}/gi,'[identificador]').slice(0,500)};}
-function statusFile(){writeFileSync(join(DATA,'status.json'),JSON.stringify(health()));}
+function statusFile(){const {supportMail:_,...status}=health();writeFileSync(join(DATA,'status.json'),JSON.stringify(status));}
 statusFile(); setInterval(statusFile,15000).unref();
 async function checkTransport(){
   if(checkingTransport||connecting||stopping||state!=='conectado')return;checkingTransport=true;const inspected=client;

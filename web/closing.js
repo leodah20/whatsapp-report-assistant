@@ -314,7 +314,7 @@ async function openCase(code){
     const attachments=[];
     d.sources.forEach((s,index)=>{
       const record=el('article',undefined,'record');
-      record.append(el('p','Fonte '+(index+1)+' · '+clock.format(new Date(s.timestamp*1000)),'hint'),el('p',s.text||(s.hasMedia?'Sem legenda.':'Mensagem sem texto.'),'evidence'));
+      record.append(el('p','Fonte '+(index+1)+(s.kind==='support-email'?' · E-mail do suporte Invenzi':'')+' · '+clock.format(new Date(s.timestamp*1000)),'hint'),el('p',s.text||(s.hasMedia?'Sem legenda.':'Mensagem sem texto.'),'evidence'));
       if(s.hasMedia&&s.mediaState==='saved'){
         const checked=row.sourceReviewState==='reviewed'?row.sourceReview.attachments.includes(index):true;
         const choice=checkbox(record,'Incluir este anexo no pacote',checked);attachments.push([index,choice]);record.append(reviewAttachment(code,s,index));

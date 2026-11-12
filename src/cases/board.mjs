@@ -61,7 +61,7 @@ function reportProgress(profile,sources,stage){
   const times=['procedimento','resultado'].filter(field=>profile.answers?.[field]).map(field=>[field,reportFieldConfirmedAt(profile,field)]);
   const stale=times.filter(([,at])=>at>0&&at<evidence.at);
   const records=[
-    ...sources.filter(s=>!s.manualPhoto&&Number.isFinite(s.timestamp)&&s.text?.trim()).map(s=>({at:s.timestamp*1000,text:s.text,origin:'source'})),
+    ...sources.filter(s=>!s.manualPhoto&&s.channel!=='support-email'&&Number.isFinite(s.timestamp)&&s.text?.trim()).map(s=>({at:s.timestamp*1000,text:s.text,origin:'source'})),
     ...profile.events.filter(e=>e.kind==='note'&&e.text).map(e=>({at:Date.parse(e.registeredAt),text:e.text,origin:'note'}))
   ].filter(e=>e.at<=evidence.at).sort((a,b)=>b.at-a.at);
   const current=[];
@@ -92,7 +92,7 @@ export class CaseBoard{
   summary(item,profile=this.profile(item.id),sources=this.sources(item)){
     const suggestion=suggestArea([...(item.facts||[]).map(f=>f.quote),...sources.map(s=>s.text)].join('\n'));
     const activityMonths=[...new Set([item.month,...sources.map(s=>s.month),...profile.events.filter(e=>e.occurredOn).map(e=>e.occurredOn.slice(0,7))])].filter(m=>/^20\d\d-(0[1-9]|1[0-2])$/.test(m)).sort();
-    const title=profile.title||item.facts?.find(f=>f.field==='equipamento')?.quote||item.facts?.find(f=>f.field==='ocorrencia')?.quote||'Registro aguardando descrição';
+    const title=profile.title||(item.externalTicket&&('Invenzi #'+item.externalTicket.number+' · '+item.externalTicket.subject))||item.facts?.find(f=>f.field==='equipamento')?.quote||item.facts?.find(f=>f.field==='ocorrencia')?.quote||'Registro aguardando descrição';
     const timestamps=sources.map(s=>s.timestamp).filter(Number.isFinite).sort((a,b)=>a-b);
     const literalLocations=[...new Set((item.facts||[]).filter(f=>f.field==='local').map(f=>literalLocation(f.quote)).filter(Boolean))];
     const location=profile.location||(literalLocations.length===1?literalLocations[0]:'');
@@ -101,7 +101,7 @@ export class CaseBoard{
     const stage=currentStage(profile,sources);
     const progress=reportProgress(profile,sources,stage);
     const missing=[...new Set([...(item.missing||[]),...(profile.location?[]:['local'])])].filter(f=>f==='local'?!profile.location:!confirmed[f]&&!progress.current.some(x=>x.field===f));
-    return {code:item.code,title:title.slice(0,180),location,locationConfirmed:!!profile.location,serviceDay:profile.serviceDay||null,referenceAt,referenceKind:timestamps.length?'source':'created',summary:confirmed.ocorrencia||item.facts?.find(f=>f.field==='ocorrencia')?.quote||'',area:profile.area||suggestion.area,areaSuggested:!profile.area,candidates:suggestion.candidates,status:stage.status,stage,version:profile.version,contextState:missing.length?(item.review==='clarification-received'?'analysis-pending':'needs-context'):'complete',missing,openTasks:profile.tasks.filter(t=>!t.resolvedAt).length,sourceCount:sources.length,answerCount:item.answerIds?.length||0,originMonth:item.month,activityMonths,firstSourceAt:timestamps[0]||null,lastSourceAt:timestamps.at(-1)||null,updatedAt:[profile.events.at(-1)?.registeredAt,item.updatedAt,item.createdAt].filter(Boolean).sort().at(-1)};
+    return {code:item.code,title:title.slice(0,180),location,locationConfirmed:!!profile.location,serviceDay:profile.serviceDay||null,referenceAt,referenceKind:timestamps.length?'source':'created',summary:confirmed.ocorrencia||item.facts?.find(f=>f.field==='ocorrencia')?.quote||'',area:profile.area||(item.externalTicket?'SCA':suggestion.area),areaSuggested:!profile.area,candidates:suggestion.candidates,status:stage.status,stage,version:profile.version,contextState:missing.length?(item.review==='clarification-received'?'analysis-pending':'needs-context'):'complete',missing,openTasks:profile.tasks.filter(t=>!t.resolvedAt).length,sourceCount:sources.length,answerCount:item.answerIds?.length||0,originMonth:item.month,activityMonths,firstSourceAt:timestamps[0]||null,lastSourceAt:timestamps.at(-1)||null,updatedAt:[profile.events.at(-1)?.registeredAt,item.updatedAt,item.createdAt].filter(Boolean).sort().at(-1),...(item.externalTicket?{externalTicket:item.externalTicket}:{})};
   }
   summaries(includeArchived=false){
     return this.assistant.all().flatMap(i=>{const p=this.profile(i.id);return !includeArchived&&p.archived?[]:[{...this.summary(i,p),archived:!!p.archived,historical:!!i.historical}];});
@@ -122,7 +122,7 @@ export class CaseBoard{
     const summary=this.summary(item,profile,sources);
     const progress=reportProgress(profile,sources,summary.stage);
     const facts=[...progress.current,...Object.entries(confirmed).map(([field,quote])=>({field,quote,confirmed:true,...(progress.fields.includes(field)?{prior:true}:{})})),...(item.facts||[]).filter(f=>!confirmed[f.field]).map(f=>progress.current.some(x=>x.field===f.field)?{...f,prior:true}:f)];
-    return {untrusted:true,...summary,profile,stageQuestion:summary.status==='unconfirmed'?stageQuestion:null,facts,reportUpdates:progress.updates,questionState:item.questionState,sources:sources.map(s=>({...s,kind:s.manualPhoto?'manual-photo':(item.answerIds||[]).includes(s.id)?'answer':'source'})),notices,confirmations};
+    return {untrusted:true,...summary,profile,stageQuestion:summary.status==='unconfirmed'?stageQuestion:null,facts,reportUpdates:progress.updates,questionState:item.questionState,sources:sources.map(s=>({...s,kind:s.channel==='support-email'?'support-email':s.manualPhoto?'manual-photo':(item.answerIds||[]).includes(s.id)?'answer':'source'})),notices,confirmations};
   }
   change(code,input){
     if(input?.kind==='merge'){
@@ -215,6 +215,7 @@ export class CaseBoard{
   merge(code,duplicateCode,version){
     const main=this.item(code),duplicate=this.item(duplicateCode);
     if(main.id===duplicate.id)throw new CaseError('Escolha outro chamado.');
+    if(main.externalTicket||duplicate.externalTicket)throw new CaseError('Tickets de suporte são atualizados pelo número externo e não podem ser reunidos por esta ação.',409);
     this.db.exec('BEGIN IMMEDIATE');
     try{
       const p=this.profile(main.id),q=this.profile(duplicate.id);

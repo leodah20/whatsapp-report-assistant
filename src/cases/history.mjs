@@ -29,7 +29,7 @@ export class HistoricalCases{
   }
   targets(month){
     if(!validMonth(month))throw new CaseError('Competência inválida.');
-    return this.board.summaries().sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt))).map(i=>({
+    return this.board.summaries().filter(i=>!i.externalTicket).sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt))).map(i=>({
       code:i.code,title:i.title,location:i.location,area:i.area,month:i.originMonth,
       current:i.activityMonths.includes(month),day:i.serviceDay,referenceAt:i.referenceAt,status:STATUSES[i.status]
     }));
@@ -64,6 +64,7 @@ export class HistoricalCases{
       let item;
       if(code){
         item=this.board.item(code);
+        if(item.externalTicket)throw new CaseError('Tickets de suporte recebem fontes pelo conector de e-mail.',409);
         if(this.board.profile(item.id).archived)throw new CaseError('Restaure o chamado antes de vincular fontes.',409);
         item.sourceIds=[...new Set([...item.sourceIds,...records.map(r=>r.id)])];
         item.updatedAt=new Date().toISOString();

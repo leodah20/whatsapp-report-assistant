@@ -69,6 +69,6 @@ O proprietário confirmou a navegação do painel privado no Android. Na aba Con
 
 O painel privado oferece Chamados, Histórico sem chamado, Fechamento e Configuração. A configuração remota mostra o estado e o explorador; controles do WhatsApp permanecem locais. O TXT/ZIP é baixado pelo navegador, sem envio automático para IA.
 
-O [mapa interativo de arquitetura](ARQUITETURA.md) é documentação separada, com oito percursos e inspeção de protocolos, controles e módulos. O painel operacional não incorpora o mapa. O Explorador da API continua em Configuração.
+O [mapa interativo de arquitetura](ARQUITETURA.md) é documentação separada, com nove percursos e inspeção de protocolos, controles e módulos. O painel operacional não incorpora o mapa. O Explorador da API continua em Configuração.
 
-O [Protótipo Runavolt 01](RUNAVOLT.md) aplica identidade, fontes locais e navegação responsiva a Chamados, Histórico, Fechamento, Configuração e diagnóstico. Na minuta, somente a barra em tela muda; o PDF não muda. Instalações por cliente, integração de e-mail e aplicativo móvel são frentes distintas de evolução.
+O [Protótipo Runavolt 01](RUNAVOLT.md) aplica identidade, fontes locais e navegação responsiva a Chamados, Histórico, Fechamento, Configuração e diagnóstico. Na minuta, somente a barra em tela muda; o PDF não muda. O [e-mail de suporte](EMAIL-DE-SUPORTE.md) entra em um chamado por ticket e não altera a etapa técnica por status do fornecedor. Instalações por cliente e aplicativo móvel são frentes futuras.

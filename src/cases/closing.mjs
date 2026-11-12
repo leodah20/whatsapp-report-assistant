@@ -126,7 +126,7 @@ export class MonthlyClosing{
           path:reviewedAttachments.has(n)?reportAttachmentPath(code,n+1,s.mime||s.type):null,selectedForPrint:!!review?.photos.includes(n)}:null}));
       return {code,area:d.area,title:review?.title||d.title,location:d.location||null,locationConfirmed:d.locationConfirmed,
         serviceDate:review?.historical?null:(review?.start||d.serviceDay||null),endDate:review?.end||null,historical:!!review?.historical,
-        fromEarlierMonth:row.carryover,stage:{label:row.stageLabel,origin:d.stage?.origin,reason:d.stage?.reason||'',scheduledFor:d.stage?.scheduledFor||null},
+        fromEarlierMonth:row.carryover,stage:{label:row.stageLabel,origin:d.stage?.origin,reason:d.stage?.reason||'',scheduledFor:d.stage?.scheduledFor||null},...(d.externalTicket?{externalTicket:d.externalTicket}:{}),
         sourceReviewState:row.sourceReviewState,reviewState:row.state,reviewedText:review?.narrative||null,question:row.state==='defer'?row.review.reason:null,
         stageQuestion:d.stageQuestion||null,missing:d.missing,facts:d.facts.map(f=>({field:f.field,text:f.quote,confirmed:!!f.confirmed,...(f.prior?{prior:true}:{}),...(f.automatic?{automatic:true,origin:f.origin,recordedAt:f.recordedAt}:{})})),
         tasks:d.profile.tasks.filter(t=>!t.resolvedAt).map(t=>t.text),

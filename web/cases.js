@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 const demo=document.body?.dataset.demo==='true';
 const labels={ALL:'Todas as frentes',CFTV:'CFTV',SDAI:'SDAI',SCA:'SCA',PABX:'PABX',MEDICAO:'Medição',BMS:'BMS',ZABBIX:'Zabbix',UNCLASSIFIED:'Sem classificação'};
 const fields={local:'Local',equipamento:'Equipamento',ocorrencia:'Ocorrência',procedimento:'Procedimento',resultado:'Resultado / pendência'};
-const kinds={source:'Registro do WhatsApp',answer:'Resposta do WhatsApp',question:'Pergunta do assistente',receipt:'Confirmação de registro',note:'Atualização local',task:'Pendência registrada',resolve:'Pendência concluída',profile:'Cadastro atualizado',context:'Respostas confirmadas',merge:'Chamados reunidos',archive:'Arquivado',restore:'Restaurado','manual-photo':'Foto adicionada pelo painel'};
+const kinds={source:'Registro do WhatsApp',answer:'Resposta do WhatsApp',question:'Pergunta do assistente',receipt:'Confirmação de registro',note:'Atualização local',task:'Pendência registrada',resolve:'Pendência concluída',profile:'Cadastro atualizado',context:'Respostas confirmadas',merge:'Chamados reunidos',archive:'Arquivado',restore:'Restaurado','manual-photo':'Foto adicionada pelo painel','support-email':'E-mail do suporte · Invenzi'};
 const tz='America/Sao_Paulo';
 const day=new Intl.DateTimeFormat('sv-SE',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'});
 const clock=new Intl.DateTimeFormat('pt-BR',{timeZone:tz,dateStyle:'short',timeStyle:'short'});
@@ -17,6 +17,7 @@ const statusOrder={open:0,pending:1,rescheduled:2,unconfirmed:3,completed:4,canc
 const counts={open:'Em andamento',pending:'Aguardando',rescheduled:'Remarcados',unconfirmed:'Sem etapa definida',completed:'Concluídos',cancelled:'Cancelados'};
 const stageOrigin={source:'Do histórico do WhatsApp',note:'De atualização no painel',context:'Das respostas no painel',manual:'Definida manualmente',task:'De pendência cadastrada'};
 function caseHeading(tag,i){const h=node(tag);h.append(node('span',locationTitle(i),'case-location'),node('span',i.title,'case-subject'));return h;}
+function ticketBadge(i){return i.externalTicket?badge(i.externalTicket.lastState==='resolvido'?'Suporte: resolvido':'Suporte Invenzi · e-mail'):null;}
 const normal=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const codeFromHash=()=>/^#R-[A-F0-9]{8}$/.test(location.hash)?location.hash.slice(1):null;
 let model={items:[],statuses:{}},area='ALL',selected=codeFromHash(),detail=null,tab='overview',listRequest=0,detailRequest=0,editing=null;
@@ -87,7 +88,7 @@ function renderList(){
     b.append(head,caseHeading('h3',i),node('p',caseDate(i)));
     if(i.summary)b.append(node('p',i.summary));
     const flags=node('div',undefined,'badges');
-    flags.append(stageBadge(i));if(i.archived)flags.append(badge('Arquivado'));if(i.historical)flags.append(badge('Histórico · revisar'));if(i.carryover)flags.append(badge('Mês anterior'));if(i.missing.length||!i.serviceDay)flags.append(badge('⚠ Contexto a completar','amber'));b.append(flags);
+    flags.append(stageBadge(i));if(i.externalTicket)flags.append(ticketBadge(i));if(i.archived)flags.append(badge('Arquivado'));if(i.historical&&!i.externalTicket)flags.append(badge('Histórico · revisar'));if(i.carryover)flags.append(badge('Mês anterior'));if(i.missing.length||!i.serviceDay)flags.append(badge('⚠ Contexto a completar','amber'));b.append(flags);
     if(['pending','rescheduled','cancelled'].includes(i.status)&&stageReason(i))b.append(node('p',stageReason(i),'stage-card-reason'));
     return b;
   }));
@@ -110,6 +111,7 @@ function renderDetail(){
     $('fila').scrollIntoView({block:'start'});$('queue-title').focus({preventScroll:true});
   },'button outline rv-queue-back'));
   flags.append(stageBadge(i),badge(labels[i.area]+(i.areaSuggested&&i.area!=='UNCLASSIFIED'?' · sugerida':'')));
+  if(i.externalTicket)flags.append(ticketBadge(i));
   const top=node('div',undefined,'detail-top');
   top.append(node('p',i.code,'case-code'),caseActions(i));
   head.append(top,caseHeading('h2',i),flags,node('p',caseDate(i),'hint'));

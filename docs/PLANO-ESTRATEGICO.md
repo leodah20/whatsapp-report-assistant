@@ -57,7 +57,8 @@
 - [x] Documentar o sistema em página HTML separada, com mapa interativo por fluxo, protocolos, limites de acesso e referências ao código. Manter o painel operacional focado nos chamados e no Explorador da API.
 - [x] Aplicar o sistema visual Runavolt ao protótipo, sem alterar o PDF aprovado nem as permissões da implantação.
 - [ ] Consolidar a configuração por cliente e validar implantação em LAN, segmentação e operação local conforme escopo contratado.
-- [ ] Integrar tickets de suporte por e-mail em leitura restrita, com vínculo por identificador e atualizações idempotentes.
+- [x] Integrar notificações recebidas de tickets de suporte por e-mail, em leitura restrita e com vínculo e deduplicação por identificadores.
+- [ ] Acompanhar formatos de notificação não reconhecidos e avaliar cobertura de respostas enviadas que não retornam na notificação do suporte.
 - [ ] Avaliar cliente móvel após validar API e autenticação, mantendo dados e inferência atrás do servidor local.
 
 **Pronto quando:** outro ambiente consegue retomar com Git e os arquivos de continuidade, sem acessar chats antigos ou dados privados para entender a arquitetura. Não depender de oferta gratuita permanente nem conectar modelo remoto ao arquivo sem autorização.

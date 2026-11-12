@@ -11,6 +11,7 @@ A página HTML de apresentação e estudo é separada da operação. O mapa docu
 | Operação remota | Navegador → HTTPS na tailnet → Serve → ponte Node em loopback → coletor em loopback | Sem Funnel, sem QR, vínculo, pausa, troca de grupo ou controle dos envios pelo remoto. |
 | Inferência | Coletor ou fechamento → HTTP local → Ollama `POST /api/chat` | Não depende dos créditos do agente que edita o código; não analisa os anexos. |
 | Consulta MCP | Cliente autorizado → stdio → Python → SQLite somente leitura | Não passa pela ponte, não publica rede e não envia mensagens. |
+| Tickets de suporte | IMAP/TLS somente leitura → adaptador Python → vínculo por número do ticket → tabelas de suporte → painel | Sem SMTP, anexos, acesso aos enviados ou encaminhamento para o WhatsApp. |
 | Desenvolvimento | VS Code e Git → repositório sanitizado → Codex/OpenCode/Claude, quando autorizados | Sessão do WhatsApp, dados, chave, perfil de navegador e configurações privadas não entram no Git. |
 
 ## Percurso de uma requisição HTTPS
